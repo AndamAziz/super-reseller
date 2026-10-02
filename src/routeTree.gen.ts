@@ -10,33 +10,118 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedCreditsRouteImport } from './routes/_authenticated/credits'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedLinesRouteImport } from './routes/_authenticated/lines'
+import { Route as AuthenticatedPlaylistsRouteImport } from './routes/_authenticated/playlists'
+import { Route as AuthenticatedResellersRouteImport } from './routes/_authenticated/resellers'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedCreditsRoute = AuthenticatedCreditsRouteImport.update({
+  id: '/credits',
+  path: '/credits',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLinesRoute = AuthenticatedLinesRouteImport.update({
+  id: '/lines',
+  path: '/lines',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPlaylistsRoute = AuthenticatedPlaylistsRouteImport.update({
+  id: '/playlists',
+  path: '/playlists',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedResellersRoute = AuthenticatedResellersRouteImport.update({
+  id: '/resellers',
+  path: '/resellers',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/credits': typeof AuthenticatedCreditsRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/lines': typeof AuthenticatedLinesRoute
+  '/playlists': typeof AuthenticatedPlaylistsRoute
+  '/resellers': typeof AuthenticatedResellersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/credits': typeof AuthenticatedCreditsRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/lines': typeof AuthenticatedLinesRoute
+  '/playlists': typeof AuthenticatedPlaylistsRoute
+  '/resellers': typeof AuthenticatedResellersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/credits': typeof AuthenticatedCreditsRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/lines': typeof AuthenticatedLinesRoute
+  '/_authenticated/playlists': typeof AuthenticatedPlaylistsRoute
+  '/_authenticated/resellers': typeof AuthenticatedResellersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/credits'
+    | '/dashboard'
+    | '/lines'
+    | '/playlists'
+    | '/resellers'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/credits'
+    | '/dashboard'
+    | '/lines'
+    | '/playlists'
+    | '/resellers'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/credits'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/lines'
+    | '/_authenticated/playlists'
+    | '/_authenticated/resellers'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +133,81 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/credits': {
+      id: '/_authenticated/credits'
+      path: '/credits'
+      fullPath: '/credits'
+      preLoaderRoute: typeof AuthenticatedCreditsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/lines': {
+      id: '/_authenticated/lines'
+      path: '/lines'
+      fullPath: '/lines'
+      preLoaderRoute: typeof AuthenticatedLinesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/playlists': {
+      id: '/_authenticated/playlists'
+      path: '/playlists'
+      fullPath: '/playlists'
+      preLoaderRoute: typeof AuthenticatedPlaylistsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/resellers': {
+      id: '/_authenticated/resellers'
+      path: '/resellers'
+      fullPath: '/resellers'
+      preLoaderRoute: typeof AuthenticatedResellersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCreditsRoute: typeof AuthenticatedCreditsRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedLinesRoute: typeof AuthenticatedLinesRoute
+  AuthenticatedPlaylistsRoute: typeof AuthenticatedPlaylistsRoute
+  AuthenticatedResellersRoute: typeof AuthenticatedResellersRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedCreditsRoute: AuthenticatedCreditsRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedLinesRoute: AuthenticatedLinesRoute,
+  AuthenticatedPlaylistsRoute: AuthenticatedPlaylistsRoute,
+  AuthenticatedResellersRoute: AuthenticatedResellersRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
