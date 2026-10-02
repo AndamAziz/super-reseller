@@ -47,6 +47,21 @@ function LinesPage() {
     qc.invalidateQueries({ queryKey: ["resellers"] });
   };
 
+  async function runPanelTest() {
+    setTesting(true);
+    setPanelTest(null);
+    try {
+      const res = await testPanelFn({ data: {} });
+      setPanelTest(res);
+      if (res.ok) toast.success("Panel connection OK");
+      else toast.error("Panel connection failed — see details below");
+    } catch (err) {
+      toast.error(errMsg(err));
+    } finally {
+      setTesting(false);
+    }
+  }
+
   async function create(e: React.FormEvent) {
     e.preventDefault();
     const parsed = schema.safeParse(form);
