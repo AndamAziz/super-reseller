@@ -71,3 +71,62 @@ export function setPanelExpiry(lineUser: string, expDateUnix: number) {
 export function deletePanelLine(lineUser: string) {
   return panelCall({ action: "delete", user: lineUser });
 }
+
+export interface PanelTestResult {
+  ok: boolean;
+  configured: boolean;
+  url?: string;
+  checks: { name: string; ok: boolean; detail: string }[];
+}
+
+/**
+ * Verify the saved panel settings step by step:
+ * 1. secrets present, 2. base URL reachable, 3. panel_api.php answers,
+ * 4. admin credentials accepted.
+ */
+export async function testPanelConnection(): Promise<PanelTestResult> {
+  const cfg = getPanelConfig();
+  if (!cfg) {
+    return {
+      ok: false,
+      configured: false,
+      checks: [{ name: "Settings saved", ok: false, detail: "panel URL, username or password is missing" }],
+    };
+  }
+
+  const checks: PanelTestResult["checks"] = [{ name: "Settings saved", ok: true, detail: cfg.base }];
+
+  // 2. Base URL reachable
+  try {
+    const res = await fetch(cfg.base, { signal: AbortSignal.timeout(10000) });
+    checks.push({ name: "Panel URL reachable", ok: true, detail: `HTTP ${res.status}` });
+  } catch (e) {
+    checks.push({
+      name: "Panel URL reachable",
+      ok: false,
+      detail: e instanceof Error ? e.message : "network error",
+    });
+    return { ok: false, configured: true, url: cfg.base, checks };
+  }
+
+  // 3 + 4. panel_api.php answers and accepts the credentials
+  const api = await panelCall({ action: "server_info" });
+  if (api.ok) {
+    checks.push({ name: "API endpoint (panel_api.php)", ok: true, detail: "answered" });
+    checks.push({ name: "Admin credentials", ok: true, detail: "accepted" });
+    return { ok: true, configured: true, url: cfg.base, checks };
+  }
+
+  const is404 = api.error === "HTTP 404";
+  checks.push({
+    name: "API endpoint (panel_api.php)",
+    ok: false,
+    detail: is404
+      ? "not found (HTTP 404) — check the URL points at the panel host and port, not a website"
+      : (api.error ?? "no answer"),
+  });
+  if (!is404) {
+    checks.push({ name: "Admin credentials", ok: false, detail: api.error ?? "rejected" });
+  }
+  return { ok: false, configured: true, url: cfg.base, checks };
+}

@@ -5,7 +5,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { createPanelLine, deletePanelLine, getPanelConfig, setPanelExpiry } from "./xtream.server";
+import { createPanelLine, deletePanelLine, getPanelConfig, setPanelExpiry, testPanelConnection } from "./xtream.server";
 
 const lineSchema = z.object({
   username: z.string().trim().min(3).max(50).regex(/^[\w.-]+$/),
@@ -89,6 +89,10 @@ export const renewLine = createServerFn({ method: "POST" })
     }
     return { ok: true as const };
   });
+
+export const testPanel = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => testPanelConnection());
 
 export const deleteLine = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
