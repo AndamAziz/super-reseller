@@ -51,7 +51,7 @@ function LinesPage() {
     setTesting(true);
     setPanelTest(null);
     try {
-      const res = await testPanelFn({ data: {} });
+      const res = await testPanelFn();
       setPanelTest(res);
       if (res.ok) toast.success("Panel connection OK");
       else toast.error("Panel connection failed — see details below");
