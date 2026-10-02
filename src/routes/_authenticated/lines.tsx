@@ -125,6 +125,34 @@ function LinesPage() {
     <>
       <PageHeader eyebrow="customers" title="Subscription lines" />
 
+      <div className="glass rise space-y-3 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="label-mono">Xtream panel</p>
+            <p className="text-[12px] text-muted-foreground">Check the saved panel URL and API before creating or renewing lines.</p>
+          </div>
+          <button type="button" onClick={runPanelTest} disabled={testing} className={softBtn}>
+            {testing ? "Testing…" : "Test panel connection"}
+          </button>
+        </div>
+        {panelTest && (
+          <div className="space-y-1.5 border-t border-border pt-3">
+            {panelTest.checks.map((c) => (
+              <div key={c.name} className="flex items-baseline gap-2 text-[12px]">
+                <span className={c.ok ? "text-good" : "text-destructive"}>{c.ok ? "✓" : "✗"}</span>
+                <span className="font-medium">{c.name}</span>
+                <span className="font-mono text-[11px] text-muted-foreground">{c.detail}</span>
+              </div>
+            ))}
+            {panelTest.ok ? (
+              <p className="pt-1 text-[12px] text-good">Panel is reachable and credentials are accepted — new lines will sync automatically.</p>
+            ) : (
+              <p className="pt-1 text-[12px] text-destructive">Fix the failing step above, then test again. Lines can still be created locally, but they won't reach the panel.</p>
+            )}
+          </div>
+        )}
+      </div>
+
       <form onSubmit={create} className="glass rise grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto_auto] lg:items-end">
         <label className="space-y-1.5">
           <span className="label-mono">Username</span>
