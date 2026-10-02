@@ -50,9 +50,9 @@ function ResellersPage() {
 
   async function adjust(id: string, sign: 1 | -1) {
     const n = parseInt(amounts[id] ?? "", 10);
-    if (!n || n < 1) return toast.error("Enter a positive amount");
+    if (!n || n < 1) return void toast.error("Enter a positive amount");
     const { error } = await supabase.rpc("adjust_credits", { _reseller_id: id, _amount: n * sign, _reason: "" });
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     toast.success(`${sign > 0 ? "Added" : "Removed"} ${n} credits`);
     setAmounts({ ...amounts, [id]: "" });
     refresh();

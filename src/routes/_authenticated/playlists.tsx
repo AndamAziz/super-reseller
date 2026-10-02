@@ -64,7 +64,7 @@ function PlaylistsPage() {
     try {
       const text = await file.text();
       const parsed = parseM3U(text);
-      if (!parsed.length) return toast.error("No channels found in this file");
+      if (!parsed.length) return void toast.error("No channels found in this file");
       setProgress(`Parsed ${parsed.length} channels…`);
       const { data: pl, error } = await supabase
         .from("playlists")
@@ -91,7 +91,7 @@ function PlaylistsPage() {
   async function remove(id: string) {
     if (!confirm("Delete this playlist?")) return;
     const { error } = await supabase.from("playlists").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     setSelected(null);
     qc.invalidateQueries({ queryKey: ["playlists"] });
   }

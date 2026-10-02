@@ -42,7 +42,7 @@ function LinesPage() {
   async function create(e: React.FormEvent) {
     e.preventDefault();
     const parsed = schema.safeParse(form);
-    if (!parsed.success) return toast.error(parsed.error.issues[0].message);
+    if (!parsed.success) return void toast.error(parsed.error.issues[0]?.message ?? "Invalid input");
     setBusy(true);
     const { error } = await supabase.rpc("create_line", {
       _username: parsed.data.username,
@@ -50,7 +50,7 @@ function LinesPage() {
       _months: parsed.data.months,
     });
     setBusy(false);
-    if (error) return toast.error(error.message.includes("duplicate") ? "Username already taken" : error.message);
+    if (error) return void toast.error(error.message.includes("duplicate") ? "Username already taken" : error.message);
     toast.success(`Line ${parsed.data.username} created`);
     setForm({ username: "", password: "", months: 1 });
     refresh();
@@ -59,7 +59,7 @@ function LinesPage() {
   async function renew(id: string) {
     const months = renewMonths[id] ?? 1;
     const { error } = await supabase.rpc("renew_line", { _line_id: id, _months: months });
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     toast.success(`Renewed for ${months} month${months > 1 ? "s" : ""}`);
     refresh();
   }
@@ -67,7 +67,7 @@ function LinesPage() {
   async function remove(id: string, username: string) {
     if (!confirm(`Delete line ${username}? Credits are not refunded.`)) return;
     const { error } = await supabase.from("lines").delete().eq("id", id);
-    if (error) return toast.error(errMsg(error));
+    if (error) return void toast.error(errMsg(error));
     toast.success("Line deleted");
     refresh();
   }

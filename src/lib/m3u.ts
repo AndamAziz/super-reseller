@@ -17,7 +17,7 @@ export function parseM3U(text: string): M3UChannel[] {
     if (!line) continue;
     if (line.startsWith("#EXTINF")) {
       const attrs: Record<string, string> = {};
-      for (const m of line.matchAll(/([\w:-]+)="([^"]*)"/g)) attrs[m[1].toLowerCase()] = m[2];
+      for (const m of line.matchAll(/([\w:-]+)="([^"]*)"/g)) attrs[m[1]!.toLowerCase()] = m[2]!;
       // Channel name follows the last comma that isn't inside quotes
       const noQuotes = line.replace(/"[^"]*"/g, '""');
       const idx = noQuotes.lastIndexOf(",");
