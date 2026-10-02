@@ -95,6 +95,8 @@ export type Database = {
           created_at: string
           expires_at: string
           id: string
+          panel_message: string | null
+          panel_status: string
           password: string
           reseller_id: string
           username: string
@@ -103,6 +105,8 @@ export type Database = {
           created_at?: string
           expires_at: string
           id?: string
+          panel_message?: string | null
+          panel_status?: string
           password: string
           reseller_id: string
           username: string
@@ -111,6 +115,8 @@ export type Database = {
           created_at?: string
           expires_at?: string
           id?: string
+          panel_message?: string | null
+          panel_status?: string
           password?: string
           reseller_id?: string
           username?: string
@@ -203,6 +209,8 @@ export type Database = {
           created_at: string
           expires_at: string
           id: string
+          panel_message: string | null
+          panel_status: string
           password: string
           reseller_id: string
           username: string
@@ -227,6 +235,8 @@ export type Database = {
           created_at: string
           expires_at: string
           id: string
+          panel_message: string | null
+          panel_status: string
           password: string
           reseller_id: string
           username: string

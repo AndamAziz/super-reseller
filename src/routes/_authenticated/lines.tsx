@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, Panel, StatusBadge, td, th, inputCls, softBtn, dangerBtn, primaryBtn } from "@/components/panel";
 import { useMe, isActive, fmtDate, errMsg } from "@/hooks/use-me";
 import { useLines } from "@/lib/queries";
+import { createLine, deleteLine, renewLine } from "@/lib/lines.functions";
 
 export const Route = createFileRoute("/_authenticated/lines")({
   head: () => ({ meta: [{ title: "Lines — Nimbus Panel" }] }),
@@ -26,6 +27,9 @@ function LinesPage() {
   const { data: me } = useMe();
   const isAdmin = me?.role === "admin";
   const { data: lines = [] } = useLines();
+  const createLineFn = useServerFn(createLine);
+  const renewLineFn = useServerFn(renewLine);
+  const deleteLineFn = useServerFn(deleteLine);
   const [form, setForm] = useState({ username: "", password: "", months: 1 });
   const [busy, setBusy] = useState(false);
   const [q, setQ] = useState("");
@@ -44,32 +48,44 @@ function LinesPage() {
     const parsed = schema.safeParse(form);
     if (!parsed.success) return void toast.error(parsed.error.issues[0]?.message ?? "Invalid input");
     setBusy(true);
-    const { error } = await supabase.rpc("create_line", {
-      _username: parsed.data.username,
-      _password: parsed.data.password,
-      _months: parsed.data.months,
-    });
-    setBusy(false);
-    if (error) return void toast.error(error.message.includes("duplicate") ? "Username already taken" : error.message);
-    toast.success(`Line ${parsed.data.username} created`);
-    setForm({ username: "", password: "", months: 1 });
-    refresh();
+    try {
+      const res = await createLineFn({ data: parsed.data });
+      if (res.panelStatus === "synced") {
+        toast.success(`Line ${parsed.data.username} created and synced to panel`);
+      } else if (res.panelStatus === "error") {
+        toast.warning(`Line ${parsed.data.username} created, but the panel rejected it: ${res.panelMessage ?? "unknown error"}`);
+      } else {
+        toast.success(`Line ${parsed.data.username} created`);
+      }
+      setForm({ username: "", password: "", months: 1 });
+      refresh();
+    } catch (err) {
+      toast.error(errMsg(err));
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function renew(id: string) {
     const months = renewMonths[id] ?? 1;
-    const { error } = await supabase.rpc("renew_line", { _line_id: id, _months: months });
-    if (error) return void toast.error(error.message);
-    toast.success(`Renewed for ${months} month${months > 1 ? "s" : ""}`);
-    refresh();
+    try {
+      await renewLineFn({ data: { lineId: id, months } });
+      toast.success(`Renewed for ${months} month${months > 1 ? "s" : ""}`);
+      refresh();
+    } catch (err) {
+      toast.error(errMsg(err));
+    }
   }
 
   async function remove(id: string, username: string) {
     if (!confirm(`Delete line ${username}? Credits are not refunded.`)) return;
-    const { error } = await supabase.from("lines").delete().eq("id", id);
-    if (error) return void toast.error(errMsg(error));
-    toast.success("Line deleted");
-    refresh();
+    try {
+      await deleteLineFn({ data: { lineId: id, username } });
+      toast.success("Line deleted");
+      refresh();
+    } catch (err) {
+      toast.error(errMsg(err));
+    }
   }
 
   const shown = useMemo(
@@ -138,6 +154,7 @@ function LinesPage() {
                 {isAdmin && <th className={th}>Reseller</th>}
                 <th className={th}>Expiry</th>
                 <th className={th}>Status</th>
+                <th className={th}>Panel</th>
                 <th className={`${th} text-right`}>Action</th>
               </tr>
             </thead>
@@ -149,6 +166,15 @@ function LinesPage() {
                   {isAdmin && <td className={`${td} text-muted-foreground`}>{l.profiles?.display_name ?? l.profiles?.email}</td>}
                   <td className={`${td} font-mono text-[12px]`}>{fmtDate(l.expires_at)}</td>
                   <td className={td}><StatusBadge active={isActive(l.expires_at)} /></td>
+                  <td className={`${td} font-mono text-[11px]`}>
+                    {l.panel_status === "synced" ? (
+                      <span className="text-good">synced</span>
+                    ) : l.panel_status === "error" ? (
+                      <span className="text-destructive" title={l.panel_message ?? undefined}>error</span>
+                    ) : (
+                      <span className="text-muted-foreground">local</span>
+                    )}
+                  </td>
                   <td className={`${td} text-right`}>
                     <div className="inline-flex items-center gap-1.5">
                       <select
@@ -166,7 +192,7 @@ function LinesPage() {
                 </tr>
               ))}
               {!shown.length && (
-                <tr><td className={`${td} text-muted-foreground`} colSpan={6}>No lines found.</td></tr>
+                <tr><td className={`${td} text-muted-foreground`} colSpan={7}>No lines found.</td></tr>
               )}
             </tbody>
           </table>
