@@ -47,32 +47,44 @@ function LinesPage() {
     const parsed = schema.safeParse(form);
     if (!parsed.success) return void toast.error(parsed.error.issues[0]?.message ?? "Invalid input");
     setBusy(true);
-    const { error } = await supabase.rpc("create_line", {
-      _username: parsed.data.username,
-      _password: parsed.data.password,
-      _months: parsed.data.months,
-    });
-    setBusy(false);
-    if (error) return void toast.error(error.message.includes("duplicate") ? "Username already taken" : error.message);
-    toast.success(`Line ${parsed.data.username} created`);
-    setForm({ username: "", password: "", months: 1 });
-    refresh();
+    try {
+      const res = await createLineFn({ data: parsed.data });
+      if (res.panelStatus === "synced") {
+        toast.success(`Line ${parsed.data.username} created and synced to panel`);
+      } else if (res.panelStatus === "error") {
+        toast.warning(`Line ${parsed.data.username} created, but the panel rejected it: ${res.panelMessage ?? "unknown error"}`);
+      } else {
+        toast.success(`Line ${parsed.data.username} created`);
+      }
+      setForm({ username: "", password: "", months: 1 });
+      refresh();
+    } catch (err) {
+      toast.error(errMsg(err));
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function renew(id: string) {
     const months = renewMonths[id] ?? 1;
-    const { error } = await supabase.rpc("renew_line", { _line_id: id, _months: months });
-    if (error) return void toast.error(error.message);
-    toast.success(`Renewed for ${months} month${months > 1 ? "s" : ""}`);
-    refresh();
+    try {
+      await renewLineFn({ data: { lineId: id, months } });
+      toast.success(`Renewed for ${months} month${months > 1 ? "s" : ""}`);
+      refresh();
+    } catch (err) {
+      toast.error(errMsg(err));
+    }
   }
 
   async function remove(id: string, username: string) {
     if (!confirm(`Delete line ${username}? Credits are not refunded.`)) return;
-    const { error } = await supabase.from("lines").delete().eq("id", id);
-    if (error) return void toast.error(errMsg(error));
-    toast.success("Line deleted");
-    refresh();
+    try {
+      await deleteLineFn({ data: { lineId: id, username } });
+      toast.success("Line deleted");
+      refresh();
+    } catch (err) {
+      toast.error(errMsg(err));
+    }
   }
 
   const shown = useMemo(
