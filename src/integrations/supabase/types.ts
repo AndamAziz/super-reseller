@@ -14,16 +14,233 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      channels: {
+        Row: {
+          group_title: string | null
+          id: string
+          logo: string | null
+          name: string
+          playlist_id: string
+          position: number
+          referrer: string | null
+          url: string
+        }
+        Insert: {
+          group_title?: string | null
+          id?: string
+          logo?: string | null
+          name: string
+          playlist_id: string
+          position?: number
+          referrer?: string | null
+          url: string
+        }
+        Update: {
+          group_title?: string | null
+          id?: string
+          logo?: string | null
+          name?: string
+          playlist_id?: string
+          position?: number
+          referrer?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channels_playlist_id_fkey"
+            columns: ["playlist_id"]
+            isOneToOne: false
+            referencedRelation: "playlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_transactions: {
+        Row: {
+          actor_id: string | null
+          amount: number
+          created_at: string
+          id: string
+          reason: string
+          reseller_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          amount: number
+          created_at?: string
+          id?: string
+          reason: string
+          reseller_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          reason?: string
+          reseller_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_transactions_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lines: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          password: string
+          reseller_id: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          password: string
+          reseller_id: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          password?: string
+          reseller_id?: string
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lines_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      playlists: {
+        Row: {
+          channel_count: number
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          channel_count?: number
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          channel_count?: number
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          credits: number
+          display_name: string | null
+          email: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          credits?: number
+          display_name?: string | null
+          email: string
+          id: string
+        }
+        Update: {
+          created_at?: string
+          credits?: number
+          display_name?: string | null
+          email?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      adjust_credits: {
+        Args: { _amount: number; _reason: string; _reseller_id: string }
+        Returns: number
+      }
+      create_line: {
+        Args: { _months: number; _password: string; _username: string }
+        Returns: {
+          created_at: string
+          expires_at: string
+          id: string
+          password: string
+          reseller_id: string
+          username: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "lines"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      renew_line: {
+        Args: { _line_id: string; _months: number }
+        Returns: {
+          created_at: string
+          expires_at: string
+          id: string
+          password: string
+          reseller_id: string
+          username: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "lines"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "reseller"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +367,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "reseller"],
+    },
   },
 } as const
