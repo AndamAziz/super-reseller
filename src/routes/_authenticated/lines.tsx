@@ -153,6 +153,7 @@ function LinesPage() {
                 {isAdmin && <th className={th}>Reseller</th>}
                 <th className={th}>Expiry</th>
                 <th className={th}>Status</th>
+                <th className={th}>Panel</th>
                 <th className={`${th} text-right`}>Action</th>
               </tr>
             </thead>
@@ -164,6 +165,15 @@ function LinesPage() {
                   {isAdmin && <td className={`${td} text-muted-foreground`}>{l.profiles?.display_name ?? l.profiles?.email}</td>}
                   <td className={`${td} font-mono text-[12px]`}>{fmtDate(l.expires_at)}</td>
                   <td className={td}><StatusBadge active={isActive(l.expires_at)} /></td>
+                  <td className={`${td} font-mono text-[11px]`}>
+                    {l.panel_status === "synced" ? (
+                      <span className="text-good">synced</span>
+                    ) : l.panel_status === "error" ? (
+                      <span className="text-destructive" title={l.panel_message ?? undefined}>error</span>
+                    ) : (
+                      <span className="text-muted-foreground">local</span>
+                    )}
+                  </td>
                   <td className={`${td} text-right`}>
                     <div className="inline-flex items-center gap-1.5">
                       <select
