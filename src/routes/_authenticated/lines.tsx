@@ -1,12 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useServerFn } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, Panel, StatusBadge, td, th, inputCls, softBtn, dangerBtn, primaryBtn } from "@/components/panel";
 import { useMe, isActive, fmtDate, errMsg } from "@/hooks/use-me";
 import { useLines } from "@/lib/queries";
+import { createLine, deleteLine, renewLine } from "@/lib/lines.functions";
 
 export const Route = createFileRoute("/_authenticated/lines")({
   head: () => ({ meta: [{ title: "Lines — Nimbus Panel" }] }),
@@ -26,6 +26,9 @@ function LinesPage() {
   const { data: me } = useMe();
   const isAdmin = me?.role === "admin";
   const { data: lines = [] } = useLines();
+  const createLineFn = useServerFn(createLine);
+  const renewLineFn = useServerFn(renewLine);
+  const deleteLineFn = useServerFn(deleteLine);
   const [form, setForm] = useState({ username: "", password: "", months: 1 });
   const [busy, setBusy] = useState(false);
   const [q, setQ] = useState("");
