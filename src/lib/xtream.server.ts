@@ -113,8 +113,37 @@ export async function testPanelConnection(): Promise<PanelTestResult> {
   const api = await panelCall({ action: "server_info" });
   if (api.ok) {
     checks.push({ name: "API endpoint (panel_api.php)", ok: true, detail: "answered" });
-    checks.push({ name: "Admin credentials", ok: true, detail: "accepted" });
-    return { ok: true, configured: true, url: cfg.base, checks };
+    const info = (api.data as { user_info?: Record<string, unknown> } | null)?.user_info;
+    // A normal subscriber line returns exp_date/max_connections — such an account can watch but not create lines.
+    if (info && ("exp_date" in info || "max_connections" in info)) {
+      checks.push({
+        name: "Admin credentials",
+        ok: false,
+        detail: "these are a customer (subscriber) login, not a panel admin/reseller account — they can't create lines",
+      });
+    } else {
+      checks.push({ name: "Admin credentials", ok: true, detail: "accepted" });
+    }
+    // 5. Can we actually create lines? The admin API (api.php) must allow our server.
+    let adminOk = false;
+    let adminDetail = "no answer";
+    try {
+      const u = new URL(`${cfg.base}/api.php`);
+      u.searchParams.set("username", cfg.username);
+      u.searchParams.set("password", cfg.password);
+      u.searchParams.set("action", "user");
+      u.searchParams.set("sub", "info");
+      const r = await fetch(u, { signal: AbortSignal.timeout(10000) });
+      const t = await r.text();
+      if (/IP FORBIDDEN/i.test(t)) adminDetail = "blocked — the panel only accepts admin calls from whitelisted IPs";
+      else if (!r.ok) adminDetail = `HTTP ${r.status}`;
+      else if (/"result"\s*:\s*false/.test(t)) adminDetail = "rejected by panel";
+      else { adminOk = true; adminDetail = "allowed"; }
+    } catch (e) {
+      adminDetail = e instanceof Error ? e.message : "network error";
+    }
+    checks.push({ name: "Line creation allowed", ok: adminOk, detail: adminDetail });
+    return { ok: checks.every((c) => c.ok), configured: true, url: cfg.base, checks };
   }
 
   const is404 = api.error === "HTTP 404";
