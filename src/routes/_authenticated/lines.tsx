@@ -1,4 +1,5 @@
-import { createFileRoute, useServerFn } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -191,7 +192,7 @@ function LinesPage() {
                 </tr>
               ))}
               {!shown.length && (
-                <tr><td className={`${td} text-muted-foreground`} colSpan={6}>No lines found.</td></tr>
+                <tr><td className={`${td} text-muted-foreground`} colSpan={7}>No lines found.</td></tr>
               )}
             </tbody>
           </table>
