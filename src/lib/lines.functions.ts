@@ -90,6 +90,10 @@ export const renewLine = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+export const testPanel = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => testPanelConnection());
+
 export const deleteLine = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => deleteSchema.parse(data))
