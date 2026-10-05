@@ -103,35 +103,14 @@ function LinesPage() {
     qc.invalidateQueries({ queryKey: ["resellers"] });
   };
 
-  async function runPanelTest() {
-    setTesting(true);
-    setPanelTest(null);
-    try {
-      const res = await testPanelFn();
-      setPanelTest(res);
-      if (res.ok) toast.success("Panel connection OK");
-      else toast.error("Panel connection failed — see details below");
-    } catch (err) {
-      toast.error(errMsg(err));
-    } finally {
-      setTesting(false);
-    }
-  }
-
   async function create(e: React.FormEvent) {
     e.preventDefault();
     const parsed = schema.safeParse(form);
     if (!parsed.success) return void toast.error(parsed.error.issues[0]?.message ?? "Invalid input");
     setBusy(true);
     try {
-      const res = await createLineFn({ data: { ...parsed.data, ...(form.host.trim() ? { customHost: form.host.trim() } : {}) } });
-      if (res.panelStatus === "synced") {
-        toast.success(`Line ${parsed.data.username} created and synced to panel`);
-      } else if (res.panelStatus === "error") {
-        toast.warning(`Line ${parsed.data.username} created, but the panel rejected it: ${res.panelMessage ?? "unknown error"}`);
-      } else {
-        toast.success(`Line ${parsed.data.username} created`);
-      }
+      await createLineFn({ data: { ...parsed.data, ...(form.host.trim() ? { customHost: form.host.trim() } : {}) } });
+      toast.success(`Line ${parsed.data.username} created`);
       setForm({ username: "", password: "", months: 1, host: "" });
       refresh();
     } catch (err) {
