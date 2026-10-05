@@ -1,0 +1,2 @@
+COMMENT ON COLUMN public.lines.panel_status IS 'DEPRECATED: Xtream panel integration removed; app no longer reads or writes this column';
+COMMENT ON COLUMN public.lines.panel_message IS 'DEPRECATED: Xtream panel integration removed; app no longer reads or writes this column';
