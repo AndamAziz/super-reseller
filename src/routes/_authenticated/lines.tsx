@@ -9,8 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, Panel, StatusBadge, td, th, inputCls, softBtn, dangerBtn, primaryBtn } from "@/components/panel";
 import { useMe, isActive, fmtDate, errMsg } from "@/hooks/use-me";
 import { useLines } from "@/lib/queries";
-import { createLine, deleteLine, renewLine, testPanel, updateLine } from "@/lib/lines.functions";
-import type { PanelTestResult } from "@/lib/xtream.server";
+import { createLine, deleteLine, renewLine, updateLine } from "@/lib/lines.functions";
 
 export const Route = createFileRoute("/_authenticated/lines")({
   head: () => ({ meta: [{ title: "Lines — Nimbus Panel" }] }),
@@ -33,10 +32,7 @@ function LinesPage() {
   const createLineFn = useServerFn(createLine);
   const renewLineFn = useServerFn(renewLine);
   const deleteLineFn = useServerFn(deleteLine);
-  const testPanelFn = useServerFn(testPanel);
   const updateLineFn = useServerFn(updateLine);
-  const [panelTest, setPanelTest] = useState<PanelTestResult | null>(null);
-  const [testing, setTesting] = useState(false);
   const [form, setForm] = useState({ username: "", password: "", months: 1, host: "" });
   const [busy, setBusy] = useState(false);
   const [q, setQ] = useState("");
@@ -107,35 +103,14 @@ function LinesPage() {
     qc.invalidateQueries({ queryKey: ["resellers"] });
   };
 
-  async function runPanelTest() {
-    setTesting(true);
-    setPanelTest(null);
-    try {
-      const res = await testPanelFn();
-      setPanelTest(res);
-      if (res.ok) toast.success("Panel connection OK");
-      else toast.error("Panel connection failed — see details below");
-    } catch (err) {
-      toast.error(errMsg(err));
-    } finally {
-      setTesting(false);
-    }
-  }
-
   async function create(e: React.FormEvent) {
     e.preventDefault();
     const parsed = schema.safeParse(form);
     if (!parsed.success) return void toast.error(parsed.error.issues[0]?.message ?? "Invalid input");
     setBusy(true);
     try {
-      const res = await createLineFn({ data: { ...parsed.data, ...(form.host.trim() ? { customHost: form.host.trim() } : {}) } });
-      if (res.panelStatus === "synced") {
-        toast.success(`Line ${parsed.data.username} created and synced to panel`);
-      } else if (res.panelStatus === "error") {
-        toast.warning(`Line ${parsed.data.username} created, but the panel rejected it: ${res.panelMessage ?? "unknown error"}`);
-      } else {
-        toast.success(`Line ${parsed.data.username} created`);
-      }
+      await createLineFn({ data: { ...parsed.data, ...(form.host.trim() ? { customHost: form.host.trim() } : {}) } });
+      toast.success(`Line ${parsed.data.username} created`);
       setForm({ username: "", password: "", months: 1, host: "" });
       refresh();
     } catch (err) {
@@ -184,34 +159,6 @@ function LinesPage() {
   return (
     <>
       <PageHeader eyebrow="customers" title="Subscription lines" />
-
-      <div className="glass rise space-y-3 p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="label-mono">Xtream panel</p>
-            <p className="text-[12px] text-muted-foreground">Check the saved panel URL and API before creating or renewing lines.</p>
-          </div>
-          <button type="button" onClick={runPanelTest} disabled={testing} className={softBtn}>
-            {testing ? "Testing…" : "Test panel connection"}
-          </button>
-        </div>
-        {panelTest && (
-          <div className="space-y-1.5 border-t border-border pt-3">
-            {panelTest.checks.map((c) => (
-              <div key={c.name} className="flex items-baseline gap-2 text-[12px]">
-                <span className={c.ok ? "text-good" : "text-destructive"}>{c.ok ? "✓" : "✗"}</span>
-                <span className="font-medium">{c.name}</span>
-                <span className="font-mono text-[11px] text-muted-foreground">{c.detail}</span>
-              </div>
-            ))}
-            {panelTest.ok ? (
-              <p className="pt-1 text-[12px] text-good">Panel is reachable and credentials are accepted — new lines will sync automatically.</p>
-            ) : (
-              <p className="pt-1 text-[12px] text-destructive">Fix the failing step above, then test again. Lines can still be created locally, but they won't reach the panel.</p>
-            )}
-          </div>
-        )}
-      </div>
 
       {isAdmin && (
         <form onSubmit={saveSource} className="glass rise flex flex-wrap items-end gap-3 p-5">
@@ -314,7 +261,6 @@ function LinesPage() {
                 <th className={th}>Expiry</th>
                 <th className={th}>Status</th>
                 <th className={th}>Link</th>
-                <th className={th}>Panel</th>
                 <th className={`${th} text-right`}>Action</th>
               </tr>
             </thead>
@@ -335,15 +281,6 @@ function LinesPage() {
                     >
                       <Copy className="size-3.5" /> M3U
                     </button>
-                  </td>
-                  <td className={`${td} font-mono text-[11px]`}>
-                    {l.panel_status === "synced" ? (
-                      <span className="text-good">synced</span>
-                    ) : l.panel_status === "error" ? (
-                      <span className="text-destructive" title={l.panel_message ?? undefined}>error</span>
-                    ) : (
-                      <span className="text-muted-foreground">local</span>
-                    )}
                   </td>
                   <td className={`${td} text-right`}>
                     <div className="inline-flex items-center gap-1.5">
