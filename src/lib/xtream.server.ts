@@ -128,7 +128,7 @@ export async function testPanelConnection(): Promise<PanelTestResult> {
   // 3 + 4. panel_api.php answers and accepts the credentials
   const api = await panelCall({ action: "server_info" });
   if (api.ok) {
-    checks.push({ name: "API endpoint (panel_api.php)", ok: true, detail: "answered" });
+    checks.push({ name: `API endpoint (${api.endpoint ?? "panel_api.php"})`, ok: true, detail: "answered" });
     const info = (api.data as { user_info?: Record<string, unknown> } | null)?.user_info;
     // A normal subscriber line returns exp_date/max_connections — such an account can watch but not create lines.
     if (info && ("exp_date" in info || "max_connections" in info)) {
@@ -149,7 +149,7 @@ export async function testPanelConnection(): Promise<PanelTestResult> {
       u.searchParams.set("password", cfg.password);
       u.searchParams.set("action", "user");
       u.searchParams.set("sub", "info");
-      const r = await fetch(u, { signal: AbortSignal.timeout(10000) });
+      const r = await fetch(u, { headers: PANEL_HEADERS, signal: AbortSignal.timeout(10000) });
       const t = await r.text();
       if (/IP FORBIDDEN/i.test(t)) adminDetail = "blocked — the panel only accepts admin calls from whitelisted IPs";
       else if (!r.ok) adminDetail = `HTTP ${r.status}`;
