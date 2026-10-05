@@ -22,32 +22,49 @@ export function getPanelConfig(): PanelConfig | null {
   return { base: base.replace(/\/+$/, ""), username, password };
 }
 
-async function panelCall(params: Record<string, string>): Promise<PanelResult & { data?: unknown }> {
+const PANEL_HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Xtream Codes Panel Client)",
+  Accept: "application/json, text/plain, */*",
+} as const;
+
+/** Try panel_api.php first; on 404 fall back to player_api.php (standard Xtream panels). */
+async function panelCall(
+  params: Record<string, string>,
+): Promise<PanelResult & { data?: unknown; endpoint?: string }> {
   const cfg = getPanelConfig();
   if (!cfg) return { ok: false, configured: false, error: "panel not configured" };
-  const url = new URL(`${cfg.base}/panel_api.php`);
-  url.searchParams.set("username", cfg.username);
-  url.searchParams.set("password", cfg.password);
-  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
-  try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
-    if (!res.ok) return { ok: false, configured: true, error: `HTTP ${res.status}` };
-    const text = await res.text();
-    let data: unknown;
+
+  let lastError = "no answer";
+  for (const endpoint of ["panel_api.php", "player_api.php"]) {
+    const url = new URL(`${cfg.base}/${endpoint}`);
+    url.searchParams.set("username", cfg.username);
+    url.searchParams.set("password", cfg.password);
+    for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
     try {
-      data = JSON.parse(text);
-    } catch {
-      return { ok: false, configured: true, error: text.slice(0, 200) };
+      const res = await fetch(url, { headers: PANEL_HEADERS, signal: AbortSignal.timeout(15000) });
+      if (res.status === 404 && endpoint === "panel_api.php") {
+        lastError = "HTTP 404";
+        continue; // try player_api.php
+      }
+      if (!res.ok) return { ok: false, configured: true, error: `HTTP ${res.status}`, endpoint };
+      const text = await res.text();
+      let data: unknown;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        return { ok: false, configured: true, error: text.slice(0, 200), endpoint };
+      }
+      const obj = data as { result?: boolean; error?: unknown } | null;
+      if (obj && obj.result === false) {
+        const msg = typeof obj.error === "string" ? obj.error : "panel rejected the action";
+        return { ok: false, configured: true, error: msg, endpoint };
+      }
+      return { ok: true, configured: true, data, endpoint };
+    } catch (e) {
+      lastError = e instanceof Error ? e.message : "network error";
     }
-    const obj = data as { result?: boolean; error?: unknown } | null;
-    if (obj && obj.result === false) {
-      const msg = typeof obj.error === "string" ? obj.error : "panel rejected the action";
-      return { ok: false, configured: true, error: msg };
-    }
-    return { ok: true, configured: true, data };
-  } catch (e) {
-    return { ok: false, configured: true, error: e instanceof Error ? e.message : "network error" };
   }
+  return { ok: false, configured: true, error: lastError };
 }
 
 /** Create a line on the panel. expDateUnix = expiry as a unix timestamp (seconds). */
@@ -112,7 +129,7 @@ export async function testPanelConnection(): Promise<PanelTestResult> {
   // 3 + 4. panel_api.php answers and accepts the credentials
   const api = await panelCall({ action: "server_info" });
   if (api.ok) {
-    checks.push({ name: "API endpoint (panel_api.php)", ok: true, detail: "answered" });
+    checks.push({ name: `API endpoint (${api.endpoint ?? "panel_api.php"})`, ok: true, detail: "answered" });
     const info = (api.data as { user_info?: Record<string, unknown> } | null)?.user_info;
     // A normal subscriber line returns exp_date/max_connections — such an account can watch but not create lines.
     if (info && ("exp_date" in info || "max_connections" in info)) {
@@ -133,7 +150,7 @@ export async function testPanelConnection(): Promise<PanelTestResult> {
       u.searchParams.set("password", cfg.password);
       u.searchParams.set("action", "user");
       u.searchParams.set("sub", "info");
-      const r = await fetch(u, { signal: AbortSignal.timeout(10000) });
+      const r = await fetch(u, { headers: PANEL_HEADERS, signal: AbortSignal.timeout(10000) });
       const t = await r.text();
       if (/IP FORBIDDEN/i.test(t)) adminDetail = "blocked — the panel only accepts admin calls from whitelisted IPs";
       else if (!r.ok) adminDetail = `HTTP ${r.status}`;
@@ -154,7 +171,7 @@ export async function testPanelConnection(): Promise<PanelTestResult> {
       const u = new URL(`${cfg.base}/player_api.php`);
       u.searchParams.set("username", cfg.username);
       u.searchParams.set("password", cfg.password);
-      const r = await fetch(u, { signal: AbortSignal.timeout(10000) });
+      const r = await fetch(u, { headers: PANEL_HEADERS, signal: AbortSignal.timeout(10000) });
       const j = (await r.json().catch(() => null)) as { message?: string; error?: string; user_info?: { auth?: number } } | null;
       if (j?.error === "USER_BAN") reason = "the saved account has been banned by the panel administrator";
       else if (j?.message || j?.error) reason = String(j.message ?? j.error);
@@ -164,7 +181,7 @@ export async function testPanelConnection(): Promise<PanelTestResult> {
     }
   }
   checks.push({
-    name: "API endpoint (panel_api.php)",
+    name: "API endpoint (panel_api.php / player_api.php)",
     ok: false,
     detail: is404
       ? reason
