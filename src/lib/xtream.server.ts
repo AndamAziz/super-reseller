@@ -22,17 +22,32 @@ export function getPanelConfig(): PanelConfig | null {
   return { base: base.replace(/\/+$/, ""), username, password };
 }
 
-async function panelCall(params: Record<string, string>): Promise<PanelResult & { data?: unknown }> {
+const PANEL_HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Xtream Codes Panel Client)",
+  Accept: "application/json, text/plain, */*",
+} as const;
+
+/** Try panel_api.php first; on 404 fall back to player_api.php (standard Xtream panels). */
+async function panelCall(
+  params: Record<string, string>,
+): Promise<PanelResult & { data?: unknown; endpoint?: string }> {
   const cfg = getPanelConfig();
   if (!cfg) return { ok: false, configured: false, error: "panel not configured" };
-  const url = new URL(`${cfg.base}/panel_api.php`);
-  url.searchParams.set("username", cfg.username);
-  url.searchParams.set("password", cfg.password);
-  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
-  try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
-    if (!res.ok) return { ok: false, configured: true, error: `HTTP ${res.status}` };
-    const text = await res.text();
+
+  let lastError = "no answer";
+  for (const endpoint of ["panel_api.php", "player_api.php"]) {
+    const url = new URL(`${cfg.base}/${endpoint}`);
+    url.searchParams.set("username", cfg.username);
+    url.searchParams.set("password", cfg.password);
+    for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+    try {
+      const res = await fetch(url, { headers: PANEL_HEADERS, signal: AbortSignal.timeout(15000) });
+      if (res.status === 404 && endpoint === "panel_api.php") {
+        lastError = "HTTP 404";
+        continue; // try player_api.php
+      }
+      if (!res.ok) return { ok: false, configured: true, error: `HTTP ${res.status}`, endpoint };
+      const text = await res.text();
     let data: unknown;
     try {
       data = JSON.parse(text);
