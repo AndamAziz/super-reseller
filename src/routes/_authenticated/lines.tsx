@@ -1,13 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { Copy, Link2, Pencil, Trash2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, Panel, StatusBadge, td, th, inputCls, softBtn, dangerBtn, primaryBtn } from "@/components/panel";
 import { useMe, isActive, fmtDate, errMsg } from "@/hooks/use-me";
 import { useLines } from "@/lib/queries";
-import { createLine, deleteLine, renewLine, testPanel } from "@/lib/lines.functions";
+import { createLine, deleteLine, renewLine, testPanel, updateLine } from "@/lib/lines.functions";
 import type { PanelTestResult } from "@/lib/xtream.server";
 
 export const Route = createFileRoute("/_authenticated/lines")({
@@ -32,13 +34,71 @@ function LinesPage() {
   const renewLineFn = useServerFn(renewLine);
   const deleteLineFn = useServerFn(deleteLine);
   const testPanelFn = useServerFn(testPanel);
+  const updateLineFn = useServerFn(updateLine);
   const [panelTest, setPanelTest] = useState<PanelTestResult | null>(null);
   const [testing, setTesting] = useState(false);
-  const [form, setForm] = useState({ username: "", password: "", months: 1 });
+  const [form, setForm] = useState({ username: "", password: "", months: 1, host: "" });
   const [busy, setBusy] = useState(false);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "expired">("all");
   const [renewMonths, setRenewMonths] = useState<Record<string, number>>({});
+  const [editing, setEditing] = useState<{ id: string; username: string; password: string; host: string; expires: string } | null>(null);
+  const [source, setSource] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "m3u_source_url")
+      .maybeSingle()
+      .then(({ data }) => setSource(data?.value ?? ""));
+  }, [isAdmin]);
+
+  const linkFor = (l: { username: string; password: string; custom_host: string | null }) => {
+    let base = (l.custom_host || (typeof window !== "undefined" ? window.location.origin : "")).trim().replace(/\/+$/, "");
+    if (base && !/^https?:\/\//i.test(base)) base = `https://${base}`;
+    return `${base}/api/public/playlist?username=${encodeURIComponent(l.username)}&password=${encodeURIComponent(l.password)}`;
+  };
+
+  async function copyLink(link: string) {
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success("M3U link copied");
+    } catch {
+      toast.error("Couldn't copy — select the link manually");
+    }
+  }
+
+  async function saveSource(e: React.FormEvent) {
+    e.preventDefault();
+    const url = (source ?? "").trim();
+    if (!/^https?:\/\/\S+$/i.test(url)) return void toast.error("Enter a valid http(s) M3U link");
+    const { error } = await supabase.from("app_settings").upsert({ key: "m3u_source_url", value: url, updated_at: new Date().toISOString() });
+    if (error) return void toast.error(error.message);
+    toast.success("Playlist source saved");
+  }
+
+  async function saveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editing) return;
+    if (editing.password.length < 4) return void toast.error("Password: min 4 chars");
+    try {
+      await updateLineFn({
+        data: {
+          lineId: editing.id,
+          password: editing.password,
+          customHost: editing.host.trim() || null,
+          expiresAt: isAdmin && editing.expires ? new Date(`${editing.expires}T23:59:59Z`).toISOString() : null,
+        },
+      });
+      toast.success("Line updated");
+      setEditing(null);
+      refresh();
+    } catch (err) {
+      toast.error(errMsg(err));
+    }
+  }
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["lines"] });
@@ -68,7 +128,7 @@ function LinesPage() {
     if (!parsed.success) return void toast.error(parsed.error.issues[0]?.message ?? "Invalid input");
     setBusy(true);
     try {
-      const res = await createLineFn({ data: parsed.data });
+      const res = await createLineFn({ data: { ...parsed.data, ...(form.host.trim() ? { customHost: form.host.trim() } : {}) } });
       if (res.panelStatus === "synced") {
         toast.success(`Line ${parsed.data.username} created and synced to panel`);
       } else if (res.panelStatus === "error") {
@@ -76,7 +136,7 @@ function LinesPage() {
       } else {
         toast.success(`Line ${parsed.data.username} created`);
       }
-      setForm({ username: "", password: "", months: 1 });
+      setForm({ username: "", password: "", months: 1, host: "" });
       refresh();
     } catch (err) {
       toast.error(errMsg(err));
@@ -153,7 +213,23 @@ function LinesPage() {
         )}
       </div>
 
-      <form onSubmit={create} className="glass rise grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto_auto] lg:items-end">
+      {isAdmin && (
+        <form onSubmit={saveSource} className="glass rise flex flex-wrap items-end gap-3 p-5">
+          <label className="min-w-[240px] flex-1 space-y-1.5">
+            <span className="label-mono inline-flex items-center gap-1.5"><Link2 className="size-3.5" /> Protected M3U source</span>
+            <input
+              className={`${inputCls} w-full py-2 font-mono text-[12px]`}
+              placeholder="https://…/playlist.m3u"
+              value={source ?? ""}
+              onChange={(e) => setSource(e.target.value)}
+            />
+            <span className="block text-[11px] text-muted-foreground">Clients never see this address — they get their own link that checks username, password and expiry.</span>
+          </label>
+          <button className={primaryBtn}>Save source</button>
+        </form>
+      )}
+
+      <form onSubmit={create} className="glass rise grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto_auto] lg:items-end">
         <label className="space-y-1.5">
           <span className="label-mono">Username</span>
           <input className={`${inputCls} w-full py-2`} value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
@@ -161,6 +237,15 @@ function LinesPage() {
         <label className="space-y-1.5">
           <span className="label-mono">Password</span>
           <input className={`${inputCls} w-full py-2`} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+        </label>
+        <label className="space-y-1.5">
+          <span className="label-mono">Custom host (optional)</span>
+          <input
+            className={`${inputCls} w-full py-2`}
+            placeholder="https://myhost.com"
+            value={form.host}
+            onChange={(e) => setForm({ ...form, host: e.target.value })}
+          />
         </label>
         <label className="space-y-1.5">
           <span className="label-mono">Duration</span>
@@ -172,11 +257,38 @@ function LinesPage() {
           {busy ? "Creating…" : isAdmin ? "Create line" : `Create · ${cost} credit${cost > 1 ? "s" : ""}`}
         </button>
         {!isAdmin && (
-          <p className="text-[11px] text-muted-foreground sm:col-span-2 lg:col-span-4">
+          <p className="text-[11px] text-muted-foreground sm:col-span-2 lg:col-span-5">
             Balance: <span className="font-mono">{me?.credits ?? 0}</span> credits · 1 credit = 1 month
           </p>
         )}
       </form>
+
+      {editing && (
+        <form onSubmit={saveEdit} className="glass rise grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto_auto_auto] lg:items-end">
+          <p className="label-mono sm:col-span-2 lg:col-span-5">Edit line · {editing.username}</p>
+          <label className="space-y-1.5">
+            <span className="label-mono">Password</span>
+            <input className={`${inputCls} w-full py-2`} value={editing.password} onChange={(e) => setEditing({ ...editing, password: e.target.value })} />
+          </label>
+          <label className="space-y-1.5">
+            <span className="label-mono">Custom host</span>
+            <input className={`${inputCls} w-full py-2`} placeholder="https://myhost.com" value={editing.host} onChange={(e) => setEditing({ ...editing, host: e.target.value })} />
+          </label>
+          <label className="space-y-1.5">
+            <span className="label-mono">Expires</span>
+            <input
+              type="date"
+              disabled={!isAdmin}
+              title={isAdmin ? undefined : "Use Renew to extend with credits"}
+              className={`${inputCls} w-full py-2`}
+              value={editing.expires}
+              onChange={(e) => setEditing({ ...editing, expires: e.target.value })}
+            />
+          </label>
+          <button className={primaryBtn}>Save</button>
+          <button type="button" className={softBtn} onClick={() => setEditing(null)}>Cancel</button>
+        </form>
+      )}
 
       <Panel
         title="All lines"
@@ -201,6 +313,7 @@ function LinesPage() {
                 {isAdmin && <th className={th}>Reseller</th>}
                 <th className={th}>Expiry</th>
                 <th className={th}>Status</th>
+                <th className={th}>Link</th>
                 <th className={th}>Panel</th>
                 <th className={`${th} text-right`}>Action</th>
               </tr>
@@ -213,6 +326,16 @@ function LinesPage() {
                   {isAdmin && <td className={`${td} text-muted-foreground`}>{l.profiles?.display_name ?? l.profiles?.email}</td>}
                   <td className={`${td} font-mono text-[12px]`}>{fmtDate(l.expires_at)}</td>
                   <td className={td}><StatusBadge active={isActive(l.expires_at)} /></td>
+                  <td className={td}>
+                    <button
+                      type="button"
+                      className={`${softBtn} inline-flex items-center gap-1`}
+                      title={linkFor(l)}
+                      onClick={() => copyLink(linkFor(l))}
+                    >
+                      <Copy className="size-3.5" /> M3U
+                    </button>
+                  </td>
                   <td className={`${td} font-mono text-[11px]`}>
                     {l.panel_status === "synced" ? (
                       <span className="text-good">synced</span>
@@ -233,13 +356,24 @@ function LinesPage() {
                         {MONTHS.map((m) => <option key={m} value={m}>{m}m</option>)}
                       </select>
                       <button className={softBtn} onClick={() => renew(l.id)}>Renew</button>
-                      <button className={dangerBtn} onClick={() => remove(l.id, l.username)}>Delete</button>
+                      <button
+                        className={softBtn}
+                        aria-label={`Edit ${l.username}`}
+                        onClick={() =>
+                          setEditing({ id: l.id, username: l.username, password: l.password, host: l.custom_host ?? "", expires: fmtDate(l.expires_at) })
+                        }
+                      >
+                        <Pencil className="size-3.5" />
+                      </button>
+                      <button className={dangerBtn} aria-label={`Delete ${l.username}`} onClick={() => remove(l.id, l.username)}>
+                        <Trash2 className="size-3.5" />
+                      </button>
                     </div>
                   </td>
                 </tr>
               ))}
               {!shown.length && (
-                <tr><td className={`${td} text-muted-foreground`} colSpan={7}>No lines found.</td></tr>
+                <tr><td className={`${td} text-muted-foreground`} colSpan={8}>No lines found.</td></tr>
               )}
             </tbody>
           </table>

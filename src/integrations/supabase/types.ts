@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       channels: {
         Row: {
           group_title: string | null
@@ -93,6 +111,7 @@ export type Database = {
       lines: {
         Row: {
           created_at: string
+          custom_host: string | null
           expires_at: string
           id: string
           panel_message: string | null
@@ -103,6 +122,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          custom_host?: string | null
           expires_at: string
           id?: string
           panel_message?: string | null
@@ -113,6 +133,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          custom_host?: string | null
           expires_at?: string
           id?: string
           panel_message?: string | null
@@ -207,6 +228,7 @@ export type Database = {
         Args: { _months: number; _password: string; _username: string }
         Returns: {
           created_at: string
+          custom_host: string | null
           expires_at: string
           id: string
           panel_message: string | null
@@ -233,6 +255,7 @@ export type Database = {
         Args: { _line_id: string; _months: number }
         Returns: {
           created_at: string
+          custom_host: string | null
           expires_at: string
           id: string
           panel_message: string | null

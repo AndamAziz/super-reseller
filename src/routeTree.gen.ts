@@ -17,6 +17,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedLinesRouteImport } from './routes/_authenticated/lines'
 import { Route as AuthenticatedPlaylistsRouteImport } from './routes/_authenticated/playlists'
 import { Route as AuthenticatedResellersRouteImport } from './routes/_authenticated/resellers'
+import { Route as ApiPublicPlaylistRouteImport } from './routes/api/public/playlist'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -57,6 +58,11 @@ const AuthenticatedResellersRoute = AuthenticatedResellersRouteImport.update({
   path: '/resellers',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicPlaylistRoute = ApiPublicPlaylistRouteImport.update({
+  id: '/api/public/playlist',
+  path: '/api/public/playlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/lines': typeof AuthenticatedLinesRoute
   '/playlists': typeof AuthenticatedPlaylistsRoute
   '/resellers': typeof AuthenticatedResellersRoute
+  '/api/public/playlist': typeof ApiPublicPlaylistRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -75,6 +82,7 @@ export interface FileRoutesByTo {
   '/lines': typeof AuthenticatedLinesRoute
   '/playlists': typeof AuthenticatedPlaylistsRoute
   '/resellers': typeof AuthenticatedResellersRoute
+  '/api/public/playlist': typeof ApiPublicPlaylistRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -86,6 +94,7 @@ export interface FileRoutesById {
   '/_authenticated/lines': typeof AuthenticatedLinesRoute
   '/_authenticated/playlists': typeof AuthenticatedPlaylistsRoute
   '/_authenticated/resellers': typeof AuthenticatedResellersRoute
+  '/api/public/playlist': typeof ApiPublicPlaylistRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/lines'
     | '/playlists'
     | '/resellers'
+    | '/api/public/playlist'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/lines'
     | '/playlists'
     | '/resellers'
+    | '/api/public/playlist'
   id:
     | '__root__'
     | '/'
@@ -116,12 +127,14 @@ export interface FileRouteTypes {
     | '/_authenticated/lines'
     | '/_authenticated/playlists'
     | '/_authenticated/resellers'
+    | '/api/public/playlist'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicPlaylistRoute: typeof ApiPublicPlaylistRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -182,6 +195,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedResellersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/playlist': {
+      id: '/api/public/playlist'
+      path: '/api/public/playlist'
+      fullPath: '/api/public/playlist'
+      preLoaderRoute: typeof ApiPublicPlaylistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -208,6 +228,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicPlaylistRoute: ApiPublicPlaylistRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
