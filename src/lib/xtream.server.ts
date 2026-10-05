@@ -147,11 +147,29 @@ export async function testPanelConnection(): Promise<PanelTestResult> {
   }
 
   const is404 = api.error === "HTTP 404";
+  // Many panels answer 404 on panel_api.php when the login is wrong or blocked — ask player_api.php for the real reason.
+  let reason = "";
+  if (is404) {
+    try {
+      const u = new URL(`${cfg.base}/player_api.php`);
+      u.searchParams.set("username", cfg.username);
+      u.searchParams.set("password", cfg.password);
+      const r = await fetch(u, { signal: AbortSignal.timeout(10000) });
+      const j = (await r.json().catch(() => null)) as { message?: string; error?: string; user_info?: { auth?: number } } | null;
+      if (j?.error === "USER_BAN") reason = "the saved account has been banned by the panel administrator";
+      else if (j?.message || j?.error) reason = String(j.message ?? j.error);
+      else if (j?.user_info && j.user_info.auth === 0) reason = "username or password is wrong";
+    } catch {
+      // keep generic message
+    }
+  }
   checks.push({
     name: "API endpoint (panel_api.php)",
     ok: false,
     detail: is404
-      ? "not found (HTTP 404) — check the URL points at the panel host and port, not a website"
+      ? reason
+        ? `refused — ${reason}`
+        : "not found (HTTP 404) — wrong login, or the URL isn't the panel host and port"
       : (api.error ?? "no answer"),
   });
   if (!is404) {
