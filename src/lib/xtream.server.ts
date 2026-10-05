@@ -47,6 +47,7 @@ async function panelCall(
         continue; // try player_api.php
       }
       if (!res.ok) return { ok: false, configured: true, error: `HTTP ${res.status}`, endpoint };
+      const text = await res.text();
       let data: unknown;
       try {
         data = JSON.parse(text);
