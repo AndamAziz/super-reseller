@@ -11,6 +11,7 @@ const lineSchema = z.object({
   username: z.string().trim().min(3).max(50).regex(/^[\w.-]+$/),
   password: z.string().min(4).max(100),
   months: z.number().int().min(1).max(24),
+  customHost: z.string().trim().max(200).optional(),
 });
 
 const renewSchema = z.object({
@@ -67,6 +68,10 @@ export const createLine = createServerFn({ method: "POST" })
       throw new Error(error.message.includes("duplicate") ? "Username already taken" : error.message);
     }
     if (line) await recordPanelStatus(line.id, panelStatus, panelMessage);
+    if (line && data.customHost) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      await supabaseAdmin.from("lines").update({ custom_host: data.customHost }).eq("id", line.id);
+    }
     return { ok: true as const, panelStatus, panelMessage };
   });
 
@@ -93,6 +98,36 @@ export const renewLine = createServerFn({ method: "POST" })
 export const testPanel = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async () => testPanelConnection());
+
+const updateSchema = z.object({
+  lineId: z.string().uuid(),
+  password: z.string().min(4).max(100),
+  customHost: z.string().trim().max(200).nullable(),
+  expiresAt: z.string().datetime().nullable(),
+});
+
+/** Edit password / custom host (owner or admin). Only admins may set the expiry directly — resellers extend via credits. */
+export const updateLine = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => updateSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    // RLS: caller can only see their own lines (or all, if admin).
+    const { data: line } = await context.supabase.from("lines").select("id").eq("id", data.lineId).maybeSingle();
+    if (!line) throw new Error("Line not found");
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    const patch: { password: string; custom_host: string | null; expires_at?: string } = {
+      password: data.password,
+      custom_host: data.customHost || null,
+    };
+    if (data.expiresAt) {
+      if (!isAdmin) throw new Error("Only admins can change the expiry date directly — use Renew");
+      patch.expires_at = data.expiresAt;
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("lines").update(patch).eq("id", data.lineId);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
 
 export const deleteLine = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
