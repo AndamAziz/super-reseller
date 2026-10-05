@@ -170,7 +170,7 @@ export async function testPanelConnection(): Promise<PanelTestResult> {
       const u = new URL(`${cfg.base}/player_api.php`);
       u.searchParams.set("username", cfg.username);
       u.searchParams.set("password", cfg.password);
-      const r = await fetch(u, { signal: AbortSignal.timeout(10000) });
+      const r = await fetch(u, { headers: PANEL_HEADERS, signal: AbortSignal.timeout(10000) });
       const j = (await r.json().catch(() => null)) as { message?: string; error?: string; user_info?: { auth?: number } } | null;
       if (j?.error === "USER_BAN") reason = "the saved account has been banned by the panel administrator";
       else if (j?.message || j?.error) reason = String(j.message ?? j.error);
@@ -180,7 +180,7 @@ export async function testPanelConnection(): Promise<PanelTestResult> {
     }
   }
   checks.push({
-    name: "API endpoint (panel_api.php)",
+    name: "API endpoint (panel_api.php / player_api.php)",
     ok: false,
     detail: is404
       ? reason
