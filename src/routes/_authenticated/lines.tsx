@@ -9,8 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, Panel, StatusBadge, td, th, inputCls, softBtn, dangerBtn, primaryBtn } from "@/components/panel";
 import { useMe, isActive, fmtDate, errMsg } from "@/hooks/use-me";
 import { useLines } from "@/lib/queries";
-import { createLine, deleteLine, renewLine, testPanel, updateLine } from "@/lib/lines.functions";
-import type { PanelTestResult } from "@/lib/xtream.server";
+import { createLine, deleteLine, renewLine, updateLine } from "@/lib/lines.functions";
 
 export const Route = createFileRoute("/_authenticated/lines")({
   head: () => ({ meta: [{ title: "Lines — Nimbus Panel" }] }),
@@ -33,10 +32,7 @@ function LinesPage() {
   const createLineFn = useServerFn(createLine);
   const renewLineFn = useServerFn(renewLine);
   const deleteLineFn = useServerFn(deleteLine);
-  const testPanelFn = useServerFn(testPanel);
   const updateLineFn = useServerFn(updateLine);
-  const [panelTest, setPanelTest] = useState<PanelTestResult | null>(null);
-  const [testing, setTesting] = useState(false);
   const [form, setForm] = useState({ username: "", password: "", months: 1, host: "" });
   const [busy, setBusy] = useState(false);
   const [q, setQ] = useState("");
