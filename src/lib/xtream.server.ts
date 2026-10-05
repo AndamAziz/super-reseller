@@ -47,22 +47,23 @@ async function panelCall(
         continue; // try player_api.php
       }
       if (!res.ok) return { ok: false, configured: true, error: `HTTP ${res.status}`, endpoint };
-      const text = await res.text();
-    let data: unknown;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      return { ok: false, configured: true, error: text.slice(0, 200) };
+      let data: unknown;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        return { ok: false, configured: true, error: text.slice(0, 200), endpoint };
+      }
+      const obj = data as { result?: boolean; error?: unknown } | null;
+      if (obj && obj.result === false) {
+        const msg = typeof obj.error === "string" ? obj.error : "panel rejected the action";
+        return { ok: false, configured: true, error: msg, endpoint };
+      }
+      return { ok: true, configured: true, data, endpoint };
+    } catch (e) {
+      lastError = e instanceof Error ? e.message : "network error";
     }
-    const obj = data as { result?: boolean; error?: unknown } | null;
-    if (obj && obj.result === false) {
-      const msg = typeof obj.error === "string" ? obj.error : "panel rejected the action";
-      return { ok: false, configured: true, error: msg };
-    }
-    return { ok: true, configured: true, data };
-  } catch (e) {
-    return { ok: false, configured: true, error: e instanceof Error ? e.message : "network error" };
   }
+  return { ok: false, configured: true, error: lastError };
 }
 
 /** Create a line on the panel. expDateUnix = expiry as a unix timestamp (seconds). */
