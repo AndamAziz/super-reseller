@@ -12,12 +12,15 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as GetDotphpRouteImport } from './routes/get[.]php'
+import { Route as Player_apiDotphpRouteImport } from './routes/player_api[.]php'
 import { Route as AuthenticatedCreditsRouteImport } from './routes/_authenticated/credits'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedLinesRouteImport } from './routes/_authenticated/lines'
 import { Route as AuthenticatedPlaylistsRouteImport } from './routes/_authenticated/playlists'
 import { Route as AuthenticatedResellersRouteImport } from './routes/_authenticated/resellers'
 import { Route as ApiPublicPlaylistRouteImport } from './routes/api/public/playlist'
+import { Route as LiveUsernamePasswordStreamRouteImport } from './routes/live.$username.$password.$stream'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -31,6 +34,16 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GetDotphpRoute = GetDotphpRouteImport.update({
+  id: '/get.php',
+  path: '/get.php',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Player_apiDotphpRoute = Player_apiDotphpRouteImport.update({
+  id: '/player_api.php',
+  path: '/player_api.php',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedCreditsRoute = AuthenticatedCreditsRouteImport.update({
@@ -63,78 +76,105 @@ const ApiPublicPlaylistRoute = ApiPublicPlaylistRouteImport.update({
   path: '/api/public/playlist',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LiveUsernamePasswordStreamRoute =
+  LiveUsernamePasswordStreamRouteImport.update({
+    id: '/live/$username/$password/$stream',
+    path: '/live/$username/$password/$stream',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/get.php': typeof GetDotphpRoute
+  '/player_api.php': typeof Player_apiDotphpRoute
   '/credits': typeof AuthenticatedCreditsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/lines': typeof AuthenticatedLinesRoute
   '/playlists': typeof AuthenticatedPlaylistsRoute
   '/resellers': typeof AuthenticatedResellersRoute
   '/api/public/playlist': typeof ApiPublicPlaylistRoute
+  '/live/$username/$password/$stream': typeof LiveUsernamePasswordStreamRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/get.php': typeof GetDotphpRoute
+  '/player_api.php': typeof Player_apiDotphpRoute
   '/credits': typeof AuthenticatedCreditsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/lines': typeof AuthenticatedLinesRoute
   '/playlists': typeof AuthenticatedPlaylistsRoute
   '/resellers': typeof AuthenticatedResellersRoute
   '/api/public/playlist': typeof ApiPublicPlaylistRoute
+  '/live/$username/$password/$stream': typeof LiveUsernamePasswordStreamRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/get.php': typeof GetDotphpRoute
+  '/player_api.php': typeof Player_apiDotphpRoute
   '/_authenticated/credits': typeof AuthenticatedCreditsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/lines': typeof AuthenticatedLinesRoute
   '/_authenticated/playlists': typeof AuthenticatedPlaylistsRoute
   '/_authenticated/resellers': typeof AuthenticatedResellersRoute
   '/api/public/playlist': typeof ApiPublicPlaylistRoute
+  '/live/$username/$password/$stream': typeof LiveUsernamePasswordStreamRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/auth'
+    | '/get.php'
+    | '/player_api.php'
     | '/credits'
     | '/dashboard'
     | '/lines'
     | '/playlists'
     | '/resellers'
     | '/api/public/playlist'
+    | '/live/$username/$password/$stream'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/get.php'
+    | '/player_api.php'
     | '/credits'
     | '/dashboard'
     | '/lines'
     | '/playlists'
     | '/resellers'
     | '/api/public/playlist'
+    | '/live/$username/$password/$stream'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/get.php'
+    | '/player_api.php'
     | '/_authenticated/credits'
     | '/_authenticated/dashboard'
     | '/_authenticated/lines'
     | '/_authenticated/playlists'
     | '/_authenticated/resellers'
     | '/api/public/playlist'
+    | '/live/$username/$password/$stream'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  GetDotphpRoute: typeof GetDotphpRoute
+  Player_apiDotphpRoute: typeof Player_apiDotphpRoute
   ApiPublicPlaylistRoute: typeof ApiPublicPlaylistRoute
+  LiveUsernamePasswordStreamRoute: typeof LiveUsernamePasswordStreamRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -158,6 +198,20 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/get.php': {
+      id: '/get.php'
+      path: '/get.php'
+      fullPath: '/get.php'
+      preLoaderRoute: typeof GetDotphpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/player_api.php': {
+      id: '/player_api.php'
+      path: '/player_api.php'
+      fullPath: '/player_api.php'
+      preLoaderRoute: typeof Player_apiDotphpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/credits': {
@@ -202,6 +256,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPlaylistRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/live/$username/$password/$stream': {
+      id: '/live/$username/$password/$stream'
+      path: '/live/$username/$password/$stream'
+      fullPath: '/live/$username/$password/$stream'
+      preLoaderRoute: typeof LiveUsernamePasswordStreamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -228,7 +289,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  GetDotphpRoute: GetDotphpRoute,
+  Player_apiDotphpRoute: Player_apiDotphpRoute,
   ApiPublicPlaylistRoute: ApiPublicPlaylistRoute,
+  LiveUsernamePasswordStreamRoute: LiveUsernamePasswordStreamRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
