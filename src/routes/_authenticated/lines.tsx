@@ -282,15 +282,6 @@ function LinesPage() {
                       <Copy className="size-3.5" /> M3U
                     </button>
                   </td>
-                  <td className={`${td} font-mono text-[11px]`}>
-                    {l.panel_status === "synced" ? (
-                      <span className="text-good">synced</span>
-                    ) : l.panel_status === "error" ? (
-                      <span className="text-destructive" title={l.panel_message ?? undefined}>error</span>
-                    ) : (
-                      <span className="text-muted-foreground">local</span>
-                    )}
-                  </td>
                   <td className={`${td} text-right`}>
                     <div className="inline-flex items-center gap-1.5">
                       <select
