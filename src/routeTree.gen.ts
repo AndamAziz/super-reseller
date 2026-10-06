@@ -20,6 +20,7 @@ import { Route as AuthenticatedLinesRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedPlaylistsRouteImport } from './routes/_authenticated/playlists'
 import { Route as AuthenticatedResellersRouteImport } from './routes/_authenticated/resellers'
 import { Route as ApiPublicPlaylistRouteImport } from './routes/api/public/playlist'
+import { Route as ApiPublicPlaylistSplatRouteImport } from './routes/api/public/playlist.$'
 import { Route as LiveUsernamePasswordStreamRouteImport } from './routes/live.$username.$password.$stream'
 
 const IndexRoute = IndexRouteImport.update({
@@ -76,6 +77,11 @@ const ApiPublicPlaylistRoute = ApiPublicPlaylistRouteImport.update({
   path: '/api/public/playlist',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPlaylistSplatRoute = ApiPublicPlaylistSplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => ApiPublicPlaylistRoute,
+} as any)
 const LiveUsernamePasswordStreamRoute =
   LiveUsernamePasswordStreamRouteImport.update({
     id: '/live/$username/$password/$stream',
@@ -93,7 +99,8 @@ export interface FileRoutesByFullPath {
   '/lines': typeof AuthenticatedLinesRoute
   '/playlists': typeof AuthenticatedPlaylistsRoute
   '/resellers': typeof AuthenticatedResellersRoute
-  '/api/public/playlist': typeof ApiPublicPlaylistRoute
+  '/api/public/playlist': typeof ApiPublicPlaylistRouteWithChildren
+  '/api/public/playlist/$': typeof ApiPublicPlaylistSplatRoute
   '/live/$username/$password/$stream': typeof LiveUsernamePasswordStreamRoute
 }
 export interface FileRoutesByTo {
@@ -106,7 +113,8 @@ export interface FileRoutesByTo {
   '/lines': typeof AuthenticatedLinesRoute
   '/playlists': typeof AuthenticatedPlaylistsRoute
   '/resellers': typeof AuthenticatedResellersRoute
-  '/api/public/playlist': typeof ApiPublicPlaylistRoute
+  '/api/public/playlist': typeof ApiPublicPlaylistRouteWithChildren
+  '/api/public/playlist/$': typeof ApiPublicPlaylistSplatRoute
   '/live/$username/$password/$stream': typeof LiveUsernamePasswordStreamRoute
 }
 export interface FileRoutesById {
@@ -121,7 +129,8 @@ export interface FileRoutesById {
   '/_authenticated/lines': typeof AuthenticatedLinesRoute
   '/_authenticated/playlists': typeof AuthenticatedPlaylistsRoute
   '/_authenticated/resellers': typeof AuthenticatedResellersRoute
-  '/api/public/playlist': typeof ApiPublicPlaylistRoute
+  '/api/public/playlist': typeof ApiPublicPlaylistRouteWithChildren
+  '/api/public/playlist/$': typeof ApiPublicPlaylistSplatRoute
   '/live/$username/$password/$stream': typeof LiveUsernamePasswordStreamRoute
 }
 export interface FileRouteTypes {
@@ -137,6 +146,7 @@ export interface FileRouteTypes {
     | '/playlists'
     | '/resellers'
     | '/api/public/playlist'
+    | '/api/public/playlist/$'
     | '/live/$username/$password/$stream'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/playlists'
     | '/resellers'
     | '/api/public/playlist'
+    | '/api/public/playlist/$'
     | '/live/$username/$password/$stream'
   id:
     | '__root__'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/_authenticated/playlists'
     | '/_authenticated/resellers'
     | '/api/public/playlist'
+    | '/api/public/playlist/$'
     | '/live/$username/$password/$stream'
   fileRoutesById: FileRoutesById
 }
@@ -173,7 +185,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   GetDotphpRoute: typeof GetDotphpRoute
   Player_apiDotphpRoute: typeof Player_apiDotphpRoute
-  ApiPublicPlaylistRoute: typeof ApiPublicPlaylistRoute
+  ApiPublicPlaylistRoute: typeof ApiPublicPlaylistRouteWithChildren
   LiveUsernamePasswordStreamRoute: typeof LiveUsernamePasswordStreamRoute
 }
 
@@ -256,6 +268,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPlaylistRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/playlist/$': {
+      id: '/api/public/playlist/$'
+      path: '/$'
+      fullPath: '/api/public/playlist/$'
+      preLoaderRoute: typeof ApiPublicPlaylistSplatRouteImport
+      parentRoute: typeof ApiPublicPlaylistRoute
+    }
     '/live/$username/$password/$stream': {
       id: '/live/$username/$password/$stream'
       path: '/live/$username/$password/$stream'
@@ -285,13 +304,24 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface ApiPublicPlaylistRouteChildren {
+  ApiPublicPlaylistSplatRoute: typeof ApiPublicPlaylistSplatRoute
+}
+
+const ApiPublicPlaylistRouteChildren: ApiPublicPlaylistRouteChildren = {
+  ApiPublicPlaylistSplatRoute: ApiPublicPlaylistSplatRoute,
+}
+
+const ApiPublicPlaylistRouteWithChildren =
+  ApiPublicPlaylistRoute._addFileChildren(ApiPublicPlaylistRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   GetDotphpRoute: GetDotphpRoute,
   Player_apiDotphpRoute: Player_apiDotphpRoute,
-  ApiPublicPlaylistRoute: ApiPublicPlaylistRoute,
+  ApiPublicPlaylistRoute: ApiPublicPlaylistRouteWithChildren,
   LiveUsernamePasswordStreamRoute: LiveUsernamePasswordStreamRoute,
 }
 export const routeTree = rootRouteImport
