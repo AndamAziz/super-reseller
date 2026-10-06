@@ -6,13 +6,13 @@ import { authLine, json, loadChannels } from "@/lib/playlist-auth.server";
 export const Route = createFileRoute("/player_api.php")({
   server: {
     handlers: {
-      GET: async ({ request }) => handle(request),
-      POST: async ({ request }) => handle(request),
+      GET: async ({ request }) => handleXtreamRequest(request),
+      POST: async ({ request }) => handleXtreamRequest(request),
     },
   },
 });
 
-async function handle(request: Request) {
+export async function handleXtreamRequest(request: Request) {
   const url = new URL(request.url);
   const params = new URLSearchParams(url.search);
   if (request.method === "POST") {
