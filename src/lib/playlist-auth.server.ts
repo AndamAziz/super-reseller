@@ -39,6 +39,23 @@ export async function loadChannels(): Promise<{ ok: true; channels: M3UChannel[]
   return { ok: true, channels: parseM3U(src.text) };
 }
 
+// Shared M3U proxy handler: validates username/password/expiry and streams the source playlist.
+// Used by /api/public/playlist and its catch-all (players that append /get.php to the URL).
+export async function handlePlaylistRequest(request: Request): Promise<Response> {
+  const url = new URL(request.url);
+  const auth = await authLine(url.searchParams.get("username") ?? "", url.searchParams.get("password") ?? "");
+  if (!auth.ok) return plain(auth.message, auth.status);
+  const src = await loadSourceText();
+  if (!src.ok) return plain(src.message, src.status);
+  return new Response(src.text, {
+    headers: {
+      "Content-Type": "audio/x-mpegurl; charset=utf-8",
+      "Content-Disposition": `inline; filename="${auth.username}.m3u"`,
+      "Cache-Control": "no-store",
+    },
+  });
+}
+
 export const plain = (body: string, status: number) =>
   new Response(body, { status, headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" } });
 
