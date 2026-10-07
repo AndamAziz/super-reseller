@@ -5,6 +5,7 @@ export type M3UChannel = {
   url: string;
   referrer: string | null;
   type?: string | null;
+  user_agent?: string | null;
 };
 
 /** Parses standard (and loosely formatted) EXTM3U playlists. */
@@ -29,10 +30,29 @@ export function parseM3U(text: string): M3UChannel[] {
         group_title: attrs["group-title"] || null,
         logo: attrs["tvg-logo"] || null,
         referrer: ref || null,
+        user_agent: attrs["http-user-agent"] || null,
         type: (attrs["tvg-type"] || "").toLowerCase() || null,
       };
     } else if (line.startsWith("#EXTVLCOPT:http-referrer=")) {
-      if (pending) pending.referrer = line.split("=").slice(1).join("=") || pending.referrer;
+      if (pending) pending.referrer = line.split("=").slice(1).join("=").trim() || pending.referrer;
+    } else if (/^#EXTVLCOPT:http-user-agent=/i.test(line)) {
+      if (pending) pending.user_agent = line.split("=").slice(1).join("=").trim() || null;
+    } else if (/^#EXTHTTP:/i.test(line)) {
+      if (pending) {
+        try {
+          const h = JSON.parse(line.slice(9)) as Record<string, string>;
+          for (const [k, v] of Object.entries(h)) {
+            if (/^refer/i.test(k) && v) pending.referrer = v;
+            if (/^user-agent$/i.test(k) && v) pending.user_agent = v;
+          }
+        } catch { /* ignore */ }
+      }
+    } else if (/^#KODIPROP:inputstream\.adaptive\.(stream_)?headers=/i.test(line)) {
+      if (pending) {
+        const h = new URLSearchParams(line.slice(line.indexOf("=") + 1));
+        const r = h.get("Referer") ?? h.get("referer"); const ua = h.get("User-Agent") ?? h.get("user-agent");
+        if (r) pending.referrer = r; if (ua) pending.user_agent = ua;
+      }
     } else if (line.startsWith("#")) {
       continue;
     } else if (pending) {
