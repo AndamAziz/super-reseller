@@ -2,6 +2,7 @@
 // Backed by the protected M3U source; live channels only (no movies/series in an M3U).
 import { createFileRoute } from "@tanstack/react-router";
 import { authLine, json, loadCatalog } from "@/lib/playlist-auth.server";
+import { needsProxy } from "@/lib/stream-proxy.server";
 
 export const Route = createFileRoute("/player_api.php")({
   server: {
@@ -127,7 +128,8 @@ export async function handleXtreamRequest(request: Request) {
           category_id: catId(c.group_title),
           custom_sid: "",
           tv_archive: 0,
-          direct_source: c.url,
+          direct_source: needsProxy(c) ? `${base}/live/${u}/${p}/${i + 1}.m3u8` : c.url,
+          requires_referer: needsProxy(c),
           tv_archive_duration: 0,
         }))
         .filter((s) => !filter || s.category_id === filter),

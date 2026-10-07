@@ -73,7 +73,7 @@ function PlaylistsPage() {
         .single();
       if (error) throw error;
       for (let i = 0; i < parsed.length; i += 500) {
-        const batch = parsed.slice(i, i + 500).map(({ type: _t, ...c }, j) => ({ ...c, playlist_id: pl.id, position: i + j }));
+        const batch = parsed.slice(i, i + 500).map(({ type: _t, user_agent: _ua, ...c }, j) => ({ ...c, playlist_id: pl.id, position: i + j }));
         const { error: cErr } = await supabase.from("channels").insert(batch);
         if (cErr) throw cErr;
         setProgress(`Importing ${Math.min(i + 500, parsed.length)} / ${parsed.length}`);
@@ -178,6 +178,7 @@ function PlaylistsPage() {
                   <th className={th}>Channel</th>
                   <th className={th}>Category</th>
                   <th className={th}>Stream URL</th>
+                  <th className={th}>Requires referer</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -191,6 +192,7 @@ function PlaylistsPage() {
                     </td>
                     <td className={`${td} text-muted-foreground`}>{c.group_title ?? "—"}</td>
                     <td className={`${td} max-w-[360px] truncate font-mono text-[11px] text-muted-foreground`} title={c.url}>{c.url}</td>
+                    <td className={td}>{c.referrer ? <span className="rounded-full bg-warn/10 px-2 py-0.5 text-[11px] font-medium text-warn ring-1 ring-warn/20" title={c.referrer}>Proxied</span> : <span className="text-muted-foreground">—</span>}</td>
                   </tr>
                 ))}
               </tbody>
