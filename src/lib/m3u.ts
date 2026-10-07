@@ -4,6 +4,7 @@ export type M3UChannel = {
   logo: string | null;
   url: string;
   referrer: string | null;
+  type?: string | null;
 };
 
 /** Parses standard (and loosely formatted) EXTM3U playlists. */
@@ -28,6 +29,7 @@ export function parseM3U(text: string): M3UChannel[] {
         group_title: attrs["group-title"] || null,
         logo: attrs["tvg-logo"] || null,
         referrer: ref || null,
+        type: (attrs["tvg-type"] || "").toLowerCase() || null,
       };
     } else if (line.startsWith("#EXTVLCOPT:http-referrer=")) {
       if (pending) pending.referrer = line.split("=").slice(1).join("=") || pending.referrer;

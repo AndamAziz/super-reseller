@@ -33,10 +33,43 @@ export async function loadSourceText(): Promise<{ ok: true; text: string } | { o
   }
 }
 
-export async function loadChannels(): Promise<{ ok: true; channels: M3UChannel[] } | { ok: false; status: number; message: string }> {
+export type Episode = M3UChannel & { id: number; season: number; episode: number };
+export type Series = { id: number; title: string; category: string; cover: string | null; episodes: Episode[] };
+export type Catalog = { live: M3UChannel[]; movies: M3UChannel[]; series: Series[]; episodes: Episode[] };
+
+let cache: { at: number; catalog: Catalog } | null = null;
+const TTL = 30 * 60 * 1000;
+
+export function buildCatalog(all: M3UChannel[]): Catalog {
+  const live: M3UChannel[] = [], movies: M3UChannel[] = [], episodes: Episode[] = [];
+  const byTitle = new Map<string, Series>();
+  for (const c of all) {
+    if (c.type === "movie") movies.push(c);
+    else if (c.type === "series") {
+      const m = /^(.*?)\s*-\s*S(\d+)E(\d+)/i.exec(c.name);
+      const title = (m?.[1] ?? c.name).trim();
+      const cat = c.group_title ?? "Uncategorized";
+      let s = byTitle.get(title);
+      if (!s) { s = { id: byTitle.size + 1, title, category: cat, cover: c.logo, episodes: [] }; byTitle.set(title, s); }
+      const ep: Episode = { ...c, id: episodes.length + 1, season: Number(m?.[2] ?? 1), episode: Number(m?.[3] ?? s.episodes.length + 1) };
+      episodes.push(ep); s.episodes.push(ep);
+    } else live.push(c);
+  }
+  return { live, movies, series: [...byTitle.values()], episodes };
+}
+
+export async function loadCatalog(force = false): Promise<{ ok: true; catalog: Catalog } | { ok: false; status: number; message: string }> {
+  if (!force && cache && Date.now() - cache.at < TTL) return { ok: true, catalog: cache.catalog };
   const src = await loadSourceText();
-  if (!src.ok) return src;
-  return { ok: true, channels: parseM3U(src.text) };
+  if (!src.ok) return cache ? { ok: true, catalog: cache.catalog } : src;
+  cache = { at: Date.now(), catalog: buildCatalog(parseM3U(src.text)) };
+  return { ok: true, catalog: cache.catalog };
+}
+
+/** Live channels only (series/movies are excluded). */
+export async function loadChannels(): Promise<{ ok: true; channels: M3UChannel[] } | { ok: false; status: number; message: string }> {
+  const r = await loadCatalog();
+  return r.ok ? { ok: true, channels: r.catalog.live } : r;
 }
 
 // Shared M3U proxy handler: validates username/password/expiry and streams the source playlist.
