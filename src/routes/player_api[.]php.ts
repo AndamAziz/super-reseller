@@ -1,7 +1,7 @@
 // Xtream Codes-compatible API so IPTV apps can add this server as an "Xtream" provider.
 // Backed by the protected M3U source; live channels only (no movies/series in an M3U).
 import { createFileRoute } from "@tanstack/react-router";
-import { authLine, json, loadChannels } from "@/lib/playlist-auth.server";
+import { authLine, json, loadCatalog } from "@/lib/playlist-auth.server";
 
 export const Route = createFileRoute("/player_api.php")({
   server: {
@@ -59,20 +59,63 @@ export async function handleXtreamRequest(request: Request) {
     });
   }
 
-  if (["get_vod_categories", "get_series_categories", "get_vod_streams", "get_series"].includes(action)) return json([]);
-
-  const loaded = await loadChannels();
+  const loaded = await loadCatalog(params.get("refresh") === "1");
   if (!loaded.ok) return json({ error: loaded.message }, loaded.status);
-  const groups = [...new Set(loaded.channels.map((c) => c.group_title ?? "Uncategorized"))];
+  const { live, movies, series } = loaded.catalog;
+  const base = `${url.origin}`;
+  const u = encodeURIComponent(auth.username), p = encodeURIComponent(auth.password);
+  const cats = (items: { group_title?: string | null; category?: string }[]) =>
+    [...new Set(items.map((c) => c.category ?? c.group_title ?? "Uncategorized"))];
+  const groups = cats(live);
   const catId = (g: string | null) => String(groups.indexOf(g ?? "Uncategorized") + 1);
+  const filter = params.get("category_id");
+
+  if (action === "get_vod_categories") {
+    return json(cats(movies).map((g, i) => ({ category_id: String(i + 1), category_name: g, parent_id: 0 })));
+  }
+  if (action === "get_vod_streams") {
+    const vc = cats(movies);
+    return json(movies.map((m, i) => ({
+      num: i + 1, name: m.name, stream_type: "movie", stream_id: i + 1, stream_icon: m.logo ?? "",
+      rating: "", added: "0", category_id: String(vc.indexOf(m.group_title ?? "Uncategorized") + 1),
+      container_extension: "m3u8", custom_sid: "", direct_source: m.url,
+    })).filter((s) => !filter || s.category_id === filter));
+  }
+  const sc = cats(series);
+  if (action === "get_series_categories") {
+    return json(sc.map((g, i) => ({ category_id: String(i + 1), category_name: g, parent_id: 0 })));
+  }
+  if (action === "get_series") {
+    return json(series.map((s, i) => ({
+      num: i + 1, name: s.title, series_id: s.id, cover: s.cover ?? "", plot: "", cast: "", director: "", genre: "",
+      releaseDate: "", last_modified: "0", rating: "", rating_5based: 0, backdrop_path: [], youtube_trailer: "",
+      episode_run_time: "", category_id: String(sc.indexOf(s.category) + 1),
+    })).filter((s) => !filter || s.category_id === filter));
+  }
+  if (action === "get_series_info") {
+    const s = series.find((x) => x.id === Number(params.get("series_id")));
+    if (!s) return json({ seasons: [], info: {}, episodes: {} });
+    const episodes: Record<string, unknown[]> = {};
+    for (const e of s.episodes) {
+      (episodes[String(e.season)] ??= []).push({
+        id: String(e.id), episode_num: e.episode, title: e.name, container_extension: "m3u8",
+        info: { movie_image: e.logo ?? s.cover ?? "" }, season: e.season, custom_sid: "", added: "0",
+        direct_source: `${base}/series/${u}/${p}/${e.id}.m3u8`,
+      });
+    }
+    return json({
+      seasons: Object.keys(episodes).map((n) => ({ season_number: Number(n), name: `Season ${n}`, episode_count: episodes[n]!.length, cover: s.cover ?? "" })),
+      info: { name: s.title, cover: s.cover ?? "", plot: "", cast: "", director: "", genre: "", releaseDate: "", rating: "", category_id: String(sc.indexOf(s.category) + 1) },
+      episodes,
+    });
+  }
 
   if (action === "get_live_categories") {
     return json(groups.map((g, i) => ({ category_id: String(i + 1), category_name: g, parent_id: 0 })));
   }
   if (action === "get_live_streams") {
-    const filter = params.get("category_id");
     return json(
-      loaded.channels
+      live
         .map((c, i) => ({
           num: i + 1,
           name: c.name,
