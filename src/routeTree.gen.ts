@@ -24,6 +24,8 @@ import { Route as ApiPublicPlayer_apiDotphpRouteImport } from './routes/api/publ
 import { Route as ApiPublicPlaylistRouteImport } from './routes/api/public/playlist'
 import { Route as ApiPublicPlaylistSplatRouteImport } from './routes/api/public/playlist.$'
 import { Route as LiveUsernamePasswordStreamRouteImport } from './routes/live.$username.$password.$stream'
+import { Route as MovieUsernamePasswordStreamRouteImport } from './routes/movie.$username.$password.$stream'
+import { Route as SeriesUsernamePasswordStreamRouteImport } from './routes/series.$username.$password.$stream'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -101,6 +103,18 @@ const LiveUsernamePasswordStreamRoute =
     path: '/live/$username/$password/$stream',
     getParentRoute: () => rootRouteImport,
   } as any)
+const MovieUsernamePasswordStreamRoute =
+  MovieUsernamePasswordStreamRouteImport.update({
+    id: '/movie/$username/$password/$stream',
+    path: '/movie/$username/$password/$stream',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const SeriesUsernamePasswordStreamRoute =
+  SeriesUsernamePasswordStreamRouteImport.update({
+    id: '/series/$username/$password/$stream',
+    path: '/series/$username/$password/$stream',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -117,6 +131,8 @@ export interface FileRoutesByFullPath {
   '/api/public/playlist': typeof ApiPublicPlaylistRouteWithChildren
   '/api/public/playlist/$': typeof ApiPublicPlaylistSplatRoute
   '/live/$username/$password/$stream': typeof LiveUsernamePasswordStreamRoute
+  '/movie/$username/$password/$stream': typeof MovieUsernamePasswordStreamRoute
+  '/series/$username/$password/$stream': typeof SeriesUsernamePasswordStreamRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -133,6 +149,8 @@ export interface FileRoutesByTo {
   '/api/public/playlist': typeof ApiPublicPlaylistRouteWithChildren
   '/api/public/playlist/$': typeof ApiPublicPlaylistSplatRoute
   '/live/$username/$password/$stream': typeof LiveUsernamePasswordStreamRoute
+  '/movie/$username/$password/$stream': typeof MovieUsernamePasswordStreamRoute
+  '/series/$username/$password/$stream': typeof SeriesUsernamePasswordStreamRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -151,6 +169,8 @@ export interface FileRoutesById {
   '/api/public/playlist': typeof ApiPublicPlaylistRouteWithChildren
   '/api/public/playlist/$': typeof ApiPublicPlaylistSplatRoute
   '/live/$username/$password/$stream': typeof LiveUsernamePasswordStreamRoute
+  '/movie/$username/$password/$stream': typeof MovieUsernamePasswordStreamRoute
+  '/series/$username/$password/$stream': typeof SeriesUsernamePasswordStreamRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -169,6 +189,8 @@ export interface FileRouteTypes {
     | '/api/public/playlist'
     | '/api/public/playlist/$'
     | '/live/$username/$password/$stream'
+    | '/movie/$username/$password/$stream'
+    | '/series/$username/$password/$stream'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -185,6 +207,8 @@ export interface FileRouteTypes {
     | '/api/public/playlist'
     | '/api/public/playlist/$'
     | '/live/$username/$password/$stream'
+    | '/movie/$username/$password/$stream'
+    | '/series/$username/$password/$stream'
   id:
     | '__root__'
     | '/'
@@ -202,6 +226,8 @@ export interface FileRouteTypes {
     | '/api/public/playlist'
     | '/api/public/playlist/$'
     | '/live/$username/$password/$stream'
+    | '/movie/$username/$password/$stream'
+    | '/series/$username/$password/$stream'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -214,6 +240,8 @@ export interface RootRouteChildren {
   ApiPublicPlayer_apiDotphpRoute: typeof ApiPublicPlayer_apiDotphpRoute
   ApiPublicPlaylistRoute: typeof ApiPublicPlaylistRouteWithChildren
   LiveUsernamePasswordStreamRoute: typeof LiveUsernamePasswordStreamRoute
+  MovieUsernamePasswordStreamRoute: typeof MovieUsernamePasswordStreamRoute
+  SeriesUsernamePasswordStreamRoute: typeof SeriesUsernamePasswordStreamRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -323,6 +351,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LiveUsernamePasswordStreamRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/movie/$username/$password/$stream': {
+      id: '/movie/$username/$password/$stream'
+      path: '/movie/$username/$password/$stream'
+      fullPath: '/movie/$username/$password/$stream'
+      preLoaderRoute: typeof MovieUsernamePasswordStreamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/series/$username/$password/$stream': {
+      id: '/series/$username/$password/$stream'
+      path: '/series/$username/$password/$stream'
+      fullPath: '/series/$username/$password/$stream'
+      preLoaderRoute: typeof SeriesUsernamePasswordStreamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -366,6 +408,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicPlayer_apiDotphpRoute: ApiPublicPlayer_apiDotphpRoute,
   ApiPublicPlaylistRoute: ApiPublicPlaylistRouteWithChildren,
   LiveUsernamePasswordStreamRoute: LiveUsernamePasswordStreamRoute,
+  MovieUsernamePasswordStreamRoute: MovieUsernamePasswordStreamRoute,
+  SeriesUsernamePasswordStreamRoute: SeriesUsernamePasswordStreamRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
