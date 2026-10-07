@@ -73,7 +73,7 @@ function PlaylistsPage() {
         .single();
       if (error) throw error;
       for (let i = 0; i < parsed.length; i += 500) {
-        const batch = parsed.slice(i, i + 500).map((c, j) => ({ ...c, playlist_id: pl.id, position: i + j }));
+        const batch = parsed.slice(i, i + 500).map(({ type: _t, ...c }, j) => ({ ...c, playlist_id: pl.id, position: i + j }));
         const { error: cErr } = await supabase.from("channels").insert(batch);
         if (cErr) throw cErr;
         setProgress(`Importing ${Math.min(i + 500, parsed.length)} / ${parsed.length}`);
