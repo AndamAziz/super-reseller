@@ -34,6 +34,7 @@ function LinesPage() {
   const isAdmin = me?.role === "admin";
   const { data: lines = [] } = useLines();
   const createLineFn = useServerFn(createLine);
+  const createTestLineFn = useServerFn(createTestLine);
   const renewLineFn = useServerFn(renewLine);
   const deleteLineFn = useServerFn(deleteLine);
   const updateLineFn = useServerFn(updateLine);
@@ -109,11 +110,16 @@ function LinesPage() {
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
-    const parsed = schema.safeParse(form);
+    const isTest = form.months === 0;
+    const parsed = schema.safeParse({ ...form, months: isTest ? 1 : form.months });
     if (!parsed.success) return void toast.error(parsed.error.issues[0]?.message ?? "Invalid input");
     setBusy(true);
     try {
-      await createLineFn({ data: { ...parsed.data, ...(form.host.trim() ? { customHost: form.host.trim() } : {}) } });
+      if (isTest) {
+        await createTestLineFn({ data: { username: parsed.data.username, password: parsed.data.password } });
+      } else {
+        await createLineFn({ data: { ...parsed.data, ...(form.host.trim() ? { customHost: form.host.trim() } : {}) } });
+      }
       toast.success(`Line ${parsed.data.username} created`);
       setForm({ username: "", password: "", months: 1, host: "" });
       refresh();
