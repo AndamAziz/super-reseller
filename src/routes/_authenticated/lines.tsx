@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, Panel, StatusBadge, td, th, inputCls, softBtn, dangerBtn, primaryBtn } from "@/components/panel";
 import { useMe, isActive, fmtDate, errMsg } from "@/hooks/use-me";
 import { useLines } from "@/lib/queries";
-import { createLine, deleteLine, renewLine, updateLine } from "@/lib/lines.functions";
+import { createLine, createTestLine, deleteLine, renewLine, updateLine } from "@/lib/lines.functions";
 
 export const Route = createFileRoute("/_authenticated/lines")({
   head: () => ({ meta: [{ title: "Lines — Nimbus Panel" }] }),
@@ -23,6 +23,10 @@ const schema = z.object({
 });
 
 const MONTHS = [1, 3, 6, 12];
+const DURATIONS: { value: number; label: string }[] = [
+  { value: 0, label: "24H test (free)" },
+  ...MONTHS.map((m) => ({ value: m, label: `${m} month${m > 1 ? "s" : ""}` })),
+];
 
 function LinesPage() {
   const qc = useQueryClient();
@@ -30,6 +34,7 @@ function LinesPage() {
   const isAdmin = me?.role === "admin";
   const { data: lines = [] } = useLines();
   const createLineFn = useServerFn(createLine);
+  const createTestLineFn = useServerFn(createTestLine);
   const renewLineFn = useServerFn(renewLine);
   const deleteLineFn = useServerFn(deleteLine);
   const updateLineFn = useServerFn(updateLine);
@@ -105,11 +110,16 @@ function LinesPage() {
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
-    const parsed = schema.safeParse(form);
+    const isTest = form.months === 0;
+    const parsed = schema.safeParse({ ...form, months: isTest ? 1 : form.months });
     if (!parsed.success) return void toast.error(parsed.error.issues[0]?.message ?? "Invalid input");
     setBusy(true);
     try {
-      await createLineFn({ data: { ...parsed.data, ...(form.host.trim() ? { customHost: form.host.trim() } : {}) } });
+      if (isTest) {
+        await createTestLineFn({ data: { username: parsed.data.username, password: parsed.data.password } });
+      } else {
+        await createLineFn({ data: { ...parsed.data, ...(form.host.trim() ? { customHost: form.host.trim() } : {}) } });
+      }
       toast.success(`Line ${parsed.data.username} created`);
       setForm({ username: "", password: "", months: 1, host: "" });
       refresh();
@@ -154,7 +164,7 @@ function LinesPage() {
     [lines, q, filter],
   );
   const active = lines.filter((l) => isActive(l.expires_at)).length;
-  const cost = isAdmin ? 0 : form.months;
+  const cost = isAdmin || form.months === 0 ? 0 : form.months;
 
   return (
     <>
@@ -197,7 +207,7 @@ function LinesPage() {
         <label className="space-y-1.5">
           <span className="label-mono">Duration</span>
           <select className={`${inputCls} w-full py-2`} value={form.months} onChange={(e) => setForm({ ...form, months: Number(e.target.value) })}>
-            {MONTHS.map((m) => <option key={m} value={m}>{m} month{m > 1 ? "s" : ""}</option>)}
+            {DURATIONS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
           </select>
         </label>
         <button disabled={busy} className={primaryBtn}>

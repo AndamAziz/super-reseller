@@ -244,6 +244,26 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_test_line: {
+        Args: { _password: string; _username: string }
+        Returns: {
+          created_at: string
+          custom_host: string | null
+          expires_at: string
+          id: string
+          panel_message: string | null
+          panel_status: string
+          password: string
+          reseller_id: string
+          username: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "lines"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
