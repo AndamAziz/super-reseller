@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, Panel, StatusBadge, td, th, inputCls, softBtn, dangerBtn, primaryBtn } from "@/components/panel";
 import { useMe, isActive, fmtDate, errMsg } from "@/hooks/use-me";
 import { useLines } from "@/lib/queries";
-import { createLine, deleteLine, renewLine, updateLine } from "@/lib/lines.functions";
+import { createLine, createTestLine, deleteLine, renewLine, updateLine } from "@/lib/lines.functions";
 
 export const Route = createFileRoute("/_authenticated/lines")({
   head: () => ({ meta: [{ title: "Lines — Nimbus Panel" }] }),
@@ -23,6 +23,10 @@ const schema = z.object({
 });
 
 const MONTHS = [1, 3, 6, 12];
+const DURATIONS: { value: number; label: string }[] = [
+  { value: 0, label: "24H test (free)" },
+  ...MONTHS.map((m) => ({ value: m, label: `${m} month${m > 1 ? "s" : ""}` })),
+];
 
 function LinesPage() {
   const qc = useQueryClient();
