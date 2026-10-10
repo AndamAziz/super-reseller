@@ -112,8 +112,10 @@ export type Database = {
         Row: {
           created_at: string
           custom_host: string | null
+          customer_contact: string | null
           expires_at: string
           id: string
+          is_test: boolean
           panel_message: string | null
           panel_status: string
           password: string
@@ -123,8 +125,10 @@ export type Database = {
         Insert: {
           created_at?: string
           custom_host?: string | null
+          customer_contact?: string | null
           expires_at: string
           id?: string
+          is_test?: boolean
           panel_message?: string | null
           panel_status?: string
           password: string
@@ -134,8 +138,10 @@ export type Database = {
         Update: {
           created_at?: string
           custom_host?: string | null
+          customer_contact?: string | null
           expires_at?: string
           id?: string
+          is_test?: boolean
           panel_message?: string | null
           panel_status?: string
           password?: string
@@ -197,6 +203,27 @@ export type Database = {
         }
         Relationships: []
       }
+      test_claims: {
+        Row: {
+          created_at: string
+          customer_key: string
+          line_id: string | null
+          reseller_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_key: string
+          line_id?: string | null
+          reseller_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_key?: string
+          line_id?: string | null
+          reseller_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -229,8 +256,10 @@ export type Database = {
         Returns: {
           created_at: string
           custom_host: string | null
+          customer_contact: string | null
           expires_at: string
           id: string
+          is_test: boolean
           panel_message: string | null
           panel_status: string
           password: string
@@ -245,12 +274,14 @@ export type Database = {
         }
       }
       create_test_line: {
-        Args: { _password: string; _username: string }
+        Args: { _customer: string; _password: string; _username: string }
         Returns: {
           created_at: string
           custom_host: string | null
+          customer_contact: string | null
           expires_at: string
           id: string
+          is_test: boolean
           panel_message: string | null
           panel_status: string
           password: string
@@ -271,13 +302,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      normalize_customer: { Args: { _c: string }; Returns: string }
       renew_line: {
         Args: { _line_id: string; _months: number }
         Returns: {
           created_at: string
           custom_host: string | null
+          customer_contact: string | null
           expires_at: string
           id: string
+          is_test: boolean
           panel_message: string | null
           panel_status: string
           password: string
@@ -291,6 +325,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      test_used: { Args: { _customer: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "reseller"
