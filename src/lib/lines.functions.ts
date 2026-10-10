@@ -44,9 +44,10 @@ export const createLine = createServerFn({ method: "POST" })
 const testLineSchema = z.object({
   username: z.string().trim().min(3).max(50).regex(/^[\w.-]+$/),
   password: z.string().min(4).max(100),
+  customer: z.string().trim().min(3).max(100),
 });
 
-/** Free 24-hour test line — no credits deducted (handled in the DB function). */
+/** Free 24-hour test line — one per customer, no credits (enforced in the DB function). */
 export const createTestLine = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => testLineSchema.parse(data))
@@ -54,11 +55,21 @@ export const createTestLine = createServerFn({ method: "POST" })
     const { error } = await context.supabase.rpc("create_test_line", {
       _username: data.username,
       _password: data.password,
+      _customer: data.customer,
     });
     if (error) {
       throw new Error(error.message.includes("duplicate") ? "Username already taken" : error.message);
     }
     return { ok: true as const };
+  });
+
+export const checkTestUsed = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ customer: z.string().trim().min(3).max(100) }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: r } = await context.supabase.rpc("test_used", { _customer: data.customer });
+    const v = r as { used?: boolean; at?: string } | null;
+    return { used: !!v?.used, at: v?.at ?? null };
   });
 
 export const renewLine = createServerFn({ method: "POST" })

@@ -4,12 +4,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Copy, Link2, Pencil, Trash2 } from "lucide-react";
+import { Copy, Link2, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, Panel, StatusBadge, td, th, inputCls, softBtn, dangerBtn, primaryBtn } from "@/components/panel";
 import { useMe, isActive, fmtDate, errMsg } from "@/hooks/use-me";
 import { useLines } from "@/lib/queries";
-import { createLine, createTestLine, deleteLine, renewLine, updateLine } from "@/lib/lines.functions";
+import { recommendDuration } from "@/lib/recommend.functions";
+import { checkTestUsed, createLine, createTestLine, deleteLine, renewLine, updateLine } from "@/lib/lines.functions";
 
 export const Route = createFileRoute("/_authenticated/lines")({
   head: () => ({ meta: [{ title: "Lines — Nimbus Panel" }] }),
@@ -38,7 +39,36 @@ function LinesPage() {
   const renewLineFn = useServerFn(renewLine);
   const deleteLineFn = useServerFn(deleteLine);
   const updateLineFn = useServerFn(updateLine);
-  const [form, setForm] = useState({ username: "", password: "", months: 1, host: "" });
+  const recommendFn = useServerFn(recommendDuration);
+  const checkTestFn = useServerFn(checkTestUsed);
+  const [form, setForm] = useState({ username: "", password: "", months: 1, host: "", customer: "" });
+  const [testUsed, setTestUsed] = useState<{ used: boolean; at: string | null } | null>(null);
+  const [needs, setNeeds] = useState("");
+  const [rec, setRec] = useState<{ months: number; explanation: string } | null>(null);
+  const [recBusy, setRecBusy] = useState(false);
+
+  useEffect(() => {
+    const c = form.customer.trim();
+    if (c.length < 3) return void setTestUsed(null);
+    const t = setTimeout(() => {
+      checkTestFn({ data: { customer: c } }).then(setTestUsed).catch(() => setTestUsed(null));
+    }, 400);
+    return () => clearTimeout(t);
+  }, [form.customer, checkTestFn]);
+
+  async function recommend(e: React.FormEvent) {
+    e.preventDefault();
+    if (needs.trim().length < 3) return void toast.error("Describe what the customer needs");
+    setRecBusy(true);
+    setRec(null);
+    try {
+      setRec(await recommendFn({ data: { needs } }));
+    } catch (err) {
+      toast.error(errMsg(err));
+    } finally {
+      setRecBusy(false);
+    }
+  }
   const [busy, setBusy] = useState(false);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "expired">("all");
@@ -113,15 +143,18 @@ function LinesPage() {
     const isTest = form.months === 0;
     const parsed = schema.safeParse({ ...form, months: isTest ? 1 : form.months });
     if (!parsed.success) return void toast.error(parsed.error.issues[0]?.message ?? "Invalid input");
+    if (isTest && form.customer.trim().length < 3) return void toast.error("Enter the customer's phone or ID for a test line");
+    if (isTest && testUsed?.used) return void toast.error("This customer already used their free 24H test");
     setBusy(true);
     try {
       if (isTest) {
-        await createTestLineFn({ data: { username: parsed.data.username, password: parsed.data.password } });
+        await createTestLineFn({ data: { username: parsed.data.username, password: parsed.data.password, customer: form.customer.trim() } });
       } else {
         await createLineFn({ data: { ...parsed.data, ...(form.host.trim() ? { customHost: form.host.trim() } : {}) } });
       }
       toast.success(`Line ${parsed.data.username} created`);
-      setForm({ username: "", password: "", months: 1, host: "" });
+      setForm({ username: "", password: "", months: 1, host: "", customer: "" });
+      setTestUsed(null);
       refresh();
     } catch (err) {
       toast.error(errMsg(err));
@@ -186,6 +219,26 @@ function LinesPage() {
         </form>
       )}
 
+      <form onSubmit={recommend} className="glass rise grid gap-3 p-5 lg:grid-cols-[1fr_auto] lg:items-end">
+        <label className="space-y-1.5">
+          <span className="label-mono inline-flex items-center gap-1.5"><Sparkles className="size-3.5" /> Duration advisor</span>
+          <input
+            className={`${inputCls} w-full py-2`}
+            placeholder="e.g. new customer, watches football on weekends, wants to try first"
+            value={needs}
+            onChange={(e) => setNeeds(e.target.value)}
+          />
+        </label>
+        <button disabled={recBusy} className={softBtn}>{recBusy ? "Thinking…" : "Recommend"}</button>
+        {rec && (
+          <div className="flex flex-wrap items-center gap-3 text-[13px] lg:col-span-2">
+            <span className="font-mono">{rec.months === 0 ? "24H test" : `${rec.months} month${rec.months > 1 ? "s" : ""}`}</span>
+            <span className="text-muted-foreground">{rec.explanation}</span>
+            <button type="button" className={softBtn} onClick={() => setForm((f) => ({ ...f, months: rec.months }))}>Use this</button>
+          </div>
+        )}
+      </form>
+
       <form onSubmit={create} className="glass rise grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto_auto] lg:items-end">
         <label className="space-y-1.5">
           <span className="label-mono">Username</span>
@@ -210,7 +263,15 @@ function LinesPage() {
             {DURATIONS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
           </select>
         </label>
-        <button disabled={busy} className={primaryBtn}>
+        {form.months === 0 && (
+          <label className="space-y-1.5 sm:col-span-2 lg:col-span-5">
+            <span className="label-mono">Customer phone or ID (one free test each)</span>
+            <input className={`${inputCls} w-full py-2`} value={form.customer} onChange={(e) => setForm({ ...form, customer: e.target.value })} />
+            {testUsed?.used && <span className="block text-[12px] text-destructive">Test already used{testUsed.at ? ` on ${fmtDate(testUsed.at)}` : ""} — choose a paid duration.</span>}
+            {testUsed && !testUsed.used && <span className="block text-[12px] text-muted-foreground">Free test available for this customer.</span>}
+          </label>
+        )}
+        <button disabled={busy || (form.months === 0 && !!testUsed?.used)} className={primaryBtn}>
           {busy ? "Creating…" : isAdmin ? "Create line" : `Create · ${cost} credit${cost > 1 ? "s" : ""}`}
         </button>
         {!isAdmin && (
@@ -277,7 +338,10 @@ function LinesPage() {
             <tbody className="divide-y divide-border">
               {shown.map((l) => (
                 <tr key={l.id} className="transition-colors hover:bg-glass-strong">
-                  <td className={`${td} font-mono text-[12px]`}>{l.username}</td>
+                  <td className={`${td} font-mono text-[12px]`}>
+                    {l.username}
+                    {l.is_test && <span className="ml-2 rounded-full border border-border px-1.5 py-0.5 font-sans text-[10px] text-muted-foreground" title={l.customer_contact ?? ""}>Test used</span>}
+                  </td>
                   <td className={`${td} font-mono text-[12px] text-muted-foreground`}>{l.password}</td>
                   {isAdmin && <td className={`${td} text-muted-foreground`}>{l.profiles?.display_name ?? l.profiles?.email}</td>}
                   <td className={`${td} font-mono text-[12px]`}>{fmtDate(l.expires_at)}</td>
