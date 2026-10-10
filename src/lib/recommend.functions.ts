@@ -9,7 +9,7 @@ export const recommendDuration = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => input.parse(d))
   .handler(async ({ data, context }) => {
-    const key = process.env.LOVABLE_API_KEY;
+    const key = process.env["LOVABLE_API_KEY"];
     if (!key) throw new Error("AI is not configured");
     const { data: prof } = await context.supabase.from("profiles").select("credits").eq("id", context.userId).maybeSingle();
     const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
