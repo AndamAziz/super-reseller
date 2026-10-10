@@ -164,7 +164,7 @@ function LinesPage() {
     [lines, q, filter],
   );
   const active = lines.filter((l) => isActive(l.expires_at)).length;
-  const cost = isAdmin ? 0 : form.months;
+  const cost = isAdmin || form.months === 0 ? 0 : form.months;
 
   return (
     <>
@@ -207,7 +207,7 @@ function LinesPage() {
         <label className="space-y-1.5">
           <span className="label-mono">Duration</span>
           <select className={`${inputCls} w-full py-2`} value={form.months} onChange={(e) => setForm({ ...form, months: Number(e.target.value) })}>
-            {MONTHS.map((m) => <option key={m} value={m}>{m} month{m > 1 ? "s" : ""}</option>)}
+            {DURATIONS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
           </select>
         </label>
         <button disabled={busy} className={primaryBtn}>
