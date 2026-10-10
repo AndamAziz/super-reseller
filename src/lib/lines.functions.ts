@@ -41,6 +41,26 @@ export const createLine = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+const testLineSchema = z.object({
+  username: z.string().trim().min(3).max(50).regex(/^[\w.-]+$/),
+  password: z.string().min(4).max(100),
+});
+
+/** Free 24-hour test line — no credits deducted (handled in the DB function). */
+export const createTestLine = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => testLineSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.rpc("create_test_line", {
+      _username: data.username,
+      _password: data.password,
+    });
+    if (error) {
+      throw new Error(error.message.includes("duplicate") ? "Username already taken" : error.message);
+    }
+    return { ok: true as const };
+  });
+
 export const renewLine = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => renewSchema.parse(data))
