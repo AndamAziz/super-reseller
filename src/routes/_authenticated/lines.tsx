@@ -73,7 +73,7 @@ function LinesPage() {
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "expired">("all");
   const [renewMonths, setRenewMonths] = useState<Record<string, number>>({});
-  const [editing, setEditing] = useState<{ id: string; username: string; password: string; host: string; expires: string } | null>(null);
+  const [editing, setEditing] = useState<{ id: string; username: string; password: string; host: string; expires: string; maxConn: number } | null>(null);
   const [source, setSource] = useState<string | null>(null);
 
   useEffect(() => {
@@ -120,6 +120,7 @@ function LinesPage() {
           lineId: editing.id,
           password: editing.password,
           customHost: editing.host.trim() || null,
+          maxConnections: editing.maxConn,
           expiresAt: isAdmin && editing.expires ? new Date(`${editing.expires}T23:59:59Z`).toISOString() : null,
         },
       });
@@ -282,8 +283,8 @@ function LinesPage() {
       </form>
 
       {editing && (
-        <form onSubmit={saveEdit} className="glass rise grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto_auto_auto] lg:items-end">
-          <p className="label-mono sm:col-span-2 lg:col-span-5">Edit line · {editing.username}</p>
+        <form onSubmit={saveEdit} className="glass rise grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto_auto_auto_auto] lg:items-end">
+          <p className="label-mono sm:col-span-2 lg:col-span-6">Edit line · {editing.username}</p>
           <label className="space-y-1.5">
             <span className="label-mono">Password</span>
             <input className={`${inputCls} w-full py-2`} value={editing.password} onChange={(e) => setEditing({ ...editing, password: e.target.value })} />
@@ -301,6 +302,17 @@ function LinesPage() {
               className={`${inputCls} w-full py-2`}
               value={editing.expires}
               onChange={(e) => setEditing({ ...editing, expires: e.target.value })}
+            />
+          </label>
+          <label className="space-y-1.5">
+            <span className="label-mono">Max connections</span>
+            <input
+              type="number"
+              min={1}
+              max={10}
+              className={`${inputCls} w-full py-2`}
+              value={editing.maxConn}
+              onChange={(e) => setEditing({ ...editing, maxConn: Math.min(10, Math.max(1, Number(e.target.value) || 1)) })}
             />
           </label>
           <button className={primaryBtn}>Save</button>
@@ -330,6 +342,7 @@ function LinesPage() {
                 <th className={th}>Password</th>
                 {isAdmin && <th className={th}>Reseller</th>}
                 <th className={th}>Expiry</th>
+                <th className={th}>Conn.</th>
                 <th className={th}>Status</th>
                 <th className={th}>Link</th>
                 <th className={`${th} text-right`}>Action</th>
@@ -345,6 +358,7 @@ function LinesPage() {
                   <td className={`${td} font-mono text-[12px] text-muted-foreground`}>{l.password}</td>
                   {isAdmin && <td className={`${td} text-muted-foreground`}>{l.profiles?.display_name ?? l.profiles?.email}</td>}
                   <td className={`${td} font-mono text-[12px]`}>{fmtDate(l.expires_at)}</td>
+                  <td className={`${td} font-mono text-[12px]`}>{l.max_connections ?? 1}</td>
                   <td className={td}><StatusBadge active={isActive(l.expires_at)} /></td>
                   <td className={td}>
                     <button
@@ -371,7 +385,7 @@ function LinesPage() {
                         className={softBtn}
                         aria-label={`Edit ${l.username}`}
                         onClick={() =>
-                          setEditing({ id: l.id, username: l.username, password: l.password, host: l.custom_host ?? "", expires: fmtDate(l.expires_at) })
+                          setEditing({ id: l.id, username: l.username, password: l.password, host: l.custom_host ?? "", expires: fmtDate(l.expires_at), maxConn: l.max_connections ?? 1 })
                         }
                       >
                         <Pencil className="size-3.5" />
@@ -384,7 +398,7 @@ function LinesPage() {
                 </tr>
               ))}
               {!shown.length && (
-                <tr><td className={`${td} text-muted-foreground`} colSpan={8}>No lines found.</td></tr>
+                <tr><td className={`${td} text-muted-foreground`} colSpan={9}>No lines found.</td></tr>
               )}
             </tbody>
           </table>

@@ -116,6 +116,7 @@ export type Database = {
           expires_at: string
           id: string
           is_test: boolean
+          max_connections: number
           panel_message: string | null
           panel_status: string
           password: string
@@ -129,6 +130,7 @@ export type Database = {
           expires_at: string
           id?: string
           is_test?: boolean
+          max_connections?: number
           panel_message?: string | null
           panel_status?: string
           password: string
@@ -142,6 +144,7 @@ export type Database = {
           expires_at?: string
           id?: string
           is_test?: boolean
+          max_connections?: number
           panel_message?: string | null
           panel_status?: string
           password?: string
@@ -260,6 +263,7 @@ export type Database = {
           expires_at: string
           id: string
           is_test: boolean
+          max_connections: number
           panel_message: string | null
           panel_status: string
           password: string
@@ -282,6 +286,7 @@ export type Database = {
           expires_at: string
           id: string
           is_test: boolean
+          max_connections: number
           panel_message: string | null
           panel_status: string
           password: string
@@ -312,6 +317,7 @@ export type Database = {
           expires_at: string
           id: string
           is_test: boolean
+          max_connections: number
           panel_message: string | null
           panel_status: string
           password: string

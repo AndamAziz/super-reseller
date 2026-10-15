@@ -89,6 +89,7 @@ const updateSchema = z.object({
   password: z.string().min(4).max(100),
   customHost: z.string().trim().max(200).nullable(),
   expiresAt: z.string().datetime().nullable(),
+  maxConnections: z.number().int().min(1).max(10).default(1),
 });
 
 /** Edit password / custom host (owner or admin). Only admins may set the expiry directly — resellers extend via credits. */
@@ -100,9 +101,10 @@ export const updateLine = createServerFn({ method: "POST" })
     const { data: line } = await context.supabase.from("lines").select("id").eq("id", data.lineId).maybeSingle();
     if (!line) throw new Error("Line not found");
     const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
-    const patch: { password: string; custom_host: string | null; expires_at?: string } = {
+    const patch: { password: string; custom_host: string | null; max_connections: number; expires_at?: string } = {
       password: data.password,
       custom_host: data.customHost || null,
+      max_connections: data.maxConnections,
     };
     if (data.expiresAt) {
       if (!isAdmin) throw new Error("Only admins can change the expiry date directly — use Renew");
