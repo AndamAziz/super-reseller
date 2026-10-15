@@ -1,0 +1,1 @@
+ALTER TABLE public.lines ADD COLUMN max_connections integer NOT NULL DEFAULT 1 CHECK (max_connections BETWEEN 1 AND 10);
