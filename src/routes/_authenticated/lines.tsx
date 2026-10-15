@@ -342,6 +342,7 @@ function LinesPage() {
                 <th className={th}>Password</th>
                 {isAdmin && <th className={th}>Reseller</th>}
                 <th className={th}>Expiry</th>
+                <th className={th}>Conn.</th>
                 <th className={th}>Status</th>
                 <th className={th}>Link</th>
                 <th className={`${th} text-right`}>Action</th>
@@ -357,6 +358,7 @@ function LinesPage() {
                   <td className={`${td} font-mono text-[12px] text-muted-foreground`}>{l.password}</td>
                   {isAdmin && <td className={`${td} text-muted-foreground`}>{l.profiles?.display_name ?? l.profiles?.email}</td>}
                   <td className={`${td} font-mono text-[12px]`}>{fmtDate(l.expires_at)}</td>
+                  <td className={`${td} font-mono text-[12px]`}>{l.max_connections ?? 1}</td>
                   <td className={td}><StatusBadge active={isActive(l.expires_at)} /></td>
                   <td className={td}>
                     <button
@@ -383,7 +385,7 @@ function LinesPage() {
                         className={softBtn}
                         aria-label={`Edit ${l.username}`}
                         onClick={() =>
-                          setEditing({ id: l.id, username: l.username, password: l.password, host: l.custom_host ?? "", expires: fmtDate(l.expires_at) })
+                          setEditing({ id: l.id, username: l.username, password: l.password, host: l.custom_host ?? "", expires: fmtDate(l.expires_at), maxConn: l.max_connections ?? 1 })
                         }
                       >
                         <Pencil className="size-3.5" />
