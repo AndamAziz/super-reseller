@@ -73,7 +73,7 @@ function LinesPage() {
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "expired">("all");
   const [renewMonths, setRenewMonths] = useState<Record<string, number>>({});
-  const [editing, setEditing] = useState<{ id: string; username: string; password: string; host: string; expires: string } | null>(null);
+  const [editing, setEditing] = useState<{ id: string; username: string; password: string; host: string; expires: string; maxConn: number } | null>(null);
   const [source, setSource] = useState<string | null>(null);
 
   useEffect(() => {
@@ -120,6 +120,7 @@ function LinesPage() {
           lineId: editing.id,
           password: editing.password,
           customHost: editing.host.trim() || null,
+          maxConnections: editing.maxConn,
           expiresAt: isAdmin && editing.expires ? new Date(`${editing.expires}T23:59:59Z`).toISOString() : null,
         },
       });
@@ -282,8 +283,8 @@ function LinesPage() {
       </form>
 
       {editing && (
-        <form onSubmit={saveEdit} className="glass rise grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto_auto_auto] lg:items-end">
-          <p className="label-mono sm:col-span-2 lg:col-span-5">Edit line · {editing.username}</p>
+        <form onSubmit={saveEdit} className="glass rise grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto_auto_auto_auto] lg:items-end">
+          <p className="label-mono sm:col-span-2 lg:col-span-6">Edit line · {editing.username}</p>
           <label className="space-y-1.5">
             <span className="label-mono">Password</span>
             <input className={`${inputCls} w-full py-2`} value={editing.password} onChange={(e) => setEditing({ ...editing, password: e.target.value })} />
@@ -301,6 +302,17 @@ function LinesPage() {
               className={`${inputCls} w-full py-2`}
               value={editing.expires}
               onChange={(e) => setEditing({ ...editing, expires: e.target.value })}
+            />
+          </label>
+          <label className="space-y-1.5">
+            <span className="label-mono">Max connections</span>
+            <input
+              type="number"
+              min={1}
+              max={10}
+              className={`${inputCls} w-full py-2`}
+              value={editing.maxConn}
+              onChange={(e) => setEditing({ ...editing, maxConn: Math.min(10, Math.max(1, Number(e.target.value) || 1)) })}
             />
           </label>
           <button className={primaryBtn}>Save</button>
