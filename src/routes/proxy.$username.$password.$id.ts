@@ -1,7 +1,7 @@
 // Segment/variant proxy for header-protected channels: /proxy/{user}/{pass}/{id}?u=<base64url>
 import { createFileRoute } from "@tanstack/react-router";
 import { authLine, loadChannels, plain } from "@/lib/playlist-auth.server";
-import { allowedUrl, needsProxy, proxyFetch, unb64u } from "@/lib/stream-proxy.server";
+import { allowedUrl, checkStreamLimit, needsProxy, proxyFetch, unb64u } from "@/lib/stream-proxy.server";
 
 export const Route = createFileRoute("/proxy/$username/$password/$id")({
   server: {
