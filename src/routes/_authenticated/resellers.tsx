@@ -10,7 +10,7 @@ import { useMe, fmtDate, errMsg, isActive } from "@/hooks/use-me";
 import { useLines, useResellers } from "@/lib/queries";
 
 export const Route = createFileRoute("/_authenticated/resellers")({
-  head: () => ({ meta: [{ title: "Resellers — Nimbus Panel" }] }),
+  head: () => ({ meta: [{ title: "Resellers — Kurdistan IPTV" }] }),
   component: ResellersPage,
 });
 

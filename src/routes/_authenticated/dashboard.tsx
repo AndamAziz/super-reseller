@@ -4,7 +4,7 @@ import { useMe, isActive, fmtDate } from "@/hooks/use-me";
 import { useLines, usePlaylists, useResellers } from "@/lib/queries";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — Nimbus Panel" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — Kurdistan IPTV" }] }),
   component: Dashboard,
 });
 

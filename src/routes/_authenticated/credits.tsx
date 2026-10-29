@@ -5,7 +5,7 @@ import { useTransactions } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/credits")({
-  head: () => ({ meta: [{ title: "Credits — Nimbus Panel" }] }),
+  head: () => ({ meta: [{ title: "Credits — Kurdistan IPTV" }] }),
   component: CreditsPage,
 });
 

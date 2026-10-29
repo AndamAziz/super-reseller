@@ -14,7 +14,7 @@ import { recommendDuration } from "@/lib/recommend.functions";
 import { checkTestUsed, createLine, createTestLine, deleteLine, renewLine, updateLine } from "@/lib/lines.functions";
 
 export const Route = createFileRoute("/_authenticated/lines")({
-  head: () => ({ meta: [{ title: "Lines — Nimbus Panel" }] }),
+  head: () => ({ meta: [{ title: "Lines — Kurdistan IPTV" }] }),
   component: LinesPage,
 });
 
