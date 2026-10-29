@@ -301,6 +301,15 @@ export type Database = {
             }
             Returns: boolean
           }
+      connection_upgrade_cost: {
+        Args: {
+          _at: string
+          _expires_at: string
+          _new_connections: number
+          _old_connections: number
+        }
+        Returns: number
+      }
       create_line: {
         Args: { _months: number; _password: string; _username: string }
         Returns: {
@@ -379,6 +388,16 @@ export type Database = {
         }
       }
       test_used: { Args: { _customer: string }; Returns: Json }
+      update_line: {
+        Args: {
+          _custom_host: string
+          _expires_at?: string
+          _line_id: string
+          _max_connections: number
+          _password: string
+        }
+        Returns: number
+      }
     }
     Enums: {
       app_role: "admin" | "reseller"
