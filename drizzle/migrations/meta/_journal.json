@@ -64,6 +64,13 @@
       "when": 1793247882720,
       "tag": "0008_raise_max_connections_to_100",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793248028998,
+      "tag": "0009_scope_catalog_read_to_members",
+      "breakpoints": true
     }
   ]
 }
