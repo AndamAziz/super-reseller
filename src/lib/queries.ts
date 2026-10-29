@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { deviceLabel } from "@/lib/device";
 import { supabase } from "@/integrations/supabase/client";
 
 export type LineDevice = { label: string; ip: string | null; lastSeen: string };
