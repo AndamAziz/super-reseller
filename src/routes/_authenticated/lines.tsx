@@ -360,11 +360,23 @@ function LinesPage() {
                   <td className={`${td} font-mono text-[12px]`}>{fmtDate(l.expires_at)}</td>
                   <td className={`${td} font-mono text-[12px]`}>
                     <span
-                      title={`${l.active_connections ?? 0} device${(l.active_connections ?? 0) === 1 ? "" : "s"} streaming now · max ${l.max_connections ?? 1}`}
+                      title={`${l.active_connections ?? 0} device${(l.active_connections ?? 0) === 1 ? "" : "s"} streaming now · max ${l.max_connections ?? 1}${(l.active_devices ?? []).length ? "\n" + (l.active_devices ?? []).map((d) => d.label).join("\n") : ""}`}
                       className={(l.active_connections ?? 0) >= (l.max_connections ?? 1) ? "text-destructive" : undefined}
                     >
                       {l.active_connections ?? 0}/{l.max_connections ?? 1}
                     </span>
+                    {(l.active_devices ?? []).length > 0 && (
+                      <div className="mt-1 space-y-0.5 font-sans text-[11px] text-muted-foreground">
+                        {(l.active_devices ?? []).slice(0, 3).map((d, i) => (
+                          <div key={i} className="truncate" title={d.label}>{d.label}</div>
+                        ))}
+                        {(l.active_devices ?? []).length > 3 && (
+                          <div title={(l.active_devices ?? []).map((d) => d.label).join("\n")}>
+                            +{(l.active_devices ?? []).length - 3} more
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </td>
                   <td className={td}><StatusBadge active={isActive(l.expires_at)} /></td>
                   <td className={td}>

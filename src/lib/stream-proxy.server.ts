@@ -5,11 +5,12 @@ import { plain } from "./playlist-auth.server";
 export const needsProxy = (c: M3UChannel) => !!(c.referrer?.trim() || c.user_agent?.trim());
 
 /** Stable per-device key: line + client IP + user-agent (Web Crypto — workerd-safe). */
-async function clientKey(request: Request, username: string): Promise<string> {
+async function clientInfo(request: Request, username: string): Promise<{ key: string; ua: string; ip: string }> {
   const ip = request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "";
   const ua = request.headers.get("user-agent") ?? "";
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${username}|${ip}|${ua}`));
-  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
+  const key = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
+  return { key, ua, ip };
 }
 
 /**
@@ -21,11 +22,13 @@ export async function checkStreamLimit(request: Request, line: { username: strin
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: row } = await supabaseAdmin.from("lines").select("id").eq("username", line.username).maybeSingle();
   if (!row) return null; // line vanished — authLine already validated it, fail open
-  const key = await clientKey(request, line.username);
+  const { key, ua, ip } = await clientInfo(request, line.username);
   const { data, error } = await supabaseAdmin.rpc("check_stream_limit", {
     _line_id: row.id,
     _client_key: key,
     _max: line.maxConnections,
+    _user_agent: ua,
+    _ip: ip,
   });
   if (error) return null; // never break playback on a bookkeeping error
   if (data === false) return plain("Max connections reached for this line", 429);

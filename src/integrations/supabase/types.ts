@@ -17,18 +17,24 @@ export type Database = {
       active_connections: {
         Row: {
           client_key: string
+          ip: string | null
           last_seen: string
           line_id: string
+          user_agent: string | null
         }
         Insert: {
           client_key: string
+          ip?: string | null
           last_seen?: string
           line_id: string
+          user_agent?: string | null
         }
         Update: {
           client_key?: string
+          ip?: string | null
           last_seen?: string
           line_id?: string
+          user_agent?: string | null
         }
         Relationships: [
           {
@@ -280,10 +286,21 @@ export type Database = {
         Args: { _amount: number; _reason: string; _reseller_id: string }
         Returns: number
       }
-      check_stream_limit: {
-        Args: { _client_key: string; _line_id: string; _max: number }
-        Returns: boolean
-      }
+      check_stream_limit:
+        | {
+            Args: { _client_key: string; _line_id: string; _max: number }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              _client_key: string
+              _ip?: string
+              _line_id: string
+              _max: number
+              _user_agent?: string
+            }
+            Returns: boolean
+          }
       create_line: {
         Args: { _months: number; _password: string; _username: string }
         Returns: {
