@@ -358,7 +358,14 @@ function LinesPage() {
                   <td className={`${td} font-mono text-[12px] text-muted-foreground`}>{l.password}</td>
                   {isAdmin && <td className={`${td} text-muted-foreground`}>{l.profiles?.display_name ?? l.profiles?.email}</td>}
                   <td className={`${td} font-mono text-[12px]`}>{fmtDate(l.expires_at)}</td>
-                  <td className={`${td} font-mono text-[12px]`}>{l.max_connections ?? 1}</td>
+                  <td className={`${td} font-mono text-[12px]`}>
+                    <span
+                      title={`${l.active_connections ?? 0} device${(l.active_connections ?? 0) === 1 ? "" : "s"} streaming now · max ${l.max_connections ?? 1}`}
+                      className={(l.active_connections ?? 0) >= (l.max_connections ?? 1) ? "text-destructive" : undefined}
+                    >
+                      {l.active_connections ?? 0}/{l.max_connections ?? 1}
+                    </span>
+                  </td>
                   <td className={td}><StatusBadge active={isActive(l.expires_at)} /></td>
                   <td className={td}>
                     <button

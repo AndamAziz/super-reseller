@@ -2,7 +2,7 @@
 // Plain channels redirect to the source; channels needing Referer/User-Agent go through our proxy.
 import { createFileRoute } from "@tanstack/react-router";
 import { authLine, loadChannels, plain } from "@/lib/playlist-auth.server";
-import { needsProxy, proxyFetch } from "@/lib/stream-proxy.server";
+import { checkStreamLimit, needsProxy, proxyFetch } from "@/lib/stream-proxy.server";
 
 export const Route = createFileRoute("/live/$username/$password/$stream")({
   server: {
@@ -16,6 +16,8 @@ export const Route = createFileRoute("/live/$username/$password/$stream")({
         const ch = Number.isFinite(id) ? loaded.channels[id - 1] : undefined;
         if (!ch) return plain("Channel not found", 404);
         if (!needsProxy(ch)) return new Response(null, { status: 302, headers: { Location: ch.url, "Cache-Control": "no-store" } });
+        const limited = await checkStreamLimit(request, auth);
+        if (limited) return limited;
         const prefix = `${new URL(request.url).origin}/proxy/${encodeURIComponent(params.username)}/${encodeURIComponent(params.password)}/${id}`;
         return proxyFetch(request, new URL(ch.url), ch, prefix);
       },
