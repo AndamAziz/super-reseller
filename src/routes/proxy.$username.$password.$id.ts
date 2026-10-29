@@ -1,7 +1,7 @@
 // Segment/variant proxy for header-protected channels: /proxy/{user}/{pass}/{id}?u=<base64url>
 import { createFileRoute } from "@tanstack/react-router";
 import { authLine, loadChannels, plain } from "@/lib/playlist-auth.server";
-import { allowedUrl, checkStreamLimit, needsProxy, proxyFetch, unb64u } from "@/lib/stream-proxy.server";
+import { allowedUrl, checkStreamLimit, proxyFetch, unb64u } from "@/lib/stream-proxy.server";
 
 export const Route = createFileRoute("/proxy/$username/$password/$id")({
   server: {
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/proxy/$username/$password/$id")({
         const loaded = await loadChannels();
         if (!loaded.ok) return plain(loaded.message, loaded.status);
         const ch = Number.isFinite(id) ? loaded.channels[id - 1] : undefined;
-        if (!ch || !needsProxy(ch)) return plain("Channel not found", 404);
+        if (!ch) return plain("Channel not found", 404);
         let raw: string;
         try { raw = unb64u(new URL(request.url).searchParams.get("u") ?? ""); } catch { return plain("Bad url", 400); }
         const target = allowedUrl(raw, ch);
