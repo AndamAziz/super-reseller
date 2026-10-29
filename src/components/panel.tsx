@@ -173,3 +173,16 @@ export const dangerBtn =
   "rounded-lg border border-destructive/25 bg-destructive/10 px-3 py-1 text-[12px] font-medium text-destructive transition-colors hover:bg-destructive/15 disabled:opacity-50";
 export const primaryBtn =
   "rounded-xl bg-primary px-4 py-2 font-display text-[13px] font-semibold text-primary-foreground ring-1 ring-border transition-colors hover:bg-primary/90 disabled:opacity-50";
+
+export function FullBadge({ max }: { max: number }) {
+  return (
+    <span
+      title={`All ${max} connection${max === 1 ? "" : "s"} in use — new devices are blocked until one stops`}
+      className="inline-flex items-center gap-1.5 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-medium text-destructive ring-1 ring-destructive/25"
+    >
+      <span className="size-1.5 rounded-full bg-destructive" />
+      Full
+    </span>
+  );
+}
+

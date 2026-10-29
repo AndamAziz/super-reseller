@@ -6,7 +6,8 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { Copy, Link2, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { PageHeader, Panel, StatusBadge, td, th, inputCls, softBtn, dangerBtn, primaryBtn } from "@/components/panel";
+import { PageHeader, Panel, StatusBadge, FullBadge, td, th, inputCls, softBtn, dangerBtn, primaryBtn } from "@/components/panel";
+import { cn } from "@/lib/utils";
 import { useMe, isActive, fmtDate, errMsg } from "@/hooks/use-me";
 import { useLines } from "@/lib/queries";
 import { recommendDuration } from "@/lib/recommend.functions";
@@ -322,7 +323,7 @@ function LinesPage() {
 
       <Panel
         title="All lines"
-        sub={`${active} active · ${lines.length - active} expired`}
+        sub={`${active} active · ${lines.length - active} expired · red rows have reached their Max connections limit`}
         actions={
           <>
             <input placeholder="search username or reseller" value={q} onChange={(e) => setQ(e.target.value)} className={`${inputCls} w-48`} />
@@ -349,9 +350,17 @@ function LinesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {shown.map((l) => (
-                <tr key={l.id} className="transition-colors hover:bg-glass-strong">
-                  <td className={`${td} font-mono text-[12px]`}>
+              {shown.map((l) => {
+                const max = l.max_connections ?? 1;
+                const live = l.active_connections ?? 0;
+                const atLimit = live >= max;
+                return (
+                <tr
+                  key={l.id}
+                  data-full={atLimit ? "true" : undefined}
+                  className={cn("transition-colors hover:bg-glass-strong", atLimit && "bg-destructive/8")}
+                >
+                  <td className={cn(td, "font-mono text-[12px]", atLimit && "border-l-2 border-l-destructive")}>
                     {l.username}
                     {l.is_test && <span className="ml-2 rounded-full border border-border px-1.5 py-0.5 font-sans text-[10px] text-muted-foreground" title={l.customer_contact ?? ""}>Test used</span>}
                   </td>
@@ -361,10 +370,15 @@ function LinesPage() {
                   <td className={`${td} font-mono text-[12px]`}>
                     <span
                       title={`${l.active_connections ?? 0} device${(l.active_connections ?? 0) === 1 ? "" : "s"} streaming now · max ${l.max_connections ?? 1}${(l.active_devices ?? []).length ? "\n" + (l.active_devices ?? []).map((d) => d.label).join("\n") : ""}`}
-                      className={(l.active_connections ?? 0) >= (l.max_connections ?? 1) ? "text-destructive" : undefined}
+                      className={cn("font-mono", atLimit && "font-semibold text-destructive")}
                     >
-                      {l.active_connections ?? 0}/{l.max_connections ?? 1}
+                      {live}/{max}
                     </span>
+                    {atLimit && (
+                      <div className="mt-1">
+                        <FullBadge max={max} />
+                      </div>
+                    )}
                     {(l.active_devices ?? []).length > 0 && (
                       <div className="mt-1 space-y-0.5 font-sans text-[11px] text-muted-foreground">
                         {(l.active_devices ?? []).slice(0, 3).map((d, i) => (
@@ -415,7 +429,8 @@ function LinesPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
               {!shown.length && (
                 <tr><td className={`${td} text-muted-foreground`} colSpan={9}>No lines found.</td></tr>
               )}
