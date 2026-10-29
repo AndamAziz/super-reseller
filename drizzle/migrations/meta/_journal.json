@@ -50,6 +50,13 @@
       "when": 1792068088124,
       "tag": "0006_add_max_connections",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793247539274,
+      "tag": "0007_add_active_connections",
+      "breakpoints": true
     }
   ]
 }

@@ -14,6 +14,32 @@ export type Database = {
   }
   public: {
     Tables: {
+      active_connections: {
+        Row: {
+          client_key: string
+          last_seen: string
+          line_id: string
+        }
+        Insert: {
+          client_key: string
+          last_seen?: string
+          line_id: string
+        }
+        Update: {
+          client_key?: string
+          last_seen?: string
+          line_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "active_connections_line_id_fkey"
+            columns: ["line_id"]
+            isOneToOne: false
+            referencedRelation: "lines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_settings: {
         Row: {
           key: string
@@ -253,6 +279,10 @@ export type Database = {
       adjust_credits: {
         Args: { _amount: number; _reason: string; _reseller_id: string }
         Returns: number
+      }
+      check_stream_limit: {
+        Args: { _client_key: string; _line_id: string; _max: number }
+        Returns: boolean
       }
       create_line: {
         Args: { _months: number; _password: string; _username: string }
