@@ -1,11 +1,13 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
-import { LogOut, Menu, X } from "lucide-react";
+import { AlertTriangle, LogOut, Menu, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMe } from "@/hooks/use-me";
 import { cn } from "@/lib/utils";
 import logoAsset from "@/assets/kurdistan-iptv-logo.png.asset.json";
+import { hasLowCredits, LOW_CREDIT_THRESHOLD } from "@/lib/credit-alert";
+import { Button } from "@/components/ui/button";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", admin: false },
@@ -43,6 +45,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   const initials = (me?.displayName || me?.email || "?").slice(0, 2).toUpperCase();
+  const lowCredits = hasLowCredits(me?.role, me?.credits ?? 0);
 
   const sidebar = (
     <aside className="glass rise p-4 lg:sticky lg:top-6 lg:self-start">
@@ -80,7 +83,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       {me?.role === "reseller" && (
         <div className="mt-6 rounded-2xl border border-glass-edge bg-gradient-to-br from-primary/10 to-good/10 p-4">
           <div className="label-mono">Balance</div>
-          <div className="mt-1 font-display text-[22px] font-semibold tracking-tight">{me.credits.toLocaleString()}</div>
+          <div className={cn("mt-1 font-display text-[22px] font-semibold tracking-tight", lowCredits && "text-warn")}>{me.credits.toLocaleString()}</div>
+          {lowCredits && <div className="mt-1 inline-flex items-center gap-1 text-[12px] font-medium text-warn"><AlertTriangle className="size-3.5" /> Low credits</div>}
           <div className="text-[11px] text-muted-foreground">credits available · 1 credit = 1 month</div>
         </div>
       )}
@@ -114,7 +118,21 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className={cn("lg:block", open ? "fixed inset-0 z-50 bg-background/70 p-4 backdrop-blur-sm" : "hidden")}>
             {sidebar}
           </div>
-          <main className="min-w-0 space-y-5">{children}</main>
+          <main className="min-w-0 space-y-5">
+            {lowCredits && (
+              <div role="alert" className="flex flex-wrap items-center gap-3 border-y border-warn/30 bg-warn/10 px-4 py-3 text-warn">
+                <AlertTriangle className="size-5 shrink-0" aria-hidden="true" />
+                <div className="min-w-0 flex-1 basis-48">
+                  <p className="font-semibold">Low credit balance · {me?.credits ?? 0} credits remaining</p>
+                  <p className="mt-0.5 text-[12px]">Your balance is below {LOW_CREDIT_THRESHOLD} credits. Contact support to top up.</p>
+                </div>
+                <Button asChild variant="outline" size="sm" className="border-warn/40 text-warn">
+                  <Link to="/contact">Top up credits</Link>
+                </Button>
+              </div>
+            )}
+            {children}
+          </main>
         </div>
       </div>
     </div>
