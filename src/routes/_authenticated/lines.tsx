@@ -370,10 +370,15 @@ function LinesPage() {
                   <td className={`${td} font-mono text-[12px]`}>
                     <span
                       title={`${l.active_connections ?? 0} device${(l.active_connections ?? 0) === 1 ? "" : "s"} streaming now · max ${l.max_connections ?? 1}${(l.active_devices ?? []).length ? "\n" + (l.active_devices ?? []).map((d) => d.label).join("\n") : ""}`}
-                      className={(l.active_connections ?? 0) >= (l.max_connections ?? 1) ? "text-destructive" : undefined}
+                      className={cn("font-mono", atLimit && "font-semibold text-destructive")}
                     >
-                      {l.active_connections ?? 0}/{l.max_connections ?? 1}
+                      {live}/{max}
                     </span>
+                    {atLimit && (
+                      <div className="mt-1">
+                        <FullBadge max={max} />
+                      </div>
+                    )}
                     {(l.active_devices ?? []).length > 0 && (
                       <div className="mt-1 space-y-0.5 font-sans text-[11px] text-muted-foreground">
                         {(l.active_devices ?? []).slice(0, 3).map((d, i) => (
@@ -424,7 +429,8 @@ function LinesPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
               {!shown.length && (
                 <tr><td className={`${td} text-muted-foreground`} colSpan={9}>No lines found.</td></tr>
               )}
