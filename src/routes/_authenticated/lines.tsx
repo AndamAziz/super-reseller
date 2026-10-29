@@ -309,10 +309,10 @@ function LinesPage() {
             <input
               type="number"
               min={1}
-              max={10}
+              max={100}
               className={`${inputCls} w-full py-2`}
               value={editing.maxConn}
-              onChange={(e) => setEditing({ ...editing, maxConn: Math.min(10, Math.max(1, Number(e.target.value) || 1)) })}
+              onChange={(e) => setEditing({ ...editing, maxConn: Math.min(100, Math.max(1, Number(e.target.value) || 1)) })}
             />
           </label>
           <button className={primaryBtn}>Save</button>
