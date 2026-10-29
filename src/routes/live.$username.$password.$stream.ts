@@ -3,7 +3,7 @@
 // Channels with a stored Referer/User-Agent also get those headers injected on origin fetches.
 import { createFileRoute } from "@tanstack/react-router";
 import { authLine, loadChannels, plain } from "@/lib/playlist-auth.server";
-import { checkStreamLimit, needsProxy, proxyFetch } from "@/lib/stream-proxy.server";
+import { checkStreamLimit, proxyFetch } from "@/lib/stream-proxy.server";
 
 export const Route = createFileRoute("/live/$username/$password/$stream")({
   server: {
