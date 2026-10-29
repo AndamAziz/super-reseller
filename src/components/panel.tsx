@@ -5,6 +5,7 @@ import { LogOut, Menu, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMe } from "@/hooks/use-me";
 import { cn } from "@/lib/utils";
+import logoAsset from "@/assets/kurdistan-iptv-logo.png.asset.json";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", admin: false },
@@ -33,11 +34,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const sidebar = (
     <aside className="glass rise p-4 lg:sticky lg:top-6 lg:self-start">
       <div className="flex items-center gap-2.5 px-2 pb-4">
-        <div className="grid size-8 place-items-center rounded-xl bg-primary font-display text-[13px] font-bold text-primary-foreground">
-          N
-        </div>
+        <img src={logoAsset.url} alt="Kurdistan IPTV" className="size-9 rounded-xl object-cover ring-1 ring-border" />
         <div className="leading-tight">
-          <div className="font-display text-[14px] font-semibold">NIMBUS</div>
+          <div className="font-display text-[14px] font-semibold">KURDISTAN IPTV</div>
           <div className="label-mono tracking-[0.18em]">{me?.role === "admin" ? "Super Admin" : "Reseller Ops"}</div>
         </div>
         <button className="ml-auto lg:hidden" onClick={() => setOpen(false)} aria-label="Close menu">
@@ -95,7 +94,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           <button onClick={() => setOpen(true)} className="glass p-2" aria-label="Open menu">
             <Menu className="size-4" />
           </button>
-          <span className="font-display font-semibold">NIMBUS</span>
+          <img src={logoAsset.url} alt="Kurdistan IPTV" className="size-7 rounded-lg object-cover ring-1 ring-border" />
+          <span className="font-display font-semibold">KURDISTAN IPTV</span>
         </div>
         <div className="grid gap-5 lg:grid-cols-[248px_minmax(0,1fr)]">
           <div className={cn("lg:block", open ? "fixed inset-0 z-50 bg-background/70 p-4 backdrop-blur-sm" : "hidden")}>

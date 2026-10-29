@@ -10,7 +10,7 @@ import { parseM3U, buildM3U, type M3UChannel } from "@/lib/m3u";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/playlists")({
-  head: () => ({ meta: [{ title: "Playlists — Nimbus Panel" }] }),
+  head: () => ({ meta: [{ title: "Playlists — Kurdistan IPTV" }] }),
   component: PlaylistsPage,
 });
 
