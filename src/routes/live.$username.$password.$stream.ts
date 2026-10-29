@@ -1,5 +1,6 @@
 // Xtream-style stream URL: /live/{user}/{pass}/{id}.m3u8
-// Plain channels redirect to the source; channels needing Referer/User-Agent go through our proxy.
+// Every channel is served through our proxy so Max connections is enforced for all lines.
+// Channels with a stored Referer/User-Agent also get those headers injected on origin fetches.
 import { createFileRoute } from "@tanstack/react-router";
 import { authLine, loadChannels, plain } from "@/lib/playlist-auth.server";
 import { checkStreamLimit, needsProxy, proxyFetch } from "@/lib/stream-proxy.server";
@@ -15,7 +16,6 @@ export const Route = createFileRoute("/live/$username/$password/$stream")({
         if (!loaded.ok) return plain(loaded.message, loaded.status);
         const ch = Number.isFinite(id) ? loaded.channels[id - 1] : undefined;
         if (!ch) return plain("Channel not found", 404);
-        if (!needsProxy(ch)) return new Response(null, { status: 302, headers: { Location: ch.url, "Cache-Control": "no-store" } });
         const limited = await checkStreamLimit(request, auth);
         if (limited) return limited;
         const prefix = `${new URL(request.url).origin}/proxy/${encodeURIComponent(params.username)}/${encodeURIComponent(params.password)}/${id}`;
