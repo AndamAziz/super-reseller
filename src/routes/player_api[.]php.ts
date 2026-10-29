@@ -79,7 +79,7 @@ export async function handleXtreamRequest(request: Request) {
     return json(movies.map((m, i) => ({
       num: i + 1, name: m.name, stream_type: "movie", stream_id: i + 1, stream_icon: m.logo ?? "",
       rating: "", added: "0", category_id: String(vc.indexOf(m.group_title ?? "Uncategorized") + 1),
-      container_extension: "m3u8", custom_sid: "", direct_source: m.url,
+      container_extension: "m3u8", custom_sid: "", direct_source: `${base}/movie/${u}/${p}/${i + 1}.m3u8`,
     })).filter((s) => !filter || s.category_id === filter));
   }
   const sc = cats(series);
@@ -128,7 +128,7 @@ export async function handleXtreamRequest(request: Request) {
           category_id: catId(c.group_title),
           custom_sid: "",
           tv_archive: 0,
-          direct_source: needsProxy(c) ? `${base}/live/${u}/${p}/${i + 1}.m3u8` : c.url,
+          direct_source: `${base}/live/${u}/${p}/${i + 1}.m3u8`,
           requires_referer: needsProxy(c),
           tv_archive_duration: 0,
         }))

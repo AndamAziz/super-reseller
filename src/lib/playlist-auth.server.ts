@@ -1,5 +1,5 @@
 // Shared auth + source loading for the public playlist endpoints (M3U and Xtream-compatible).
-import { parseM3U, type M3UChannel } from "./m3u";
+import { buildM3U, parseM3U, type M3UChannel } from "./m3u";
 
 export type AuthResult =
   | { ok: true; lineId: string; username: string; password: string; expiresAt: string; createdAt: string | null; maxConnections: number }
@@ -90,9 +90,18 @@ export async function handlePlaylistRequest(request: Request): Promise<Response>
   const url = new URL(request.url);
   const auth = await authLine(url.searchParams.get("username") ?? "", url.searchParams.get("password") ?? "");
   if (!auth.ok) return plain(auth.message, auth.status);
-  const src = await loadSourceText();
-  if (!src.ok) return plain(src.message, src.status);
-  return new Response(src.text, {
+  const loaded = await loadCatalog();
+  if (!loaded.ok) return plain(loaded.message, loaded.status);
+  // Rewrite every stream URL through this app so auth, max-connections and referer rules apply.
+  const origin = url.origin;
+  const u = encodeURIComponent(auth.username), p = encodeURIComponent(auth.password);
+  const { live, movies, episodes } = loaded.catalog;
+  const rewritten: M3UChannel[] = [
+    ...live.map((c, i) => ({ ...c, url: `${origin}/live/${u}/${p}/${i + 1}.m3u8` })),
+    ...movies.map((m, i) => ({ ...m, url: `${origin}/movie/${u}/${p}/${i + 1}.m3u8` })),
+    ...episodes.map((e) => ({ ...e, url: `${origin}/series/${u}/${p}/${e.id}.m3u8` })),
+  ];
+  return new Response(buildM3U(rewritten), {
     headers: {
       "Content-Type": "audio/x-mpegurl; charset=utf-8",
       "Content-Disposition": `inline; filename="${auth.username}.m3u"`,
