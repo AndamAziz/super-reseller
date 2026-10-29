@@ -8,13 +8,22 @@ import { Copy, Link2, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, Panel, StatusBadge, FullBadge, td, th, inputCls, softBtn, dangerBtn, primaryBtn } from "@/components/panel";
 import { cn } from "@/lib/utils";
+import { connectionUpgradeCost, renewalCost } from "@/lib/connection-pricing";
+import { Button } from "@/components/ui/button";
 import { useMe, isActive, fmtDate, errMsg } from "@/hooks/use-me";
 import { useLines } from "@/lib/queries";
 import { recommendDuration } from "@/lib/recommend.functions";
 import { checkTestUsed, createLine, createTestLine, deleteLine, renewLine, updateLine } from "@/lib/lines.functions";
 
 export const Route = createFileRoute("/_authenticated/lines")({
-  head: () => ({ meta: [{ title: "Lines — Kurdistan IPTV" }] }),
+  head: () => ({ meta: [
+    { title: "Lines — Kurdistan IPTV" },
+    { name: "description", content: "Manage Kurdistan IPTV subscriptions, connection limits and credit renewals." },
+    { property: "og:title", content: "Lines — Kurdistan IPTV" },
+    { property: "og:description", content: "Manage Kurdistan IPTV subscriptions, connection limits and credit renewals." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: LinesPage,
 });
 
@@ -116,7 +125,7 @@ function LinesPage() {
     if (!editing) return;
     if (editing.password.length < 4) return void toast.error("Password: min 4 chars");
     try {
-      await updateLineFn({
+      const result = await updateLineFn({
         data: {
           lineId: editing.id,
           password: editing.password,
@@ -125,7 +134,7 @@ function LinesPage() {
           expiresAt: isAdmin && editing.expires ? new Date(`${editing.expires}T23:59:59Z`).toISOString() : null,
         },
       });
-      toast.success("Line updated");
+      toast.success(result.creditsCharged ? `Line updated · ${result.creditsCharged} credits deducted` : "Line updated");
       setEditing(null);
       refresh();
     } catch (err) {
@@ -200,6 +209,11 @@ function LinesPage() {
   );
   const active = lines.filter((l) => isActive(l.expires_at)).length;
   const cost = isAdmin || form.months === 0 ? 0 : form.months;
+  const originalLine = editing ? lines.find((l) => l.id === editing.id) : undefined;
+  const upgradeCost = !isAdmin && editing && originalLine
+    ? connectionUpgradeCost(originalLine.expires_at, originalLine.max_connections ?? 1, editing.maxConn)
+    : 0;
+  const insufficientUpgradeCredits = upgradeCost > (me?.credits ?? 0);
 
   return (
     <>
@@ -316,8 +330,17 @@ function LinesPage() {
               onChange={(e) => setEditing({ ...editing, maxConn: Math.min(100, Math.max(1, Number(e.target.value) || 1)) })}
             />
           </label>
-          <button className={primaryBtn}>Save</button>
-          <button type="button" className={softBtn} onClick={() => setEditing(null)}>Cancel</button>
+          <Button type="submit" disabled={insufficientUpgradeCredits} className={primaryBtn}>
+            {isAdmin ? "Save" : `Save · ${upgradeCost} credits`}
+          </Button>
+          <Button type="button" variant="outline" className={softBtn} onClick={() => setEditing(null)}>Cancel</Button>
+          {!isAdmin && (
+            <p className="text-[12px] text-muted-foreground sm:col-span-2 lg:col-span-6">
+              Additional connections: 1 credit each per remaining month (partial months rounded up).
+              {` Balance: ${me?.credits ?? 0} credits. Reductions do not refund credits.`}
+              {insufficientUpgradeCredits && <span className="ml-2 text-destructive">Insufficient credits.</span>}
+            </p>
+          )}
         </form>
       )}
 
@@ -413,7 +436,9 @@ function LinesPage() {
                       >
                         {MONTHS.map((m) => <option key={m} value={m}>{m}m</option>)}
                       </select>
-                      <button className={softBtn} onClick={() => renew(l.id)}>Renew</button>
+                      <Button type="button" variant="outline" className={softBtn} onClick={() => renew(l.id)}>
+                        {isAdmin ? "Renew" : `Renew · ${renewalCost(renewMonths[l.id] ?? 1, l.max_connections ?? 1)} credits`}
+                      </Button>
                       <button
                         className={softBtn}
                         aria-label={`Edit ${l.username}`}

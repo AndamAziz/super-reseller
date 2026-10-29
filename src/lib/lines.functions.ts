@@ -1,5 +1,5 @@
 // Server functions for managing subscription lines.
-// Credit deduction and expiry stay in the DB functions (create_line / renew_line);
+// Credit deduction and expiry stay in the DB functions (create_line / renew_line / update_line);
 // these wrappers add validation, auth, and the custom-host field.
 
 import { createServerFn } from "@tanstack/react-start";
@@ -97,23 +97,15 @@ export const updateLine = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => updateSchema.parse(data))
   .handler(async ({ data, context }) => {
-    // RLS: caller can only see their own lines (or all, if admin).
-    const { data: line } = await context.supabase.from("lines").select("id").eq("id", data.lineId).maybeSingle();
-    if (!line) throw new Error("Line not found");
-    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
-    const patch: { password: string; custom_host: string | null; max_connections: number; expires_at?: string } = {
-      password: data.password,
-      custom_host: data.customHost || null,
-      max_connections: data.maxConnections,
-    };
-    if (data.expiresAt) {
-      if (!isAdmin) throw new Error("Only admins can change the expiry date directly — use Renew");
-      patch.expires_at = data.expiresAt;
-    }
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("lines").update(patch).eq("id", data.lineId);
+    const { data: creditsCharged, error } = await context.supabase.rpc("update_line", {
+      _line_id: data.lineId,
+      _password: data.password,
+      _custom_host: data.customHost ?? "",
+      _max_connections: data.maxConnections,
+      ... (data.expiresAt ? { _expires_at: data.expiresAt } : {}),
+    });
     if (error) throw new Error(error.message);
-    return { ok: true as const };
+    return { ok: true as const, creditsCharged: creditsCharged ?? 0 };
   });
 
 export const deleteLine = createServerFn({ method: "POST" })
