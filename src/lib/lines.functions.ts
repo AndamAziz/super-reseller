@@ -89,7 +89,7 @@ const updateSchema = z.object({
   password: z.string().min(4).max(100),
   customHost: z.string().trim().max(200).nullable(),
   expiresAt: z.string().datetime().nullable(),
-  maxConnections: z.number().int().min(1).max(10).default(1),
+  maxConnections: z.number().int().min(1).max(100).default(1),
 });
 
 /** Edit password / custom host (owner or admin). Only admins may set the expiry directly — resellers extend via credits. */
