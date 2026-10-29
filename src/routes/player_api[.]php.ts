@@ -1,7 +1,7 @@
 // Xtream Codes-compatible API so IPTV apps can add this server as an "Xtream" provider.
 // Backed by the protected M3U source; live channels only (no movies/series in an M3U).
 import { createFileRoute } from "@tanstack/react-router";
-import { authLine, json, loadCatalog } from "@/lib/playlist-auth.server";
+import { authLine, countActiveConnections, json, loadCatalog } from "@/lib/playlist-auth.server";
 import { needsProxy } from "@/lib/stream-proxy.server";
 
 export const Route = createFileRoute("/player_api.php")({
@@ -43,7 +43,7 @@ export async function handleXtreamRequest(request: Request) {
         status: "Active",
         exp_date: String(exp),
         is_trial: "0",
-        active_cons: "0",
+        active_cons: String(await countActiveConnections(auth.lineId)),
         created_at: String(Math.floor(new Date(auth.createdAt ?? Date.now()).getTime() / 1000)),
         max_connections: String(auth.maxConnections),
         allowed_output_formats: ["m3u8", "ts"],
