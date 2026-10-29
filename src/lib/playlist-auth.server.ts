@@ -2,7 +2,7 @@
 import { parseM3U, type M3UChannel } from "./m3u";
 
 export type AuthResult =
-  | { ok: true; username: string; password: string; expiresAt: string; createdAt: string | null; maxConnections: number }
+  | { ok: true; lineId: string; username: string; password: string; expiresAt: string; createdAt: string | null; maxConnections: number }
   | { ok: false; status: number; message: string };
 
 export async function authLine(username: string, password: string): Promise<AuthResult> {
@@ -12,12 +12,24 @@ export async function authLine(username: string, password: string): Promise<Auth
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: line } = await supabaseAdmin
     .from("lines")
-    .select("username, password, expires_at, created_at, max_connections")
+    .select("id, username, password, expires_at, created_at, max_connections")
     .eq("username", username.trim())
     .maybeSingle();
   if (!line || line.password !== password) return { ok: false, status: 401, message: "Invalid credentials" };
   if (new Date(line.expires_at).getTime() <= Date.now()) return { ok: false, status: 403, message: "Subscription expired" };
-  return { ok: true, username: line.username, password: line.password, expiresAt: line.expires_at, createdAt: line.created_at ?? null, maxConnections: line.max_connections ?? 1 };
+  return { ok: true, lineId: line.id, username: line.username, password: line.password, expiresAt: line.expires_at, createdAt: line.created_at ?? null, maxConnections: line.max_connections ?? 1 };
+}
+
+/** Devices seen streaming on this line in the last 90 seconds (same window as check_stream_limit). */
+export async function countActiveConnections(lineId: string): Promise<number> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const since = new Date(Date.now() - 90_000).toISOString();
+  const { count } = await supabaseAdmin
+    .from("active_connections")
+    .select("client_key", { count: "exact", head: true })
+    .eq("line_id", lineId)
+    .gte("last_seen", since);
+  return count ?? 0;
 }
 
 export async function loadSourceText(): Promise<{ ok: true; text: string } | { ok: false; status: number; message: string }> {
