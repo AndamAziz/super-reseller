@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { inputCls, primaryBtn } from "@/components/panel";
+import { inputCls, primaryBtn, TelegramIcon, TELEGRAM_HANDLE, TELEGRAM_URL } from "@/components/panel";
 import logoAsset from "@/assets/kurdistan-iptv-logo.png.asset.json";
 
 export const Route = createFileRoute("/auth")({
@@ -58,6 +58,15 @@ function AuthPage() {
           {busy ? "Signing in…" : "Sign in"}
         </button>
         <p className="text-center text-[11px] text-muted-foreground">Reseller accounts are created by your administrator.</p>
+        <a
+          href={TELEGRAM_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 rounded-xl border border-glass-edge bg-glass-strong px-3 py-2 text-[12px] text-muted-foreground ring-1 ring-border transition-colors hover:text-foreground"
+        >
+          <TelegramIcon className="size-4 text-primary" />
+          Need an account or help? Chat on Telegram @{TELEGRAM_HANDLE}
+        </a>
       </form>
     </div>
   );

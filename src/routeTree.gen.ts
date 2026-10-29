@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as GetDotphpRouteImport } from './routes/get[.]php'
 import { Route as Player_apiDotphpRouteImport } from './routes/player_api[.]php'
+import { Route as AuthenticatedContactRouteImport } from './routes/_authenticated/contact'
 import { Route as AuthenticatedCreditsRouteImport } from './routes/_authenticated/credits'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedLinesRouteImport } from './routes/_authenticated/lines'
@@ -51,6 +52,11 @@ const Player_apiDotphpRoute = Player_apiDotphpRouteImport.update({
   id: '/player_api.php',
   path: '/player_api.php',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedContactRoute = AuthenticatedContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCreditsRoute = AuthenticatedCreditsRouteImport.update({
   id: '/credits',
@@ -127,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/get.php': typeof GetDotphpRoute
   '/player_api.php': typeof Player_apiDotphpRoute
+  '/contact': typeof AuthenticatedContactRoute
   '/credits': typeof AuthenticatedCreditsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/lines': typeof AuthenticatedLinesRoute
@@ -146,6 +153,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/get.php': typeof GetDotphpRoute
   '/player_api.php': typeof Player_apiDotphpRoute
+  '/contact': typeof AuthenticatedContactRoute
   '/credits': typeof AuthenticatedCreditsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/lines': typeof AuthenticatedLinesRoute
@@ -167,6 +175,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/get.php': typeof GetDotphpRoute
   '/player_api.php': typeof Player_apiDotphpRoute
+  '/_authenticated/contact': typeof AuthenticatedContactRoute
   '/_authenticated/credits': typeof AuthenticatedCreditsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/lines': typeof AuthenticatedLinesRoute
@@ -188,6 +197,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/get.php'
     | '/player_api.php'
+    | '/contact'
     | '/credits'
     | '/dashboard'
     | '/lines'
@@ -207,6 +217,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/get.php'
     | '/player_api.php'
+    | '/contact'
     | '/credits'
     | '/dashboard'
     | '/lines'
@@ -227,6 +238,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/get.php'
     | '/player_api.php'
+    | '/_authenticated/contact'
     | '/_authenticated/credits'
     | '/_authenticated/dashboard'
     | '/_authenticated/lines'
@@ -293,6 +305,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/player_api.php'
       preLoaderRoute: typeof Player_apiDotphpRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/contact': {
+      id: '/_authenticated/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof AuthenticatedContactRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/credits': {
       id: '/_authenticated/credits'
@@ -389,6 +408,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedContactRoute: typeof AuthenticatedContactRoute
   AuthenticatedCreditsRoute: typeof AuthenticatedCreditsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedLinesRoute: typeof AuthenticatedLinesRoute
@@ -397,6 +417,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedContactRoute: AuthenticatedContactRoute,
   AuthenticatedCreditsRoute: AuthenticatedCreditsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedLinesRoute: AuthenticatedLinesRoute,
