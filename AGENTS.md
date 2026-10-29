@@ -9,6 +9,6 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 
-- Credit deduction and line expiry run only in database functions (create_line, renew_line, update_line, adjust_credits); update_line locks the line and balance together, and renew_line charges for every configured connection, preventing browser bypass and concurrent overspending.
+- Credit deduction and line expiry run only in database functions; update_line locks the line, bill_connection_increase triggers atomic balance deductions for all reseller connection increases (including legacy service-role updates without a user identity), and renew_line charges every configured connection. Authenticated admin changes remain exempt; update_line must not also deduct the trigger's charge.
 - Connection upgrade previews mirror database UTC calendar-month arithmetic, rounding remaining partial months up; the database returns the actual charge and remains authoritative.
 - Reseller accounts are created/deleted by admin-only server functions; public sign-up is disabled.

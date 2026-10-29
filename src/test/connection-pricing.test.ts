@@ -18,6 +18,10 @@ describe("reseller connection pricing", () => {
   it("charges all connections for renewal", () => {
     expect(renewalCost(3, 5)).toBe(15);
   });
+  it("charges five additional credits when a one-month line goes from one to six devices", () => {
+    expect(connectionUpgradeCost("2026-11-28T02:13:41Z", 1, 6, new Date("2026-10-29T05:21:00Z"))).toBe(5);
+    expect(renewalCost(1, 6)).toBe(6);
+  });
   it("handles end-of-month UTC dates the same as the database", () => {
     expect(connectionUpgradeCost("2027-02-28T05:09:00Z", 1, 2, new Date("2027-01-31T05:09:00Z"))).toBe(1);
   });
