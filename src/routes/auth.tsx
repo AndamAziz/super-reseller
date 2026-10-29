@@ -2,14 +2,15 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { inputCls, primaryBtn } from "@/components/panel";
+import logoAsset from "@/assets/kurdistan-iptv-logo.png.asset.json";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — Nimbus Panel" },
-      { name: "description", content: "Sign in to the Nimbus reseller and admin panel." },
-      { property: "og:title", content: "Sign in — Nimbus Panel" },
-      { property: "og:description", content: "Sign in to the Nimbus reseller and admin panel." },
+      { title: "Sign in — Kurdistan IPTV" },
+      { name: "description", content: "Sign in to the Kurdistan IPTV reseller and admin panel." },
+      { property: "og:title", content: "Sign in — Kurdistan IPTV" },
+      { property: "og:description", content: "Sign in to the Kurdistan IPTV reseller and admin panel." },
     ],
   }),
   component: AuthPage,
@@ -37,9 +38,9 @@ function AuthPage() {
       <div className="sheen-bg pointer-events-none absolute inset-0" />
       <form onSubmit={submit} className="glass rise relative w-full max-w-sm space-y-4 p-7">
         <div className="flex items-center gap-2.5">
-          <div className="grid size-9 place-items-center rounded-xl bg-primary font-display font-bold text-primary-foreground">N</div>
+          <img src={logoAsset.url} alt="Kurdistan IPTV" className="size-10 rounded-xl object-cover ring-1 ring-border" />
           <div className="leading-tight">
-            <div className="font-display text-[15px] font-semibold">NIMBUS</div>
+            <div className="font-display text-[15px] font-semibold">KURDISTAN IPTV</div>
             <div className="label-mono tracking-[0.18em]">Reseller Ops</div>
           </div>
         </div>
