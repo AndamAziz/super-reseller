@@ -19,6 +19,8 @@ export const Route = createFileRoute("/proxy/$username/$password/$id")({
         try { raw = unb64u(new URL(request.url).searchParams.get("u") ?? ""); } catch { return plain("Bad url", 400); }
         const target = allowedUrl(raw, ch);
         if (!target) return plain("Forbidden target", 403);
+        const limited = await checkStreamLimit(request, auth);
+        if (limited) return limited;
         const prefix = `${new URL(request.url).origin}/proxy/${encodeURIComponent(params.username)}/${encodeURIComponent(params.password)}/${id}`;
         return proxyFetch(request, target, ch, prefix);
       },
