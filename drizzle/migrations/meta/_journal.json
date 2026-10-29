@@ -92,6 +92,13 @@
       "when": 1793250720615,
       "tag": "0012_bill_reseller_connection_upgrades_and_renewals",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1793251371826,
+      "tag": "0013_enforce_connection_billing_for_legacy_updates",
+      "breakpoints": true
     }
   ]
 }
