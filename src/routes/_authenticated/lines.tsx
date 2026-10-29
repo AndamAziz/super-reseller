@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { deviceLabel } from "@/lib/device";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Copy, Link2, Pencil, Sparkles, Trash2 } from "lucide-react";
