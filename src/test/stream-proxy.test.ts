@@ -9,7 +9,7 @@ describe("HLS rewriter", () => {
   it("never rewrites tag lines and resolves relative URIs against the playlist URL", async () => {
     const out = await rewritePlaylist(src, "https://after-redirect.ir/hls2/bein1.m3u8", P, "u:186");
     expect(out).toContain("#EXT-X-VERSION:6");
-    expect(out).not.toMatch(/ext-x-version/i.source.includes("x") ? /\?u=ZXh0/ : /x/);
+    expect(out.split("\n")[1]).toBe("#EXT-X-VERSION:6");
     expect(urls(out)).toEqual(["https://after-redirect.ir/hls2/seg1.ts", "https://edge22.358598.ir.cdn.ir/hls2/seg2.ts"]);
     expect(out).toMatch(/URI="https:\/\/app\.test\/proxy/);
   });
