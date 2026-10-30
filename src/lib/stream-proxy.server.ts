@@ -51,30 +51,53 @@ function isPrivateHost(h: string) {
   return a === 10 || a === 127 || a === 0 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127) || a >= 224;
 }
 
-/** Allowed: http(s), public host, same registrable base domain as the channel origin. */
-export function allowedUrl(target: string, channel: M3UChannel): URL | null {
-  let u: URL, o: URL;
-  try { u = new URL(target); o = new URL(channel.url); } catch { return null; }
-  if (u.protocol !== "http:" && u.protocol !== "https:") return null;
-  if (isPrivateHost(u.hostname)) return null;
-  const base = (h: string) => h.split(".").slice(-2).join(".");
-  return base(u.hostname) === base(o.hostname) ? u : null;
+/** Chain signature: every URL we emit in a rewritten playlist is HMAC-signed for (user, stream). */
+async function hmacKey() {
+  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_URL || "stream-proxy";
+  return crypto.subtle.importKey("raw", new TextEncoder().encode(`proxy:${secret}`), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+}
+export async function signTarget(scope: string, url: string): Promise<string> {
+  const sig = await crypto.subtle.sign("HMAC", await hmacKey(), new TextEncoder().encode(`${scope}\n${url}`));
+  return b64u(String.fromCharCode(...new Uint8Array(sig).slice(0, 18)));
 }
 
-function rewrite(text: string, from: string, prefix: string) {
-  const abs = (uri: string) => `${prefix}?u=${b64u(new URL(uri, from).toString())}`;
-  return text.split(/\r?\n/).map((line) => {
+/** Allowed: http(s), public host, and signed by us for this user+stream (i.e. came from the channel's playlist chain). */
+export async function allowedUrl(target: string, sig: string, scope: string): Promise<URL | null> {
+  let u: URL;
+  try { u = new URL(target); } catch { return null; }
+  if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+  if (isPrivateHost(u.hostname)) return null;
+  if (!sig || sig !== (await signTarget(scope, u.toString()))) return null;
+  return u;
+}
+
+const isTag = (t: string) => t.startsWith("#") || /^EXT-?X?-?[A-Z-]*:/i.test(t) || /^EXTM3U$/i.test(t);
+
+export async function rewritePlaylist(text: string, from: string, prefix: string, scope: string): Promise<string> {
+  const abs = async (uri: string) => {
+    const full = new URL(uri.trim(), from).toString();
+    return `${prefix}?u=${b64u(full)}&s=${await signTarget(scope, full)}`;
+  };
+  const out: string[] = [];
+  for (const line of text.replace(/^\uFEFF/, "").split(/\r\n|\r|\n/)) {
     const t = line.trim();
-    if (!t) return line;
-    if (t.startsWith("#")) return line.replace(/URI="([^"]+)"/g, (_, uri: string) => `URI="${abs(uri)}"`);
-    return abs(t);
-  }).join("\n");
+    if (!t) { out.push(line); continue; }
+    if (isTag(t)) {
+      if (/^#EXT-X-(KEY|MAP|MEDIA|SESSION-KEY|I-FRAME-STREAM-INF):/i.test(t) && /URI="/.test(t)) {
+        const m = /URI="([^"]+)"/.exec(t)!;
+        out.push(t.replace(m[0], `URI="${await abs(m[1]!)}"`));
+      } else out.push(line);
+      continue;
+    }
+    try { out.push(await abs(t)); } catch { out.push(line); }
+  }
+  return out.join("\n");
 }
 
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Expose-Headers": "Content-Length, Content-Range" };
 
 /** Fetch target with the channel's headers; rewrite playlists, stream everything else. */
-export async function proxyFetch(request: Request, target: URL, channel: M3UChannel, prefix: string): Promise<Response> {
+export async function proxyFetch(request: Request, target: URL, channel: M3UChannel, prefix: string, scope: string): Promise<Response> {
   const headers: Record<string, string> = { "User-Agent": channel.user_agent?.trim() || "Mozilla/5.0" };
   if (channel.referrer?.trim()) {
     headers["Referer"] = channel.referrer.trim();
@@ -82,17 +105,28 @@ export async function proxyFetch(request: Request, target: URL, channel: M3UChan
   }
   const range = request.headers.get("range");
   if (range) headers["Range"] = range;
-  let res: Response;
+  // Follow redirects manually so every hop is checked against private/local addresses.
+  let res: Response | null = null;
+  let current = target;
   try {
-    res = await fetch(target, { headers, redirect: "follow", signal: AbortSignal.timeout(15000) });
+    for (let hop = 0; hop < 6; hop++) {
+      if (isPrivateHost(current.hostname)) return plain("Forbidden target", 403);
+      res = await fetch(current, { headers, redirect: "manual", signal: AbortSignal.timeout(15000) });
+      const loc = res.status >= 300 && res.status < 400 ? res.headers.get("location") : null;
+      if (!loc) break;
+      current = new URL(loc, current);
+      if (current.protocol !== "http:" && current.protocol !== "https:") return plain("Forbidden target", 403);
+      res = null;
+    }
   } catch {
     return plain("Stream origin unreachable", 502);
   }
+  if (!res) return plain("Too many redirects", 502);
   if (!res.ok && res.status !== 206) return plain(`Stream origin error (HTTP ${res.status})`, 502);
   const ct = res.headers.get("content-type") ?? "";
-  const isPlaylist = /mpegurl/i.test(ct) || /\.m3u8?($|\?)/i.test(new URL(res.url || target.toString()).pathname);
+  const isPlaylist = /mpegurl/i.test(ct) || /\.m3u8?$/i.test(current.pathname);
   if (isPlaylist) {
-    const body = rewrite(await res.text(), res.url || target.toString(), prefix);
+    const body = await rewritePlaylist(await res.text(), current.toString(), prefix, scope);
     return new Response(body, { headers: { ...CORS, "Content-Type": "application/vnd.apple.mpegurl", "Cache-Control": "public, max-age=3" } });
   }
   const out = new Headers({ ...CORS, "Content-Type": ct || "video/mp2t", "Cache-Control": "public, max-age=60" });
