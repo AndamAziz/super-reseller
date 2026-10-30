@@ -7,7 +7,7 @@ export type StreamTestStep = { step: string; url: string; status: number | null;
 /** Admin-only: fetch a channel's playlist chain and first segment through the same proxy logic players use. */
 export const testStream = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ url: z.string().url().max(2000), referrer: z.string().max(500).nullable().optional() }).parse(d))
+  .inputValidator((d) => z.object({ streamId: z.number().int().min(1).optional(), url: z.string().url().max(2000).optional(), referrer: z.string().max(500).nullable().optional() }).parse(d))
   .handler(async ({ data, context }) => {
     const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) throw new Error("Admins only");
@@ -15,8 +15,9 @@ export const testStream = createServerFn({ method: "POST" })
     const { proxyFetch, allowedUrl, unb64u } = await import("./stream-proxy.server");
 
     const loaded = await loadChannels();
-    const idx = loaded.ok ? loaded.channels.findIndex((c) => c.url === data.url) : -1;
-    const ch = idx >= 0 && loaded.ok ? loaded.channels[idx]! : { name: "test", group_title: null, logo: null, url: data.url, referrer: data.referrer ?? null };
+    const idx = !loaded.ok ? -1 : data.streamId ? (data.streamId <= loaded.channels.length ? data.streamId - 1 : -1) : loaded.channels.findIndex((c) => c.url === data.url);
+    if (idx < 0 && !data.url) throw new Error(loaded.ok ? `Stream ${data.streamId} not found` : loaded.message);
+    const ch = idx >= 0 && loaded.ok ? loaded.channels[idx]! : { name: "test", group_title: null, logo: null, url: data.url!, referrer: data.referrer ?? null };
     const scope = "admin-test:0";
     const prefix = "https://proxy.test/proxy/test/test/0";
     const steps: StreamTestStep[] = [];
@@ -59,5 +60,5 @@ export const testStream = createServerFn({ method: "POST" })
       target = next;
       label = /\.m3u8?$/i.test(next.pathname) ? "Variant playlist" : "First segment";
     }
-    return { streamId: idx >= 0 ? idx + 1 : null, steps, ok: steps.length > 0 && steps.every((s) => s.ok) && steps.at(-1)!.step !== "Playlist" };
+    return { name: ch.name, streamId: idx >= 0 ? idx + 1 : null, steps, ok: steps.length > 0 && steps.every((s) => s.ok) && steps.at(-1)!.step !== "Playlist" };
   });

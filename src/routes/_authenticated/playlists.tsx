@@ -139,6 +139,8 @@ function PlaylistsPage() {
         }
       />
 
+      {isAdmin && <StreamIdTester />}
+
       <div className="flex flex-wrap gap-2">
         {playlists.map((p) => (
           <div key={p.id} className={cn("glass flex items-center gap-2 px-3 py-2", p.id === current && "ring-2 ring-primary/40")}>
@@ -241,5 +243,35 @@ function TestOutput({ r }: { r: TestResult | undefined }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+function StreamIdTester() {
+  const runTest = useServerFn(testStream);
+  const [id, setId] = useState("");
+  const [name, setName] = useState<string | null>(null);
+  const [r, setR] = useState<TestResult | undefined>();
+  async function go() {
+    const n = Number.parseInt(id, 10);
+    if (!Number.isFinite(n) || n < 1) return void toast.error("Enter a stream number");
+    setR({ loading: true }); setName(null);
+    try {
+      const res = await runTest({ data: { streamId: n } });
+      setName(res.name);
+      setR({ loading: false, ok: res.ok, steps: res.steps });
+    } catch (e) {
+      setR({ loading: false, ok: false, steps: [], error: errMsg(e) });
+    }
+  }
+  return (
+    <Panel title="Test stream" sub="Fetches the playlist and first segment through the proxy, exactly like a player">
+      <div className="flex flex-wrap items-center gap-2 px-5 pb-4">
+        <input inputMode="numeric" placeholder="stream number, e.g. 186" value={id} onChange={(e) => setId(e.target.value)} onKeyDown={(e) => e.key === "Enter" && go()} className={`${inputCls} w-56`} />
+        <button className={softBtn} disabled={r?.loading} onClick={go}>{r?.loading ? "Testing…" : "Test stream"}</button>
+        {name && <span className="text-[13px] font-medium">{name}</span>}
+        {r && !r.loading && <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1", r.ok ? "bg-good/10 text-good ring-good/20" : "bg-destructive/10 text-destructive ring-destructive/20")}>{r.ok ? "OK" : "Failed"}</span>}
+      </div>
+      <div className="px-5 pb-4"><TestOutput r={r} /></div>
+    </Panel>
   );
 }
