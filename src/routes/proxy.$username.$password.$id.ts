@@ -15,14 +15,16 @@ export const Route = createFileRoute("/proxy/$username/$password/$id")({
         if (!loaded.ok) return plain(loaded.message, loaded.status);
         const ch = Number.isFinite(id) ? loaded.channels[id - 1] : undefined;
         if (!ch) return plain("Channel not found", 404);
+        const sp = new URL(request.url).searchParams;
         let raw: string;
-        try { raw = unb64u(new URL(request.url).searchParams.get("u") ?? ""); } catch { return plain("Bad url", 400); }
-        const target = allowedUrl(raw, ch);
+        try { raw = unb64u(sp.get("u") ?? ""); } catch { return plain("Bad url", 400); }
+        const scope = `${auth.username}:${id}`;
+        const target = await allowedUrl(raw, sp.get("s") ?? "", scope);
         if (!target) return plain("Forbidden target", 403);
         const limited = await checkStreamLimit(request, auth);
         if (limited) return limited;
         const prefix = `${new URL(request.url).origin}/proxy/${encodeURIComponent(params.username)}/${encodeURIComponent(params.password)}/${id}`;
-        return proxyFetch(request, target, ch, prefix);
+        return proxyFetch(request, target, ch, prefix, scope);
       },
     },
   },

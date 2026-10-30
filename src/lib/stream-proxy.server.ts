@@ -53,7 +53,7 @@ function isPrivateHost(h: string) {
 
 /** Chain signature: every URL we emit in a rewritten playlist is HMAC-signed for (user, stream). */
 async function hmacKey() {
-  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_URL || "stream-proxy";
+  const secret = process.env["SUPABASE_SERVICE_ROLE_KEY"] || process.env["SUPABASE_URL"] || "stream-proxy";
   return crypto.subtle.importKey("raw", new TextEncoder().encode(`proxy:${secret}`), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
 }
 export async function signTarget(scope: string, url: string): Promise<string> {
