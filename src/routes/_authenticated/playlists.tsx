@@ -8,6 +8,10 @@ import { useMe, errMsg } from "@/hooks/use-me";
 import { usePlaylists } from "@/lib/queries";
 import { parseM3U, buildM3U, type M3UChannel } from "@/lib/m3u";
 import { cn } from "@/lib/utils";
+import { useServerFn } from "@tanstack/react-start";
+import { testStream, type StreamTestStep } from "@/lib/stream-test.functions";
+
+type TestResult = { loading: true } | { loading: false; ok: boolean; steps: StreamTestStep[]; error?: string };
 
 export const Route = createFileRoute("/_authenticated/playlists")({
   head: () => ({ meta: [{ title: "Playlists — Kurdistan IPTV" }] }),
@@ -40,6 +44,18 @@ function PlaylistsPage() {
   const [group, setGroup] = useState<string>("all");
   const [q, setQ] = useState("");
   const current = selected ?? playlists[0]?.id ?? null;
+  const runTest = useServerFn(testStream);
+  const [tests, setTests] = useState<Record<string, TestResult>>({});
+
+  async function test(c: M3UChannel & { id: string }) {
+    setTests((t) => ({ ...t, [c.id]: { loading: true } }));
+    try {
+      const r = await runTest({ data: { url: c.url, referrer: c.referrer } });
+      setTests((t) => ({ ...t, [c.id]: { loading: false, ok: r.ok, steps: r.steps } }));
+    } catch (e) {
+      setTests((t) => ({ ...t, [c.id]: { loading: false, ok: false, steps: [], error: errMsg(e) } }));
+    }
+  }
 
   const { data: channels = [], isLoading } = useQuery({
     queryKey: ["channels", current],
@@ -123,6 +139,8 @@ function PlaylistsPage() {
         }
       />
 
+      {isAdmin && <StreamIdTester />}
+
       <div className="flex flex-wrap gap-2">
         {playlists.map((p) => (
           <div key={p.id} className={cn("glass flex items-center gap-2 px-3 py-2", p.id === current && "ring-2 ring-primary/40")}>
@@ -179,6 +197,7 @@ function PlaylistsPage() {
                   <th className={th}>Category</th>
                   <th className={th}>Stream URL</th>
                   <th className={th}>Requires referer</th>
+                  {isAdmin && <th className={th}>Test stream</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -193,6 +212,14 @@ function PlaylistsPage() {
                     <td className={`${td} text-muted-foreground`}>{c.group_title ?? "—"}</td>
                     <td className={`${td} max-w-[360px] truncate font-mono text-[11px] text-muted-foreground`} title={c.url}>{c.url}</td>
                     <td className={td}>{c.referrer ? <span className="rounded-full bg-warn/10 px-2 py-0.5 text-[11px] font-medium text-warn ring-1 ring-warn/20" title={c.referrer}>Proxied</span> : <span className="text-muted-foreground">—</span>}</td>
+                    {isAdmin && (
+                      <td className={`${td} min-w-[220px] align-top`}>
+                        <button className={softBtn} disabled={tests[c.id]?.loading} onClick={() => test(c)}>
+                          {tests[c.id]?.loading ? "Testing…" : "Test stream"}
+                        </button>
+                        <TestOutput r={tests[c.id]} />
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -202,5 +229,49 @@ function PlaylistsPage() {
         </Panel>
       )}
     </>
+  );
+}
+
+function TestOutput({ r }: { r: TestResult | undefined }) {
+  if (!r || r.loading) return null;
+  if (r.error) return <div className="mt-1.5 font-mono text-[11px] text-destructive">{r.error}</div>;
+  return (
+    <ul className="mt-1.5 space-y-0.5 font-mono text-[11px]">
+      {r.steps.map((s, i) => (
+        <li key={i} className={s.ok ? "text-good" : "text-destructive"} title={s.url}>
+          {s.step}: {s.status ?? "ERR"}{s.error ? ` — ${s.error}` : ""} <span className="text-muted-foreground">{s.ms}ms</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function StreamIdTester() {
+  const runTest = useServerFn(testStream);
+  const [id, setId] = useState("");
+  const [name, setName] = useState<string | null>(null);
+  const [r, setR] = useState<TestResult | undefined>();
+  async function go() {
+    const n = Number.parseInt(id, 10);
+    if (!Number.isFinite(n) || n < 1) return void toast.error("Enter a stream number");
+    setR({ loading: true }); setName(null);
+    try {
+      const res = await runTest({ data: { streamId: n } });
+      setName(res.name);
+      setR({ loading: false, ok: res.ok, steps: res.steps });
+    } catch (e) {
+      setR({ loading: false, ok: false, steps: [], error: errMsg(e) });
+    }
+  }
+  return (
+    <Panel title="Test stream" sub="Fetches the playlist and first segment through the proxy, exactly like a player">
+      <div className="flex flex-wrap items-center gap-2 px-5 pb-4">
+        <input inputMode="numeric" placeholder="stream number, e.g. 186" value={id} onChange={(e) => setId(e.target.value)} onKeyDown={(e) => e.key === "Enter" && go()} className={`${inputCls} w-56`} />
+        <button className={softBtn} disabled={r?.loading} onClick={go}>{r?.loading ? "Testing…" : "Test stream"}</button>
+        {name && <span className="text-[13px] font-medium">{name}</span>}
+        {r && !r.loading && <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1", r.ok ? "bg-good/10 text-good ring-good/20" : "bg-destructive/10 text-destructive ring-destructive/20")}>{r.ok ? "OK" : "Failed"}</span>}
+      </div>
+      <div className="px-5 pb-4"><TestOutput r={r} /></div>
+    </Panel>
   );
 }
