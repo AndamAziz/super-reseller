@@ -230,7 +230,7 @@ function PlaylistsPage() {
   );
 }
 
-function TestOutput({ r }: { r?: TestResult }) {
+function TestOutput({ r }: { r: TestResult | undefined }) {
   if (!r || r.loading) return null;
   if (r.error) return <div className="mt-1.5 font-mono text-[11px] text-destructive">{r.error}</div>;
   return (
