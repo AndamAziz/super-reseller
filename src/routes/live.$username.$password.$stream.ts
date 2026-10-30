@@ -19,7 +19,7 @@ export const Route = createFileRoute("/live/$username/$password/$stream")({
         const limited = await checkStreamLimit(request, auth);
         if (limited) return limited;
         const prefix = `${new URL(request.url).origin}/proxy/${encodeURIComponent(params.username)}/${encodeURIComponent(params.password)}/${id}`;
-        return proxyFetch(request, new URL(ch.url), ch, prefix);
+        return proxyFetch(request, new URL(ch.url), ch, prefix, `${auth.username}:${id}`);
       },
     },
   },
