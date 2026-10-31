@@ -1,4 +1,8 @@
 # Connection billing
+## Test suite
+- [x] Fix the two page tests without changing application behavior.
+- [x] Run the full test suite and confirm all 26 tests pass.
+
 ## Playlist playback
 - [x] Keep generated identity-bearing links tied to their channel across source reordering and automatically updated URLs.
 - [x] Retry temporary upstream failures; 14 tests passed and real MP3 played beyond 20 seconds without refresh in preview.

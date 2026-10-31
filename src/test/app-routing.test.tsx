@@ -1,39 +1,67 @@
 import { QueryClient } from "@tanstack/react-query";
-import { createMemoryHistory, createRouter, RouterProvider } from "@tanstack/react-router";
+import { createMemoryHistory, createRouter, RouterProvider, type RootRouteOptions } from "@tanstack/react-router";
+import { AuthSessionMissingError } from "@supabase/supabase-js";
 import { cleanup, render, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { routeTree } from "@/routeTree.gen";
+import { supabase } from "@/integrations/supabase/client";
 
-function renderAt(path: string) {
-  const queryClient = new QueryClient();
+const rootOptions = routeTree.options as typeof routeTree.options & Pick<RootRouteOptions, "shellComponent">;
+const documentShell = rootOptions.shellComponent;
+const clients: QueryClient[] = [];
+
+async function renderAt(path: string) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  clients.push(queryClient);
   const router = createRouter({
     routeTree,
     context: { queryClient },
     history: createMemoryHistory({ initialEntries: [path] }),
   });
-  return render(<RouterProvider router={router} />);
+  await router.load();
+  render(<RouterProvider router={router} />);
+  return router;
 }
+
+beforeAll(() => {
+  // React 19 document shells belong at document level, not RTL's div container.
+  // Exercise the real route components without nesting html inside that div.
+  delete rootOptions.shellComponent;
+});
+
+afterAll(() => {
+  if (documentShell) rootOptions.shellComponent = documentShell;
+});
+
+beforeEach(() => {
+  // Keep the signed-out redirect deterministic and avoid a hosted auth request.
+  vi.spyOn(supabase.auth, "getUser").mockResolvedValue({ data: { user: null }, error: new AuthSessionMissingError() });
+});
 
 afterEach(() => {
   cleanup();
+  clients.splice(0).forEach((client) => client.clear());
   vi.restoreAllMocks();
 });
 
-// Assert only that the router mounts and paints, never page content:
-// routes are rewritten as the app is built and this must keep passing.
+// Assert route outcomes rather than copy, styling or markup.
 describe("App routing", () => {
   it("renders the index route", async () => {
-    const { container } = renderAt("/");
+    const router = await renderAt("/");
 
-    await waitFor(() => expect(container.firstChild).not.toBeNull());
+    await waitFor(() => expect(router.state.location.pathname).toBe("/auth"));
+    expect(router.state.matches.at(-1)?.routeId).toBe("/auth");
+    expect(router.state.matches.every((match) => match.status === "success")).toBe(true);
   });
 
   it("renders the not-found route", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
-    const { container } = renderAt("/this-route-does-not-exist");
+    const router = await renderAt("/this-route-does-not-exist");
 
-    await waitFor(() => expect(container.firstChild).not.toBeNull());
+    await waitFor(() => expect(router.state.status).toBe("idle"));
+    expect(router.state.location.pathname).toBe("/this-route-does-not-exist");
+    expect(router.state.matches.some((match) => match._notFound || match.status === "notFound")).toBe(true);
   });
 });
