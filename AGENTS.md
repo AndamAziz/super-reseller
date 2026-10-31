@@ -14,3 +14,5 @@
 - Reseller accounts are created/deleted by admin-only server functions; public sign-up is disabled.
 - Low-credit alerts derive from the authenticated balance in the shared AppShell and a single tested threshold helper, so every reseller page shows the same warning without storing duplicate notification state.
 - Stream proxy targets are authorized by an HMAC signature (scope user:stream) added when our rewriter emits each URI, so any host in a channel's playlist chain is allowed without a host allowlist; private hosts stay blocked on every redirect hop.
+- Generated media URLs use authenticated /api/public playback handlers and preserve source extensions, so audio/video files avoid HLS misidentification and the site access wall; catalog classification still follows tvg-type only.
+- Catalog refresh is request-driven through a coalesced last-good cache with short retries, so source outages do not discard a working playlist.

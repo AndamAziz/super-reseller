@@ -17,7 +17,9 @@ export const testStream = createServerFn({ method: "POST" })
     const loaded = await loadChannels();
     const idx = !loaded.ok ? -1 : data.streamId ? (data.streamId <= loaded.channels.length ? data.streamId - 1 : -1) : loaded.channels.findIndex((c) => c.url === data.url);
     if (idx < 0 && !data.url) throw new Error(loaded.ok ? `Stream ${data.streamId} not found` : loaded.message);
-    const ch = idx >= 0 && loaded.ok ? loaded.channels[idx]! : { name: "test", group_title: null, logo: null, url: data.url!, referrer: data.referrer ?? null };
+    const existing = idx >= 0 && loaded.ok ? loaded.channels[idx] : undefined;
+    if (!existing && !data.url) throw new Error("Stream not found");
+    const ch = existing ?? { name: "test", group_title: null, logo: null, url: data.url ?? "", referrer: data.referrer ?? null };
     const scope = "admin-test:0";
     const prefix = "https://proxy.test/proxy/test/test/0";
     const steps: StreamTestStep[] = [];
@@ -41,7 +43,7 @@ export const testStream = createServerFn({ method: "POST" })
       }
       if (!isPlaylist) {
         await res.body?.cancel();
-        steps.push({ step: label, url: target.toString(), status: res.status, ok, error: null, ms: Date.now() - t0 });
+        steps.push({ step: depth === 0 ? "Media" : label, url: target.toString(), status: res.status, ok, error: null, ms: Date.now() - t0 });
         break;
       }
       const text = await res.text();
@@ -60,5 +62,5 @@ export const testStream = createServerFn({ method: "POST" })
       target = next;
       label = /\.m3u8?$/i.test(next.pathname) ? "Variant playlist" : "First segment";
     }
-    return { name: ch.name, streamId: idx >= 0 ? idx + 1 : null, steps, ok: steps.length > 0 && steps.every((s) => s.ok) && steps.at(-1)!.step !== "Playlist" };
+    return { name: ch.name, streamId: idx >= 0 ? idx + 1 : null, steps, ok: steps.length > 0 && steps.every((s) => s.ok) && steps.at(-1)?.step !== "Playlist" };
   });
