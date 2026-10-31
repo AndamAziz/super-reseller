@@ -1,0 +1,60 @@
+import { useState } from "react";
+import { Save } from "lucide-react";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { channelLinksSchema } from "@/lib/channel-links";
+import { errMsg } from "@/hooks/use-me";
+import { inputCls } from "@/components/panel";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+type Channel = { id: string; name: string; url: string; logo: string | null };
+
+export function ChannelLinksDialog({ channel, playlistId, onClose }: {
+  channel: Channel; playlistId: string; onClose: () => void;
+}) {
+  const qc = useQueryClient();
+  const [url, setUrl] = useState(channel.url);
+  const [logo, setLogo] = useState(channel.logo ?? "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function save(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const parsed = channelLinksSchema.safeParse({ url, logo: logo.trim() });
+    if (!parsed.success) { setError(parsed.error.issues[0]?.message ?? "Check the URLs"); return; }
+    setSaving(true); setError(null);
+    try {
+      const { data, error: updateError } = await supabase.from("channels")
+        .update(parsed.data).eq("id", channel.id).eq("playlist_id", playlistId)
+        .select("id").single();
+      if (updateError) throw updateError;
+      if (!data) throw new Error("Channel could not be saved");
+      await qc.invalidateQueries({ queryKey: ["channels", playlistId] });
+      toast.success("Channel links saved");
+      onClose();
+    } catch (e) { setError(errMsg(e)); }
+    finally { setSaving(false); }
+  }
+
+  return <Dialog open onOpenChange={(open) => { if (!open && !saving) onClose(); }}>
+    <DialogContent className="max-w-[min(32rem,calc(100%-2rem))]">
+      <DialogHeader><DialogTitle>Edit channel links</DialogTitle>
+        <DialogDescription className="break-words">{channel.name}</DialogDescription></DialogHeader>
+      <form onSubmit={save} className="grid gap-4">
+        <label className="grid gap-2 text-sm">Stream URL
+          <input type="url" required value={url} onChange={(e) => setUrl(e.target.value)} className={`${inputCls} w-full min-w-0`} />
+        </label>
+        <label className="grid gap-2 text-sm">Logo URL
+          <input type="url" value={logo} onChange={(e) => setLogo(e.target.value)} className={`${inputCls} w-full min-w-0`} />
+        </label>
+        {error && <p role="alert" className="break-words text-sm text-destructive">{error}</p>}
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="outline" disabled={saving} onClick={onClose}>Cancel</Button>
+          <Button type="submit" disabled={saving}><Save />{saving ? "Saving…" : "Save links"}</Button>
+        </div>
+      </form>
+    </DialogContent>
+  </Dialog>;
+}
