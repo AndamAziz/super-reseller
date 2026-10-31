@@ -6,9 +6,9 @@ const httpUrl = z.string().trim().max(4000).url("Enter a valid URL")
 const optionalText = (max: number) => z.string().trim().max(max).transform((value) => value || null);
 
 export const channelLinksSchema = z.object({
-  name: z.string().trim().min(1, "Enter a channel name").max(300).optional(),
-  group_title: optionalText(200).optional(),
-  referrer: z.union([httpUrl, z.literal("")]).transform((value) => value || null).optional(),
+  name: z.string().trim().min(1, "Enter a channel name").max(300),
+  group_title: optionalText(200),
+  referrer: z.union([httpUrl, z.literal("")]).transform((value) => value || null),
   url: httpUrl,
   logo: z.union([httpUrl, z.literal("")]).transform((value) => value || null),
 });
