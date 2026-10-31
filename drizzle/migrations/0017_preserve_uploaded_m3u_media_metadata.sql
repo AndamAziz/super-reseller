@@ -1,0 +1,3 @@
+ALTER TABLE public.channels ADD COLUMN type text, ADD COLUMN user_agent text, ADD COLUMN m3u_metadata jsonb;
+ALTER TABLE public.playlists ADD COLUMN m3u_header text NOT NULL DEFAULT '#EXTM3U', ADD COLUMN m3u_newline text NOT NULL DEFAULT E'\n';
+COMMENT ON COLUMN public.channels.m3u_metadata IS 'Original EXTINF, directives and parsed values for lossless unedited M3U metadata export. Legacy imports need reimport to recover discarded metadata.';

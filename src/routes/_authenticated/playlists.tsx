@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, Panel, td, th, inputCls, softBtn, dangerBtn } from "@/components/panel";
 import { useMe, errMsg } from "@/hooks/use-me";
 import { usePlaylists } from "@/lib/queries";
-import { parseM3U, buildM3U, type M3UChannel } from "@/lib/m3u";
+import { parseM3UDocument, buildM3U, mediaSection, type M3UChannel } from "@/lib/m3u";
 import { cn } from "@/lib/utils";
 import { useServerFn } from "@tanstack/react-start";
 import { testStream, type StreamTestStep } from "@/lib/stream-test.functions";
@@ -37,13 +37,13 @@ async function fetchAllChannels(playlistId: string) {
   for (let from = 0; ; from += 1000) {
     const { data, error } = await supabase
       .from("channels")
-      .select("id, name, group_title, logo, url, referrer")
+      .select("id, name, group_title, logo, url, referrer, type, user_agent, m3u_metadata")
       .eq("playlist_id", playlistId)
       .order("position")
         .order("id")
       .range(from, from + 999);
     if (error) throw error;
-    all.push(...data);
+    all.push(...(data as unknown as (M3UChannel & { id: string })[]));
     if (data.length < 1000) break;
   }
   return all;
@@ -58,6 +58,7 @@ function PlaylistsPage() {
   const [progress, setProgress] = useState<string | null>(null);
   const [group, setGroup] = useState<string>("all");
   const [q, setQ] = useState("");
+  const [section, setSection] = useState<"all" | "live" | "movie" | "series">("all");
   // Default to the newest imported playlist so the Edit links column is visible on load.
   const current = selected ?? playlists[0]?.id ?? "github";
   const isSource = current === "github";
@@ -87,19 +88,20 @@ function PlaylistsPage() {
   const channels = isSource ? source.data ?? [] : imported.data ?? [];
   const isLoading = isSource ? source.isLoading : imported.isLoading;
 
+  const sectionChannels = useMemo(() => channels.filter((c) => section === "all" || mediaSection(c) === section), [channels, section]);
   const groups = useMemo(() => {
     const m = new Map<string, number>();
-    channels.forEach((c) => m.set(c.group_title ?? "Uncategorized", (m.get(c.group_title ?? "Uncategorized") ?? 0) + 1));
+    sectionChannels.forEach((c) => m.set(c.group_title ?? "Uncategorized", (m.get(c.group_title ?? "Uncategorized") ?? 0) + 1));
     return [...m.entries()];
-  }, [channels]);
+  }, [sectionChannels]);
   const activeGroup = group === "all" || groups.some(([name]) => name === group) ? group : "all";
 
   const shown = useMemo(() => {
     const s = q.toLowerCase();
-    return channels.filter(
+    return sectionChannels.filter(
       (c) => (activeGroup === "all" || (c.group_title ?? "Uncategorized") === activeGroup) && (!s || c.name.toLowerCase().includes(s)),
     );
-  }, [channels, activeGroup, q]);
+  }, [sectionChannels, activeGroup, q]);
 
   async function moveChannel(id: string, direction: -1 | 1) {
     const neighbor = channelNeighbor(shown, id, direction);
@@ -117,17 +119,18 @@ function PlaylistsPage() {
   async function onFile(file: File) {
     try {
       const text = await file.text();
-      const parsed = parseM3U(text);
+      const document = parseM3UDocument(text);
+      const parsed = document.channels;
       if (!parsed.length) return void toast.error("No channels found in this file");
       setProgress(`Parsed ${parsed.length} channels…`);
       const { data: pl, error } = await supabase
         .from("playlists")
-        .insert({ name: file.name, channel_count: parsed.length })
+        .insert({ name: file.name, channel_count: parsed.length, m3u_header: document.header, m3u_newline: document.newline })
         .select()
         .single();
       if (error) throw error;
       for (let i = 0; i < parsed.length; i += 500) {
-        const batch = parsed.slice(i, i + 500).map(({ type: _t, user_agent: _ua, ...c }, j) => ({ ...c, playlist_id: pl.id, position: i + j }));
+        const batch = parsed.slice(i, i + 500).map((c, j) => ({ ...c, m3u_metadata: c.m3u_metadata ? JSON.parse(JSON.stringify(c.m3u_metadata)) : null, playlist_id: pl.id, position: i + j }));
         const { error: cErr } = await supabase.from("channels").insert(batch);
         if (cErr) throw cErr;
         setProgress(`Importing ${Math.min(i + 500, parsed.length)} / ${parsed.length}`);
@@ -152,7 +155,7 @@ function PlaylistsPage() {
 
   function download() {
     const pl = playlists.find((p) => p.id === current);
-    const blob = new Blob([buildM3U(channels)], { type: "audio/x-mpegurl" });
+    const blob = new Blob([buildM3U(channels, { header: pl?.m3u_header, newline: pl?.m3u_newline })], { type: "audio/x-mpegurl" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = pl?.name.endsWith(".m3u") ? pl.name : `${pl?.name ?? "playlist"}.m3u`;
@@ -195,6 +198,14 @@ function PlaylistsPage() {
       </div>
       {isSource && source.isError && <p role="alert" className="text-destructive">{errMsg(source.error)}</p>}
 
+      <div role="tablist" aria-label="Media sections" className="flex flex-wrap gap-2">
+        {([ ["all", "All"], ["live", "Live TV"], ["movie", "Movies"], ["series", "Series"] ] as const).map(([value, label]) => (
+          <Button key={value} role="tab" aria-selected={section === value} variant={section === value ? "default" : "outline"} className="h-11" onClick={() => { setSection(value); setGroup("all"); }}>
+            {label} · {value === "all" ? channels.length : channels.filter((c) => mediaSection(c) === value).length}
+          </Button>
+        ))}
+      </div>
+
       {current && (
         <section className="rise grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
           <div className="glass order-2 min-w-0 p-4 sm:p-5 lg:order-none">
@@ -205,7 +216,7 @@ function PlaylistsPage() {
             </pre>
             <div className="mt-4 flex max-h-44 flex-wrap gap-2 overflow-y-auto sm:max-h-none sm:overflow-visible">
                 <Button size="sm" onClick={() => setGroup("all")} className={cn("h-auto rounded-full px-3 py-1 text-[11px] font-medium ring-1 ring-border", activeGroup === "all" ? "bg-primary text-primary-foreground" : "bg-glass-strong text-foreground")}>
-                All · {channels.length}
+                All · {sectionChannels.length}
                 </Button>
               {groups.map(([g, n]) => (
                 <Button key={g} size="sm" onClick={() => setGroup(g)} className={cn("h-auto whitespace-normal rounded-full px-3 py-1 text-[11px] font-medium ring-1 ring-border", activeGroup === g ? "bg-primary text-primary-foreground" : "bg-glass-strong text-foreground")}>

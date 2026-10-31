@@ -69,31 +69,40 @@ export type Database = {
           group_title: string | null
           id: string
           logo: string | null
+          m3u_metadata: Json | null
           name: string
           playlist_id: string
           position: number
           referrer: string | null
+          type: string | null
           url: string
+          user_agent: string | null
         }
         Insert: {
           group_title?: string | null
           id?: string
           logo?: string | null
+          m3u_metadata?: Json | null
           name: string
           playlist_id: string
           position?: number
           referrer?: string | null
+          type?: string | null
           url: string
+          user_agent?: string | null
         }
         Update: {
           group_title?: string | null
           id?: string
           logo?: string | null
+          m3u_metadata?: Json | null
           name?: string
           playlist_id?: string
           position?: number
           referrer?: string | null
+          type?: string | null
           url?: string
+          user_agent?: string | null
         }
         Relationships: [
           {
@@ -198,18 +207,24 @@ export type Database = {
           channel_count: number
           created_at: string
           id: string
+          m3u_header: string
+          m3u_newline: string
           name: string
         }
         Insert: {
           channel_count?: number
           created_at?: string
           id?: string
+          m3u_header?: string
+          m3u_newline?: string
           name: string
         }
         Update: {
           channel_count?: number
           created_at?: string
           id?: string
+          m3u_header?: string
+          m3u_newline?: string
           name?: string
         }
         Relationships: []
