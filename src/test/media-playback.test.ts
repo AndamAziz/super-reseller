@@ -45,25 +45,36 @@ describe("Playlist media", () => {
     expect(playbackUrl("https://app.test", "live", "user", "pass", 1, source)).toBe(`https://app.test/api/public/live/user/pass/1.${format}`);
     expect(parseM3U(`#EXTM3U\n#EXTINF:-1 tvg-name="Quran",Quran\n${source}`)[0]?.url).toBe(source);
   });
-  it("refreshes GitHub additions after 60 seconds", async () => {
+  it.each(["live", "movie", "series"])("refreshes new %s entries after five seconds", async (kind) => {
     let at = 0;
-    const load = vi.fn().mockResolvedValueOnce(["old"]).mockResolvedValueOnce(["old", "quran.mp3"]);
+    const addition = parseM3U(`#EXTM3U\n#EXTINF:-1 tvg-type="${kind}",New entry\nhttps://media.test/new.mp4`)[0];
+    expect(addition?.type).toBe(kind);
+    const load = vi.fn().mockResolvedValueOnce(["old"]).mockResolvedValueOnce(["old", addition]);
     const read = createPlaylistCache(load, () => at);
     expect(await read()).toEqual(["old"]);
-    at = 59_999;
+    at = 4_999;
     expect(await read()).toEqual(["old"]);
-    at = 60_000;
-    expect(await read()).toEqual(["old", "quran.mp3"]);
+    at = 5_000;
+    expect(await read()).toEqual(["old", addition]);
     expect(load).toHaveBeenCalledTimes(2);
+  });
+  it("coalesces simultaneous catalog reads into one source request", async () => {
+    const load = vi.fn().mockResolvedValue(["new"]);
+    const read = createPlaylistCache(load);
+    expect(await Promise.all([read(), read(), read(true)])).toEqual([["new"], ["new"], ["new"]]);
+    expect(load).toHaveBeenCalledTimes(1);
   });
   it("keeps the last working playlist on an outage and retries", async () => {
     let at = 0;
     const load = vi.fn().mockResolvedValueOnce(["working"]).mockRejectedValueOnce(new Error("outage")).mockResolvedValueOnce(["new"]);
     const read = createPlaylistCache(load, () => at);
     await read();
-    at = 60_000;
+    at = 5_000;
     expect(await read()).toEqual(["working"]);
-    at = 75_000;
+    at = 9_999;
+    expect(await read()).toEqual(["working"]);
+    expect(load).toHaveBeenCalledTimes(2);
+    at = 10_000;
     expect(await read()).toEqual(["new"]);
   });
   it.each([["mp3", "audio/mpeg"], ["mp4", "video/mp4"]])("streams %s bytes and preserves seeking", async (ext, type) => {
