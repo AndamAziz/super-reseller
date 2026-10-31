@@ -1,5 +1,6 @@
 // Shared client logic for deleting a channel from an uploaded playlist.
 // Used by the channel card (mobile) and the edit dialog (ChannelLinksDialog).
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -22,11 +23,13 @@ export async function deleteChannelById(id: string, playlistId: string): Promise
   }
 }
 
-/** Wraps deleteChannelById with confirm, toasts and query refresh. Returns true when deleted. */
+/** Confirm, delete, refresh queries and toast. `busyId` is the channel currently being deleted. */
 export function useDeleteChannel(playlistId: string, onDeleted?: () => void) {
   const qc = useQueryClient();
-  return async function removeChannel(id: string, name: string) {
+  const [busyId, setBusyId] = useState<string | null>(null);
+  async function removeChannel(id: string, name: string) {
     if (!confirm(`Delete "${name}" from this playlist?`)) return false;
+    setBusyId(id);
     try {
       await deleteChannelById(id, playlistId);
       await Promise.all([
@@ -39,6 +42,9 @@ export function useDeleteChannel(playlistId: string, onDeleted?: () => void) {
     } catch (e) {
       toast.error(errMsg(e));
       return false;
+    } finally {
+      setBusyId(null);
     }
-  };
+  }
+  return { removeChannel, busyId };
 }

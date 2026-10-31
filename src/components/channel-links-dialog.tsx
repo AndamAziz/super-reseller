@@ -16,7 +16,7 @@ export function ChannelLinksDialog({ channel, playlistId, onClose }: {
   channel: Channel; playlistId: string; onClose: () => void;
 }) {
   const qc = useQueryClient();
-  const removeChannel = useDeleteChannel(playlistId, onClose);
+  const { removeChannel, busyId } = useDeleteChannel(playlistId, onClose);
   const [name, setName] = useState(channel.name);
   const [group, setGroup] = useState(channel.group_title ?? "");
   const [referrer, setReferrer] = useState(channel.referrer ?? "");
@@ -75,7 +75,7 @@ export function ChannelLinksDialog({ channel, playlistId, onClose }: {
         </label>
         {error && <p role="alert" className="break-words text-sm text-destructive">{error}</p>}
         <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
-          <Button type="button" variant="destructive" className="col-span-2 h-11 sm:mr-auto sm:h-9" disabled={saving} onClick={remove}><Trash2 />Delete channel</Button>
+          <Button type="button" variant="destructive" className="col-span-2 h-11 sm:mr-auto sm:h-9" disabled={saving || busyId != null} onClick={remove}><Trash2 />Delete channel</Button>
           <Button type="button" variant="outline" className="h-11 sm:h-9" disabled={saving} onClick={onClose}>Cancel</Button>
           <Button type="submit" className="h-11 sm:h-9" disabled={saving}><Save />{saving ? "Saving…" : "Save"}</Button>
         </div>
