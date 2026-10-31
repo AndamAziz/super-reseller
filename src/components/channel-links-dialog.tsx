@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { channelLinksSchema } from "@/lib/channel-links";
+import { useDeleteChannel } from "@/lib/channel-delete";
 import { errMsg } from "@/hooks/use-me";
 import { inputCls } from "@/components/panel";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ export function ChannelLinksDialog({ channel, playlistId, onClose }: {
   channel: Channel; playlistId: string; onClose: () => void;
 }) {
   const qc = useQueryClient();
+  const removeChannel = useDeleteChannel(playlistId, onClose);
   const [name, setName] = useState(channel.name);
   const [group, setGroup] = useState(channel.group_title ?? "");
   const [referrer, setReferrer] = useState(channel.referrer ?? "");
