@@ -103,9 +103,9 @@ export async function handlePlaylistRequest(request: Request): Promise<Response>
   const origin = url.origin;
   const { live, movies, episodes } = loaded.catalog;
   const rewritten: M3UChannel[] = [
-    ...live.map((c, i) => ({ ...c, url: playbackUrl(origin, "live", auth.username, auth.password, i + 1, c.url) })),
-    ...movies.map((m, i) => ({ ...m, url: playbackUrl(origin, "movie", auth.username, auth.password, i + 1, m.url) })),
-    ...episodes.map((e) => ({ ...e, url: playbackUrl(origin, "series", auth.username, auth.password, e.id, e.url) })),
+    ...live.map((c, i) => ({ ...c, url: playbackUrl(origin, "live", auth.username, auth.password, i + 1, c.url, c) })),
+    ...movies.map((m, i) => ({ ...m, url: playbackUrl(origin, "movie", auth.username, auth.password, i + 1, m.url, m) })),
+    ...episodes.map((e) => ({ ...e, url: playbackUrl(origin, "series", auth.username, auth.password, e.id, e.url, e) })),
   ];
   return new Response(buildM3U(rewritten), {
     headers: {

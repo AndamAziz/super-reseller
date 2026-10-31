@@ -1,5 +1,7 @@
 # Connection billing
 ## Playlist playback
+- [x] Keep generated identity-bearing links tied to their channel across source reordering and automatically updated URLs.
+- [x] Retry temporary upstream failures; 14 tests passed and real MP3 played beyond 20 seconds without refresh in preview.
 - [x] Support correct MP3/MP4/M3U8 links through authenticated public playback.
 - [x] Refresh GitHub additions quickly with last-good playlist fallback.
 - [x] Test formats and refresh; real Quran MP3 returned 206 audio/mpeg and admin test returned Media 200.
