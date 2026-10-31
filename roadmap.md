@@ -1,7 +1,9 @@
 # Connection billing
+## Channel-link permission verification
+- [x] Run transactional admin/reseller/signed-out channel-link permission checks: admins saved both links, reseller edits changed zero rows, signed-out edits were blocked; no permission gaps found. Retain src/test/channel-links-permissions.sql; all 36 automated tests pass.
 ## Uploaded playlist editing
 - [x] Let admins replace stream and logo URLs on individual uploaded channels, persist edits and include them in downloaded M3U files.
-- [x] Verify authenticated upload, edit, reload, logo removal and download with real saved data; 36 tests pass and the deployed admin-only update policy is confirmed (reseller write simulation unavailable in the read-only query environment).
+- [x] Verify authenticated upload, edit, reload, logo removal and download with real saved data; 36 tests pass and transactional permission checks confirm only admins can update links.
 ## Automatic GitHub categories
 - [x] Show the live GitHub source in Playlists with automatic five-second updates and source category ordering for admins and resellers.
 - [x] Test automatic reorder updates without remounting; all 33 tests pass, authenticated UI reads 10,409 channels and polls twice in 11.5 seconds without refresh.
