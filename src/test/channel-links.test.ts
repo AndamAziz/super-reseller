@@ -14,4 +14,14 @@ it("allows removing the logo without removing the stream", () => {
 it("rejects non-HTTP replacement URLs", () => {
   expect(channelLinksSchema.safeParse({ url: "javascript:alert(1)", logo: "" }).success).toBe(false);
   expect(channelLinksSchema.safeParse({ url: "https://media.test/live.m3u8", logo: "file:///tmp/logo.png" }).success).toBe(false);
+});it("accepts a renamed channel and category and exports them", () => {
+  const edit = channelLinksSchema.parse({ name: " Rudaw HD ", group_title: "Kurdish", referrer: "", url: "https://media.test/r.m3u8", logo: "" });
+  expect(edit.name).toBe("Rudaw HD");
+  expect(edit.referrer).toBeNull();
+  const exported = buildM3U([{ name: edit.name!, group_title: edit.group_title!, referrer: null, url: edit.url, logo: null }]);
+  expect(exported).toContain('group-title="Kurdish"');
+  expect(exported).toContain(",Rudaw HD");
+});
+it("rejects an empty channel name", () => {
+  expect(channelLinksSchema.safeParse({ name: "  ", url: "https://media.test/a.m3u8", logo: "" }).success).toBe(false);
 });

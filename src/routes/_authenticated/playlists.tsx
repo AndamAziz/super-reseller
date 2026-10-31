@@ -221,7 +221,7 @@ function PlaylistsPage() {
                     <div className="truncate text-[12px] text-muted-foreground">{c.group_title ?? "—"}{c.referrer ? " · Proxied" : ""}</div>
                   </div>
                   {isAdmin && !isSource && (
-                    <Button variant="outline" className="h-11 shrink-0 px-3" aria-label={`Edit links for ${c.name}`} onClick={() => setEditing(c)}><Pencil /> Edit</Button>
+                    <Button variant="outline" className="h-11 shrink-0 px-3" aria-label={`Edit channel ${c.name}`} onClick={() => setEditing(c)}><Pencil /> Edit</Button>
                   )}
                 </div>
                 <div className="truncate font-mono text-[11px] text-muted-foreground">{c.url}</div>
@@ -244,7 +244,7 @@ function PlaylistsPage() {
                   <th className={th}>Stream URL</th>
                   <th className={th}>Requires referer</th>
                   {isAdmin && <th className={th}>Test stream</th>}
-                  {isAdmin && !isSource && <th className={th}>Edit links</th>}
+                  {isAdmin && !isSource && <th className={th}>Edit</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -268,7 +268,7 @@ function PlaylistsPage() {
                       </td>
                     )}
                     {isAdmin && !isSource && <td className={td}>
-                      <Button variant="ghost" size="icon" title={`Edit links for ${c.name}`} aria-label={`Edit links for ${c.name}`} onClick={() => setEditing(c)}><Pencil /></Button>
+                      <Button variant="ghost" size="icon" title={`Edit channel ${c.name}`} aria-label={`Edit channel ${c.name}`} onClick={() => setEditing(c)}><Pencil /></Button>
                     </td>}
                   </tr>
                 ))}
