@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Save } from "lucide-react";
+import { Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +38,26 @@ export function ChannelLinksDialog({ channel, playlistId, onClose }: {
     finally { setSaving(false); }
   }
 
+  async function remove() {
+    if (!confirm(`Delete "${channel.name}" from this playlist?`)) return;
+    setSaving(true); setError(null);
+    try {
+      const { data, error: delError } = await supabase.from("channels")
+        .delete().eq("id", channel.id).eq("playlist_id", playlistId).select("id");
+      if (delError) throw delError;
+      if (!data?.length) throw new Error("Channel could not be deleted");
+      const { count } = await supabase.from("channels").select("id", { count: "exact", head: true }).eq("playlist_id", playlistId);
+      if (count != null) await supabase.from("playlists").update({ channel_count: count }).eq("id", playlistId);
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["channels", playlistId] }),
+        qc.invalidateQueries({ queryKey: ["playlists"] }),
+      ]);
+      toast.success("Channel deleted");
+      onClose();
+    } catch (e) { setError(errMsg(e)); }
+    finally { setSaving(false); }
+  }
+
   return <Dialog open onOpenChange={(open) => { if (!open && !saving) onClose(); }}>
     <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-[min(32rem,calc(100%-1.5rem))] overflow-y-auto p-4 sm:p-6">
       <DialogHeader className="text-left"><DialogTitle>Edit channel links</DialogTitle>
@@ -54,6 +74,7 @@ export function ChannelLinksDialog({ channel, playlistId, onClose }: {
         </label>
         {error && <p role="alert" className="break-words text-sm text-destructive">{error}</p>}
         <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+          <Button type="button" variant="destructive" className="col-span-2 h-11 sm:mr-auto sm:h-9" disabled={saving} onClick={remove}><Trash2 />Delete channel</Button>
           <Button type="button" variant="outline" className="h-11 sm:h-9" disabled={saving} onClick={onClose}>Cancel</Button>
           <Button type="submit" className="h-11 sm:h-9" disabled={saving}><Save />{saving ? "Saving…" : "Save links"}</Button>
         </div>
