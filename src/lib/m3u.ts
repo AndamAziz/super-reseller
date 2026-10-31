@@ -19,7 +19,9 @@ export function parseM3U(text: string): M3UChannel[] {
     if (!line) continue;
     if (line.startsWith("#EXTINF")) {
       const attrs: Record<string, string> = {};
-      for (const m of line.matchAll(/([\w:-]+)="([^"]*)"/g)) attrs[m[1]!.toLowerCase()] = m[2]!;
+      for (const m of line.matchAll(/([\w:-]+)="([^"]*)"/g)) {
+        if (m[1] && m[2] !== undefined) attrs[m[1].toLowerCase()] = m[2];
+      }
       // Channel name follows the last comma that isn't inside quotes
       const noQuotes = line.replace(/"[^"]*"/g, '""');
       const idx = noQuotes.lastIndexOf(",");
@@ -69,8 +71,10 @@ export function buildM3U(channels: M3UChannel[]): string {
     const attrs = [`tvg-name="${c.name}"`];
     if (c.logo) attrs.push(`tvg-logo="${c.logo}"`);
     if (c.group_title) attrs.push(`group-title="${c.group_title}"`);
+    if (c.type) attrs.push(`tvg-type="${c.type}"`);
     rows.push(`#EXTINF:-1 ${attrs.join(" ")},${c.name}`);
     if (c.referrer) rows.push(`#EXTVLCOPT:http-referrer=${c.referrer}`);
+    if (c.user_agent) rows.push(`#EXTVLCOPT:http-user-agent=${c.user_agent}`);
     rows.push(c.url);
   }
   return rows.join("\n");

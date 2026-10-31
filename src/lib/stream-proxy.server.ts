@@ -1,6 +1,7 @@
 // Header-injecting HLS proxy for channels that require Referer / User-Agent.
 import type { M3UChannel } from "./m3u";
 import { plain } from "./playlist-auth.server";
+import { mediaContentType } from "./media";
 
 export const needsProxy = (c: M3UChannel) => !!(c.referrer?.trim() || c.user_agent?.trim());
 
@@ -84,8 +85,9 @@ export async function rewritePlaylist(text: string, from: string, prefix: string
     if (!t) { out.push(line); continue; }
     if (isTag(t)) {
       if (/^#EXT-X-(KEY|MAP|MEDIA|SESSION-KEY|I-FRAME-STREAM-INF):/i.test(t) && /URI="/.test(t)) {
-        const m = /URI="([^"]+)"/.exec(t)!;
-        out.push(t.replace(m[0], `URI="${await abs(m[1]!)}"`));
+        const m = /URI="([^"]+)"/.exec(t);
+        if (m?.[1]) out.push(t.replace(m[0], `URI="${await abs(m[1])}"`));
+        else out.push(line);
       } else out.push(line);
       continue;
     }
@@ -129,7 +131,8 @@ export async function proxyFetch(request: Request, target: URL, channel: M3UChan
     const body = await rewritePlaylist(await res.text(), current.toString(), prefix, scope);
     return new Response(body, { headers: { ...CORS, "Content-Type": "application/vnd.apple.mpegurl", "Cache-Control": "public, max-age=3" } });
   }
-  const out = new Headers({ ...CORS, "Content-Type": ct || "video/mp2t", "Cache-Control": "public, max-age=60" });
+  const genericType = !ct || /^(application\/octet-stream|binary\/octet-stream)(;|$)/i.test(ct);
+  const out = new Headers({ ...CORS, "Content-Type": genericType ? mediaContentType(current.toString()) : ct, "Cache-Control": "no-store" });
   for (const h of ["content-length", "content-range", "accept-ranges"]) { const v = res.headers.get(h); if (v) out.set(h, v); }
   return new Response(res.body, { status: res.status, headers: out });
 }

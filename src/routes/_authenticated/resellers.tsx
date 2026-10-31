@@ -10,7 +10,12 @@ import { useMe, fmtDate, errMsg, isActive } from "@/hooks/use-me";
 import { useLines, useResellers } from "@/lib/queries";
 
 export const Route = createFileRoute("/_authenticated/resellers")({
-  head: () => ({ meta: [{ title: "Resellers — Kurdistan IPTV" }] }),
+  head: () => ({ meta: [{ title: "Resellers — Kurdistan IPTV" },
+    { name: "description", content: "Manage Kurdistan IPTV reseller accounts and credit allocations." },
+    { property: "og:title", content: "Resellers — Kurdistan IPTV" },
+    { property: "og:description", content: "Manage Kurdistan IPTV reseller accounts and credit allocations." },
+    { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
+  ] }),
   component: ResellersPage,
 });
 

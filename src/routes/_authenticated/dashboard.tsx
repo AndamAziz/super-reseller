@@ -4,7 +4,12 @@ import { useMe, isActive, fmtDate } from "@/hooks/use-me";
 import { useLines, usePlaylists, useResellers } from "@/lib/queries";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — Kurdistan IPTV" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — Kurdistan IPTV" },
+    { name: "description", content: "Monitor Kurdistan IPTV subscriptions, credits and expirations." },
+    { property: "og:title", content: "Dashboard — Kurdistan IPTV" },
+    { property: "og:description", content: "Monitor Kurdistan IPTV subscriptions, credits and expirations." },
+    { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
+  ] }),
   component: Dashboard,
 });
 
