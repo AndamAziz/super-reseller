@@ -7,7 +7,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { routeTree } from "@/routeTree.gen";
 import { supabase } from "@/integrations/supabase/client";
 
-const rootOptions = routeTree.options as RootRouteOptions;
+const rootOptions = routeTree.options as typeof routeTree.options & Pick<RootRouteOptions, "shellComponent">;
 const documentShell = rootOptions.shellComponent;
 const clients: QueryClient[] = [];
 
@@ -27,10 +27,12 @@ async function renderAt(path: string) {
 beforeAll(() => {
   // React 19 document shells belong at document level, not RTL's div container.
   // Exercise the real route components without nesting html inside that div.
-  rootOptions.shellComponent = undefined;
+  delete rootOptions.shellComponent;
 });
 
-afterAll(() => { rootOptions.shellComponent = documentShell; });
+afterAll(() => {
+  if (documentShell) rootOptions.shellComponent = documentShell;
+});
 
 beforeEach(() => {
   // Keep the signed-out redirect deterministic and avoid a hosted auth request.

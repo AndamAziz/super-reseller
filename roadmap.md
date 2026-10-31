@@ -1,7 +1,7 @@
 # Connection billing
 ## Test suite
-- [ ] Fix the two page tests without changing application behavior.
-- [ ] Run the full test suite and confirm all tests pass.
+- [x] Fix the two page tests without changing application behavior.
+- [x] Run the full test suite and confirm all 26 tests pass.
 
 ## Playlist playback
 - [x] Keep generated identity-bearing links tied to their channel across source reordering and automatically updated URLs.
