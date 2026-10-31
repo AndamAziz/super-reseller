@@ -44,24 +44,11 @@ export function ChannelLinksDialog({ channel, playlistId, onClose }: {
   }
 
   async function remove() {
-    if (!confirm(`Delete "${channel.name}" from this playlist?`)) return;
-    setSaving(true); setError(null);
-    try {
-      const { data, error: delError } = await supabase.from("channels")
-        .delete().eq("id", channel.id).eq("playlist_id", playlistId).select("id");
-      if (delError) throw delError;
-      if (!data?.length) throw new Error("Channel could not be deleted");
-      const { count } = await supabase.from("channels").select("id", { count: "exact", head: true }).eq("playlist_id", playlistId);
-      if (count != null) await supabase.from("playlists").update({ channel_count: count }).eq("id", playlistId);
-      await Promise.all([
-        qc.invalidateQueries({ queryKey: ["channels", playlistId] }),
-        qc.invalidateQueries({ queryKey: ["playlists"] }),
-      ]);
-      toast.success("Channel deleted");
-      onClose();
-    } catch (e) { setError(errMsg(e)); }
+    setSaving(true);
+    try { await removeChannel(channel.id, channel.name); }
     finally { setSaving(false); }
   }
+
 
   return <Dialog open onOpenChange={(open) => { if (!open && !saving) onClose(); }}>
     <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-[min(32rem,calc(100%-1.5rem))] overflow-y-auto p-4 sm:p-6">

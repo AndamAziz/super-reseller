@@ -221,10 +221,14 @@ function PlaylistsPage() {
                     <div className="truncate text-[12px] text-muted-foreground">{c.group_title ?? "—"}{c.referrer ? " · Proxied" : ""}</div>
                   </div>
                   {isAdmin && !isSource && (
-                    <Button variant="outline" className="h-11 shrink-0 px-3" aria-label={`Edit channel ${c.name}`} onClick={() => setEditing(c)}><Pencil /> Edit</Button>
+                    <div className="grid h-11 shrink-0 grid-flow-col gap-2">
+                      <Button variant="outline" className="h-11 px-3" aria-label={`Edit channel ${c.name}`} onClick={() => setEditing(c)}><Pencil /> Edit</Button>
+                      <Button variant="destructive" className="h-11 px-3" aria-label={`Delete channel ${c.name}`} disabled={deleting[c.id] === true} onClick={() => removeChannel(c.id, c.name)}><Trash2 /></Button>
+                    </div>
                   )}
                 </div>
                 <div className="truncate font-mono text-[11px] text-muted-foreground">{c.url}</div>
+
                 {isAdmin && (
                   <div>
                     <button className={`${softBtn} py-2`} disabled={tests[c.id]?.loading} onClick={() => test(c)}>{tests[c.id]?.loading ? "Testing…" : "Test stream"}</button>
