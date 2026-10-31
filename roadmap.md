@@ -1,4 +1,7 @@
 # Connection billing
+## Automatic GitHub categories
+- [ ] Show the live GitHub source in Playlists with automatic five-second updates and source category ordering for admins and resellers.
+- [ ] Test automatic reorder updates without a page refresh and run the full test suite.
 ## Admin credit overview
 - [x] Show every reseller balance and the existing below-10 warning in the admin dashboard.
 - [x] Verify authenticated dashboard balances against both real reseller records; all 26 tests pass, including low-credit boundary tests.
