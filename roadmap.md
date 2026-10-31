@@ -1,7 +1,7 @@
 # Connection billing
 ## Uploaded channel ordering
-- [ ] Add up/down arrows for admins on uploaded channels, persist reordered positions atomically and export the saved order.
-- [ ] Verify moving in both directions, reload and cleaned M3U download; run ordering and full tests.
+- [x] Add up/down arrows for admins on uploaded channels, persist reordered positions atomically and export the saved order.
+- [x] Verify authenticated mobile moves in both directions, reload and M3U download with a temporary fixture (removed afterwards); all 41 tests passed, build OK, transactional admin/reseller/anonymous permission checks passed.
 ## Channel-link permission verification
 - [x] Run transactional admin/reseller/signed-out channel-link permission checks: admins saved both links, reseller edits changed zero rows, signed-out edits were blocked; no permission gaps found. Retain src/test/channel-links-permissions.sql; all 36 automated tests pass.
 ## Uploaded playlist editing
