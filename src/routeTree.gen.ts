@@ -28,6 +28,10 @@ import { Route as LiveUsernamePasswordStreamRouteImport } from './routes/live.$u
 import { Route as MovieUsernamePasswordStreamRouteImport } from './routes/movie.$username.$password.$stream'
 import { Route as ProxyUsernamePasswordIdRouteImport } from './routes/proxy.$username.$password.$id'
 import { Route as SeriesUsernamePasswordStreamRouteImport } from './routes/series.$username.$password.$stream'
+import { Route as ApiPublicLiveUsernamePasswordStreamRouteImport } from './routes/api/public/live.$username.$password.$stream'
+import { Route as ApiPublicMovieUsernamePasswordStreamRouteImport } from './routes/api/public/movie.$username.$password.$stream'
+import { Route as ApiPublicSeriesUsernamePasswordStreamRouteImport } from './routes/api/public/series.$username.$password.$stream'
+import { Route as ApiPublicMediaProxyKindUsernamePasswordStreamRouteImport } from './routes/api/public/media-proxy.$kind.$username.$password.$stream'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -127,6 +131,30 @@ const SeriesUsernamePasswordStreamRoute =
     path: '/series/$username/$password/$stream',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicLiveUsernamePasswordStreamRoute =
+  ApiPublicLiveUsernamePasswordStreamRouteImport.update({
+    id: '/api/public/live/$username/$password/$stream',
+    path: '/api/public/live/$username/$password/$stream',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicMovieUsernamePasswordStreamRoute =
+  ApiPublicMovieUsernamePasswordStreamRouteImport.update({
+    id: '/api/public/movie/$username/$password/$stream',
+    path: '/api/public/movie/$username/$password/$stream',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicSeriesUsernamePasswordStreamRoute =
+  ApiPublicSeriesUsernamePasswordStreamRouteImport.update({
+    id: '/api/public/series/$username/$password/$stream',
+    path: '/api/public/series/$username/$password/$stream',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicMediaProxyKindUsernamePasswordStreamRoute =
+  ApiPublicMediaProxyKindUsernamePasswordStreamRouteImport.update({
+    id: '/api/public/media-proxy/$kind/$username/$password/$stream',
+    path: '/api/public/media-proxy/$kind/$username/$password/$stream',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -147,6 +175,10 @@ export interface FileRoutesByFullPath {
   '/movie/$username/$password/$stream': typeof MovieUsernamePasswordStreamRoute
   '/proxy/$username/$password/$id': typeof ProxyUsernamePasswordIdRoute
   '/series/$username/$password/$stream': typeof SeriesUsernamePasswordStreamRoute
+  '/api/public/live/$username/$password/$stream': typeof ApiPublicLiveUsernamePasswordStreamRoute
+  '/api/public/movie/$username/$password/$stream': typeof ApiPublicMovieUsernamePasswordStreamRoute
+  '/api/public/series/$username/$password/$stream': typeof ApiPublicSeriesUsernamePasswordStreamRoute
+  '/api/public/media-proxy/$kind/$username/$password/$stream': typeof ApiPublicMediaProxyKindUsernamePasswordStreamRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -167,6 +199,10 @@ export interface FileRoutesByTo {
   '/movie/$username/$password/$stream': typeof MovieUsernamePasswordStreamRoute
   '/proxy/$username/$password/$id': typeof ProxyUsernamePasswordIdRoute
   '/series/$username/$password/$stream': typeof SeriesUsernamePasswordStreamRoute
+  '/api/public/live/$username/$password/$stream': typeof ApiPublicLiveUsernamePasswordStreamRoute
+  '/api/public/movie/$username/$password/$stream': typeof ApiPublicMovieUsernamePasswordStreamRoute
+  '/api/public/series/$username/$password/$stream': typeof ApiPublicSeriesUsernamePasswordStreamRoute
+  '/api/public/media-proxy/$kind/$username/$password/$stream': typeof ApiPublicMediaProxyKindUsernamePasswordStreamRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -189,6 +225,10 @@ export interface FileRoutesById {
   '/movie/$username/$password/$stream': typeof MovieUsernamePasswordStreamRoute
   '/proxy/$username/$password/$id': typeof ProxyUsernamePasswordIdRoute
   '/series/$username/$password/$stream': typeof SeriesUsernamePasswordStreamRoute
+  '/api/public/live/$username/$password/$stream': typeof ApiPublicLiveUsernamePasswordStreamRoute
+  '/api/public/movie/$username/$password/$stream': typeof ApiPublicMovieUsernamePasswordStreamRoute
+  '/api/public/series/$username/$password/$stream': typeof ApiPublicSeriesUsernamePasswordStreamRoute
+  '/api/public/media-proxy/$kind/$username/$password/$stream': typeof ApiPublicMediaProxyKindUsernamePasswordStreamRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -211,6 +251,10 @@ export interface FileRouteTypes {
     | '/movie/$username/$password/$stream'
     | '/proxy/$username/$password/$id'
     | '/series/$username/$password/$stream'
+    | '/api/public/live/$username/$password/$stream'
+    | '/api/public/movie/$username/$password/$stream'
+    | '/api/public/series/$username/$password/$stream'
+    | '/api/public/media-proxy/$kind/$username/$password/$stream'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -231,6 +275,10 @@ export interface FileRouteTypes {
     | '/movie/$username/$password/$stream'
     | '/proxy/$username/$password/$id'
     | '/series/$username/$password/$stream'
+    | '/api/public/live/$username/$password/$stream'
+    | '/api/public/movie/$username/$password/$stream'
+    | '/api/public/series/$username/$password/$stream'
+    | '/api/public/media-proxy/$kind/$username/$password/$stream'
   id:
     | '__root__'
     | '/'
@@ -252,6 +300,10 @@ export interface FileRouteTypes {
     | '/movie/$username/$password/$stream'
     | '/proxy/$username/$password/$id'
     | '/series/$username/$password/$stream'
+    | '/api/public/live/$username/$password/$stream'
+    | '/api/public/movie/$username/$password/$stream'
+    | '/api/public/series/$username/$password/$stream'
+    | '/api/public/media-proxy/$kind/$username/$password/$stream'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -267,6 +319,10 @@ export interface RootRouteChildren {
   MovieUsernamePasswordStreamRoute: typeof MovieUsernamePasswordStreamRoute
   ProxyUsernamePasswordIdRoute: typeof ProxyUsernamePasswordIdRoute
   SeriesUsernamePasswordStreamRoute: typeof SeriesUsernamePasswordStreamRoute
+  ApiPublicLiveUsernamePasswordStreamRoute: typeof ApiPublicLiveUsernamePasswordStreamRoute
+  ApiPublicMovieUsernamePasswordStreamRoute: typeof ApiPublicMovieUsernamePasswordStreamRoute
+  ApiPublicSeriesUsernamePasswordStreamRoute: typeof ApiPublicSeriesUsernamePasswordStreamRoute
+  ApiPublicMediaProxyKindUsernamePasswordStreamRoute: typeof ApiPublicMediaProxyKindUsernamePasswordStreamRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -404,6 +460,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SeriesUsernamePasswordStreamRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/live/$username/$password/$stream': {
+      id: '/api/public/live/$username/$password/$stream'
+      path: '/api/public/live/$username/$password/$stream'
+      fullPath: '/api/public/live/$username/$password/$stream'
+      preLoaderRoute: typeof ApiPublicLiveUsernamePasswordStreamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/movie/$username/$password/$stream': {
+      id: '/api/public/movie/$username/$password/$stream'
+      path: '/api/public/movie/$username/$password/$stream'
+      fullPath: '/api/public/movie/$username/$password/$stream'
+      preLoaderRoute: typeof ApiPublicMovieUsernamePasswordStreamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/series/$username/$password/$stream': {
+      id: '/api/public/series/$username/$password/$stream'
+      path: '/api/public/series/$username/$password/$stream'
+      fullPath: '/api/public/series/$username/$password/$stream'
+      preLoaderRoute: typeof ApiPublicSeriesUsernamePasswordStreamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/media-proxy/$kind/$username/$password/$stream': {
+      id: '/api/public/media-proxy/$kind/$username/$password/$stream'
+      path: '/api/public/media-proxy/$kind/$username/$password/$stream'
+      fullPath: '/api/public/media-proxy/$kind/$username/$password/$stream'
+      preLoaderRoute: typeof ApiPublicMediaProxyKindUsernamePasswordStreamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -452,6 +536,14 @@ const rootRouteChildren: RootRouteChildren = {
   MovieUsernamePasswordStreamRoute: MovieUsernamePasswordStreamRoute,
   ProxyUsernamePasswordIdRoute: ProxyUsernamePasswordIdRoute,
   SeriesUsernamePasswordStreamRoute: SeriesUsernamePasswordStreamRoute,
+  ApiPublicLiveUsernamePasswordStreamRoute:
+    ApiPublicLiveUsernamePasswordStreamRoute,
+  ApiPublicMovieUsernamePasswordStreamRoute:
+    ApiPublicMovieUsernamePasswordStreamRoute,
+  ApiPublicSeriesUsernamePasswordStreamRoute:
+    ApiPublicSeriesUsernamePasswordStreamRoute,
+  ApiPublicMediaProxyKindUsernamePasswordStreamRoute:
+    ApiPublicMediaProxyKindUsernamePasswordStreamRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

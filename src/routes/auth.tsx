@@ -11,6 +11,8 @@ export const Route = createFileRoute("/auth")({
       { name: "description", content: "Sign in to the Kurdistan IPTV reseller and admin panel." },
       { property: "og:title", content: "Sign in — Kurdistan IPTV" },
       { property: "og:description", content: "Sign in to the Kurdistan IPTV reseller and admin panel." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AuthPage,

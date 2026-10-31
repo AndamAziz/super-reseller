@@ -14,7 +14,12 @@ import { testStream, type StreamTestStep } from "@/lib/stream-test.functions";
 type TestResult = { loading: true } | { loading: false; ok: boolean; steps: StreamTestStep[]; error?: string };
 
 export const Route = createFileRoute("/_authenticated/playlists")({
-  head: () => ({ meta: [{ title: "Playlists — Kurdistan IPTV" }] }),
+  head: () => ({ meta: [{ title: "Playlists — Kurdistan IPTV" },
+    { name: "description", content: "Manage and test Kurdistan IPTV audio, video and live playlists." },
+    { property: "og:title", content: "Playlists — Kurdistan IPTV" },
+    { property: "og:description", content: "Manage and test Kurdistan IPTV audio, video and live playlists." },
+    { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
+  ] }),
   component: PlaylistsPage,
 });
 

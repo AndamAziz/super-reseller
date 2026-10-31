@@ -5,7 +5,12 @@ import { useTransactions } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/credits")({
-  head: () => ({ meta: [{ title: "Credits — Kurdistan IPTV" }] }),
+  head: () => ({ meta: [{ title: "Credits — Kurdistan IPTV" },
+    { name: "description", content: "Review Kurdistan IPTV credit balances and transactions." },
+    { property: "og:title", content: "Credits — Kurdistan IPTV" },
+    { property: "og:description", content: "Review Kurdistan IPTV credit balances and transactions." },
+    { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
+  ] }),
   component: CreditsPage,
 });
 
