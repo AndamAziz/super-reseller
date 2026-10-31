@@ -13,6 +13,8 @@ import { testStream, type StreamTestStep } from "@/lib/stream-test.functions";
 import { getSourcePlaylist } from "@/lib/source-playlist.functions";
 import { sourcePlaylistQueryOptions } from "@/lib/source-playlist-query";
 import { Button } from "@/components/ui/button";
+import { Pencil } from "lucide-react";
+import { ChannelLinksDialog } from "@/components/channel-links-dialog";
 
 type TestResult = { loading: true } | { loading: false; ok: boolean; steps: StreamTestStep[]; error?: string };
 
@@ -58,6 +60,7 @@ function PlaylistsPage() {
   const source = useQuery(sourcePlaylistQueryOptions(() => fetchSource()));
   const runTest = useServerFn(testStream);
   const [tests, setTests] = useState<Record<string, TestResult>>({});
+  const [editing, setEditing] = useState<(M3UChannel & { id: string }) | null>(null);
 
   async function test(c: M3UChannel & { id: string }) {
     setTests((t) => ({ ...t, [c.id]: { loading: true } }));
@@ -216,6 +219,7 @@ function PlaylistsPage() {
                   <th className={th}>Stream URL</th>
                   <th className={th}>Requires referer</th>
                   {isAdmin && <th className={th}>Test stream</th>}
+                  {isAdmin && !isSource && <th className={th}>Edit links</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -238,6 +242,9 @@ function PlaylistsPage() {
                         <TestOutput r={tests[c.id]} />
                       </td>
                     )}
+                    {isAdmin && !isSource && <td className={td}>
+                      <Button variant="ghost" size="icon" title={`Edit links for ${c.name}`} aria-label={`Edit links for ${c.name}`} onClick={() => setEditing(c)}><Pencil /></Button>
+                    </td>}
                   </tr>
                 ))}
               </tbody>
@@ -246,6 +253,7 @@ function PlaylistsPage() {
           </div>
         </Panel>
       )}
+      {editing && isAdmin && !isSource && <ChannelLinksDialog key={editing.id} channel={editing} playlistId={current} onClose={() => setEditing(null)} />}
     </>
   );
 }
