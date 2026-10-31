@@ -1,4 +1,7 @@
 # Connection billing
+## Uploaded playlist format
+- [ ] Preserve media classification and original M3U metadata through import, edits and download; show separate Live TV, Movies and Series views.
+- [ ] Verify mixed-media upload, edit, delete and download with saved data and automated tests.
 ## Uploaded channel ordering
 - [x] Add up/down arrows for admins on uploaded channels, persist reordered positions atomically and export the saved order.
 - [x] Verify authenticated mobile moves in both directions, reload and M3U download with a temporary fixture (removed afterwards); all 41 tests passed, build OK, transactional admin/reseller/anonymous permission checks passed.
