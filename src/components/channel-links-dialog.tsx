@@ -39,20 +39,23 @@ export function ChannelLinksDialog({ channel, playlistId, onClose }: {
   }
 
   return <Dialog open onOpenChange={(open) => { if (!open && !saving) onClose(); }}>
-    <DialogContent className="max-w-[min(32rem,calc(100%-2rem))]">
-      <DialogHeader><DialogTitle>Edit channel links</DialogTitle>
+    <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-[min(32rem,calc(100%-1.5rem))] overflow-y-auto p-4 sm:p-6">
+      <DialogHeader className="text-left"><DialogTitle>Edit channel links</DialogTitle>
         <DialogDescription className="break-words">{channel.name}</DialogDescription></DialogHeader>
       <form onSubmit={save} className="grid gap-4">
         <label className="grid gap-2 text-sm">Stream URL
-          <input type="url" required value={url} onChange={(e) => setUrl(e.target.value)} className={`${inputCls} w-full min-w-0`} />
+          <textarea required rows={3} inputMode="url" autoCapitalize="off" autoCorrect="off" spellCheck={false} value={url} onChange={(e) => setUrl(e.target.value.replace(/\s+/g, ""))} className={`${inputCls} w-full min-w-0 resize-none break-all font-mono text-base sm:text-[13px]`} />
         </label>
         <label className="grid gap-2 text-sm">Logo URL
-          <input type="url" value={logo} onChange={(e) => setLogo(e.target.value)} className={`${inputCls} w-full min-w-0`} />
+          <div className="flex min-w-0 items-center gap-3">
+            {logo.trim() ? <img src={logo.trim()} alt="" className="size-12 shrink-0 rounded-lg bg-muted object-contain" /> : <div className="size-12 shrink-0 rounded-lg bg-muted" />}
+            <input type="url" autoCapitalize="off" autoCorrect="off" spellCheck={false} value={logo} onChange={(e) => setLogo(e.target.value)} className={`${inputCls} h-11 w-full min-w-0 text-base sm:text-[13px]`} />
+          </div>
         </label>
         {error && <p role="alert" className="break-words text-sm text-destructive">{error}</p>}
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" disabled={saving} onClick={onClose}>Cancel</Button>
-          <Button type="submit" disabled={saving}><Save />{saving ? "Saving…" : "Save links"}</Button>
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+          <Button type="button" variant="outline" className="h-11 sm:h-9" disabled={saving} onClick={onClose}>Cancel</Button>
+          <Button type="submit" className="h-11 sm:h-9" disabled={saving}><Save />{saving ? "Saving…" : "Save links"}</Button>
         </div>
       </form>
     </DialogContent>

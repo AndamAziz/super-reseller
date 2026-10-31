@@ -160,12 +160,12 @@ function PlaylistsPage() {
 
       {isAdmin && <StreamIdTester />}
 
-      <div className="flex flex-wrap gap-2">
-        <Button variant={isSource ? "default" : "outline"} className="h-auto py-2" onClick={() => { setSelected("github"); setGroup("all"); }}>
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+        <Button variant={isSource ? "default" : "outline"} className="h-auto shrink-0 py-2" onClick={() => { setSelected("github"); setGroup("all"); }}>
           <span className="text-left"><span className="block">GitHub playlist</span><span className="block font-mono text-[10px]">{source.data?.length ?? 0} channels</span></span>
         </Button>
         {playlists.map((p) => (
-          <div key={p.id} className={cn("glass flex items-center gap-2 px-3 py-2", p.id === current && "ring-2 ring-primary/40")}>
+          <div key={p.id} className={cn("glass flex shrink-0 items-center gap-2 px-3 py-2", p.id === current && "ring-2 ring-primary/40")}>
             <button onClick={() => { setSelected(p.id); setGroup("all"); }} className="text-left">
               <div className="text-[13px] font-medium">{p.name}</div>
               <div className="font-mono text-[10px] text-muted-foreground">{p.channel_count} channels</div>
@@ -178,7 +178,7 @@ function PlaylistsPage() {
 
       {current && (
         <section className="rise grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
-          <div className="glass p-5">
+          <div className="glass order-2 min-w-0 p-4 sm:p-5 lg:order-none">
             <div className="label-mono">Playlist parser</div>
             <h2 className="mt-1 font-display text-[16px] font-semibold tracking-tight">M3U preview</h2>
             <pre className="mt-3 max-h-48 overflow-auto rounded-xl border border-border bg-ink p-4 font-mono text-[11.5px] leading-relaxed text-ink-foreground">
@@ -195,7 +195,7 @@ function PlaylistsPage() {
               ))}
             </div>
           </div>
-          <div className="glass p-5">
+          <div className="glass order-1 p-4 sm:p-5 lg:order-none">
             <div className="label-mono">Import status</div>
             <div className="mt-3 flex items-center gap-3">
               <div className="grid size-10 place-items-center rounded-xl bg-good/10 font-display text-[13px] font-bold text-good ring-1 ring-good/20">✓</div>
@@ -204,14 +204,38 @@ function PlaylistsPage() {
                 <div className="font-mono text-[10px] text-muted-foreground">{groups.length} categories</div>
               </div>
             </div>
-            <button onClick={download} disabled={!channels.length} className={`${softBtn} mt-5 w-full py-2`}>Download .m3u</button>
+            <button onClick={download} disabled={!channels.length} className={`${softBtn} mt-5 w-full py-3 sm:py-2`}>Download .m3u</button>
           </div>
         </section>
       )}
 
       {current && (
-        <Panel title="Channels" sub={`${shown.length} shown`} actions={<input placeholder="search channel" value={q} onChange={(e) => setQ(e.target.value)} className={`${inputCls} w-48`} />}>
-          <div className="max-h-[600px] overflow-auto">
+        <Panel title="Channels" sub={`${shown.length} shown`} actions={<input type="search" placeholder="search channel" value={q} onChange={(e) => setQ(e.target.value)} className={`${inputCls} h-11 w-full text-base sm:h-auto sm:w-48 sm:text-[13px]`} />}>
+          <ul className="divide-y divide-border md:hidden">
+            {shown.slice(0, 300).map((c) => (
+              <li key={c.id} className="space-y-2 px-4 py-3">
+                <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
+                  {c.logo ? <img src={c.logo} alt="" loading="lazy" className="size-11 shrink-0 rounded-lg bg-muted object-contain" /> : <div className="size-11 shrink-0 rounded-lg bg-muted" />}
+                  <div className="min-w-0">
+                    <div className="truncate font-medium">{c.name}</div>
+                    <div className="truncate text-[12px] text-muted-foreground">{c.group_title ?? "—"}{c.referrer ? " · Proxied" : ""}</div>
+                  </div>
+                  {isAdmin && !isSource && (
+                    <Button variant="outline" className="h-11 shrink-0 px-3" aria-label={`Edit links for ${c.name}`} onClick={() => setEditing(c)}><Pencil /> Edit</Button>
+                  )}
+                </div>
+                <div className="truncate font-mono text-[11px] text-muted-foreground">{c.url}</div>
+                {isAdmin && (
+                  <div>
+                    <button className={`${softBtn} py-2`} disabled={tests[c.id]?.loading} onClick={() => test(c)}>{tests[c.id]?.loading ? "Testing…" : "Test stream"}</button>
+                    <TestOutput r={tests[c.id]} />
+                  </div>
+                )}
+              </li>
+            ))}
+            {shown.length > 300 && <li className="px-4 py-3 font-mono text-[11px] text-muted-foreground">Showing first 300 — refine with search or category.</li>}
+          </ul>
+          <div className="hidden max-h-[600px] overflow-auto md:block">
             <table className="w-full min-w-[720px] text-[13px]">
               <thead className="sticky top-0 bg-glass-strong backdrop-blur">
                 <tr>
