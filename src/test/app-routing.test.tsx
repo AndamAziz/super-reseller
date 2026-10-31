@@ -1,12 +1,14 @@
 import { QueryClient } from "@tanstack/react-query";
-import { createMemoryHistory, createRouter, RouterProvider } from "@tanstack/react-router";
+import { createMemoryHistory, createRouter, RouterProvider, type RootRouteOptions } from "@tanstack/react-router";
+import { AuthSessionMissingError } from "@supabase/supabase-js";
 import { cleanup, render, waitFor } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { routeTree } from "@/routeTree.gen";
 import { supabase } from "@/integrations/supabase/client";
 
-const documentShell = routeTree.options.shellComponent;
+const rootOptions = routeTree.options as RootRouteOptions;
+const documentShell = rootOptions.shellComponent;
 const clients: QueryClient[] = [];
 
 async function renderAt(path: string) {
@@ -25,14 +27,14 @@ async function renderAt(path: string) {
 beforeAll(() => {
   // React 19 document shells belong at document level, not RTL's div container.
   // Exercise the real route components without nesting html inside that div.
-  routeTree.options.shellComponent = undefined;
+  rootOptions.shellComponent = undefined;
 });
 
-afterAll(() => { routeTree.options.shellComponent = documentShell; });
+afterAll(() => { rootOptions.shellComponent = documentShell; });
 
 beforeEach(() => {
   // Keep the signed-out redirect deterministic and avoid a hosted auth request.
-  vi.spyOn(supabase.auth, "getUser").mockResolvedValue({ data: { user: null }, error: null });
+  vi.spyOn(supabase.auth, "getUser").mockResolvedValue({ data: { user: null }, error: new AuthSessionMissingError() });
 });
 
 afterEach(() => {
@@ -58,6 +60,6 @@ describe("App routing", () => {
 
     await waitFor(() => expect(router.state.status).toBe("idle"));
     expect(router.state.location.pathname).toBe("/this-route-does-not-exist");
-    expect(router.state.matches.some((match) => match.globalNotFound || match.status === "notFound")).toBe(true);
+    expect(router.state.matches.some((match) => match._notFound || match.status === "notFound")).toBe(true);
   });
 });
