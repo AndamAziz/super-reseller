@@ -82,13 +82,14 @@ function PlaylistsPage() {
     channels.forEach((c) => m.set(c.group_title ?? "Uncategorized", (m.get(c.group_title ?? "Uncategorized") ?? 0) + 1));
     return [...m.entries()];
   }, [channels]);
+  const activeGroup = group === "all" || groups.some(([name]) => name === group) ? group : "all";
 
   const shown = useMemo(() => {
     const s = q.toLowerCase();
     return channels.filter(
-      (c) => (group === "all" || (c.group_title ?? "Uncategorized") === group) && (!s || c.name.toLowerCase().includes(s)),
+      (c) => (activeGroup === "all" || (c.group_title ?? "Uncategorized") === activeGroup) && (!s || c.name.toLowerCase().includes(s)),
     );
-  }, [channels, group, q]);
+  }, [channels, activeGroup, q]);
 
   async function onFile(file: File) {
     try {
@@ -180,13 +181,13 @@ function PlaylistsPage() {
               {preview}
             </pre>
             <div className="mt-4 flex flex-wrap gap-2">
-              <button onClick={() => setGroup("all")} className={cn("rounded-full px-3 py-1 text-[11px] font-medium ring-1 ring-border", group === "all" ? "bg-primary text-primary-foreground" : "bg-glass-strong")}>
+                <Button size="sm" onClick={() => setGroup("all")} className={cn("h-auto rounded-full px-3 py-1 text-[11px] font-medium ring-1 ring-border", activeGroup === "all" ? "bg-primary text-primary-foreground" : "bg-glass-strong text-foreground")}>
                 All · {channels.length}
-              </button>
+                </Button>
               {groups.map(([g, n]) => (
-                <button key={g} onClick={() => setGroup(g)} className={cn("rounded-full px-3 py-1 text-[11px] font-medium ring-1 ring-border", group === g ? "bg-primary text-primary-foreground" : "bg-glass-strong")}>
+                <Button key={g} size="sm" onClick={() => setGroup(g)} className={cn("h-auto whitespace-normal rounded-full px-3 py-1 text-[11px] font-medium ring-1 ring-border", activeGroup === g ? "bg-primary text-primary-foreground" : "bg-glass-strong text-foreground")}>
                   {g} · {n}
-                </button>
+                </Button>
               ))}
             </div>
           </div>

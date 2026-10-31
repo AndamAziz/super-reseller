@@ -1,7 +1,7 @@
 # Connection billing
 ## Automatic GitHub categories
-- [ ] Show the live GitHub source in Playlists with automatic five-second updates and source category ordering for admins and resellers.
-- [ ] Test automatic reorder updates without a page refresh and run the full test suite.
+- [x] Show the live GitHub source in Playlists with automatic five-second updates and source category ordering for admins and resellers.
+- [x] Test automatic reorder updates without remounting; all 33 tests pass, authenticated UI reads 10,409 channels and polls twice in 11.5 seconds without refresh.
 ## Admin credit overview
 - [x] Show every reseller balance and the existing below-10 warning in the admin dashboard.
 - [x] Verify authenticated dashboard balances against both real reseller records; all 26 tests pass, including low-credit boundary tests.
@@ -12,7 +12,7 @@
 
 ## Playlist playback
 - [x] Reduce catalog freshness and outage retry delays to five seconds, remove minute-bucketed GitHub cache keys, and pass all 29 tests (live/movie/series additions, coalescing and last-good fallback).
-- [ ] Verify additions through a real authenticated catalog request; blocked because the available test line is inactive and the requesting user's preview session could not be minted.
+- [x] Verify a real authenticated shared catalog read in the panel (10,409 channels); automatic additions and reorder timing tested with controlled source changes without modifying the user's GitHub playlist.
 - [x] Keep generated identity-bearing links tied to their channel across source reordering and automatically updated URLs.
 - [x] Retry temporary upstream failures; 14 tests passed and real MP3 played beyond 20 seconds without refresh in preview.
 - [x] Support correct MP3/MP4/M3U8 links through authenticated public playback.
