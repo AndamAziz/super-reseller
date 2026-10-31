@@ -317,7 +317,7 @@ function StreamIdTester() {
   return (
     <Panel title="Test stream" sub="Fetches the playlist and first segment through the proxy, exactly like a player">
       <div className="flex flex-wrap items-center gap-2 px-5 pb-4">
-        <input inputMode="numeric" placeholder="stream number, e.g. 186" value={id} onChange={(e) => setId(e.target.value)} onKeyDown={(e) => e.key === "Enter" && go()} className={`${inputCls} w-56`} />
+        <input inputMode="numeric" placeholder="stream number, e.g. 186" value={id} onChange={(e) => setId(e.target.value)} onKeyDown={(e) => e.key === "Enter" && go()} className={`${inputCls} h-11 w-full text-base sm:h-auto sm:w-56 sm:text-[12px]`} />
         <button className={softBtn} disabled={r?.loading} onClick={go}>{r?.loading ? "Testing…" : "Test stream"}</button>
         {name && <span className="text-[13px] font-medium">{name}</span>}
         {r && !r.loading && <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1", r.ok ? "bg-good/10 text-good ring-good/20" : "bg-destructive/10 text-destructive ring-destructive/20")}>{r.ok ? "OK" : "Failed"}</span>}

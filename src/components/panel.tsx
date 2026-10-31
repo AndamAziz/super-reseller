@@ -68,7 +68,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               to={n.to}
               onClick={() => setOpen(false)}
               className={cn(
-                "flex items-center justify-between rounded-xl px-3 py-2 text-[13px] transition-colors",
+                "flex items-center justify-between rounded-xl px-3 py-3 text-[15px] lg:py-2 lg:text-[13px] transition-colors",
                 active
                   ? "bg-glass-strong font-medium ring-1 ring-border"
                   : "text-muted-foreground hover:bg-glass-strong hover:text-foreground",
@@ -107,15 +107,15 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="relative min-h-screen overflow-hidden text-sm">
       <div className="sheen-bg pointer-events-none absolute inset-0" />
       <div className="relative mx-auto max-w-[1440px] px-4 py-5 lg:px-8 lg:py-7">
-        <div className="mb-4 flex items-center gap-3 lg:hidden">
-          <button onClick={() => setOpen(true)} className="glass p-2" aria-label="Open menu">
+        <div className="sticky top-2 z-40 mb-4 flex items-center gap-3 lg:hidden">
+          <button onClick={() => setOpen(true)} className="glass p-3" aria-label="Open menu">
             <Menu className="size-4" />
           </button>
           <img src={logoAsset.url} alt="Kurdistan IPTV" className="size-7 rounded-lg object-cover ring-1 ring-border" />
           <span className="font-display font-semibold">KURDISTAN IPTV</span>
         </div>
         <div className="grid gap-5 lg:grid-cols-[248px_minmax(0,1fr)]">
-          <div className={cn("lg:block", open ? "fixed inset-0 z-50 bg-background/70 p-4 backdrop-blur-sm" : "hidden")}>
+          <div className={cn("lg:block", open ? "fixed inset-0 z-50 overflow-y-auto bg-background/70 p-4 backdrop-blur-sm" : "hidden")}>
             {sidebar}
           </div>
           <main className="min-w-0 space-y-5">
@@ -187,7 +187,7 @@ export function Panel({ title, sub, actions, children, className }: { title: str
           <h2 className="font-display text-[16px] font-semibold tracking-tight">{title}</h2>
           {sub && <div className="label-mono mt-0.5">{sub}</div>}
         </div>
-        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+        {actions && <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">{actions}</div>}
       </div>
       {children}
     </section>
