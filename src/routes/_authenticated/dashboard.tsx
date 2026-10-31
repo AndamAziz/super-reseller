@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageHeader, Panel, StatCard, StatusBadge, td, th, primaryBtn } from "@/components/panel";
 import { useMe, isActive, fmtDate } from "@/hooks/use-me";
 import { useLines, usePlaylists, useResellers } from "@/lib/queries";
+import { AlertTriangle } from "lucide-react";
+import { hasLowCredits } from "@/lib/credit-alert";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Kurdistan IPTV" },
@@ -25,6 +27,7 @@ function Dashboard() {
     return t > 0 && t < 7 * 864e5;
   }).length;
   const creditsOut = (resellers.data ?? []).reduce((s, r) => s + r.credits, 0);
+  const lowBalanceCount = (resellers.data ?? []).filter((r) => hasLowCredits("reseller", r.credits)).length;
 
   return (
     <>
@@ -55,6 +58,46 @@ function Dashboard() {
           <StatCard label="Playlists" value={playlists.length} delay={240} />
         )}
       </section>
+
+      {isAdmin && (
+        <Panel title="Reseller credit balances" sub={`${lowBalanceCount} low-credit ${lowBalanceCount === 1 ? "account" : "accounts"}`} actions={<Link to="/resellers" className="text-[12px] font-medium text-primary">Manage resellers →</Link>}>
+          <div className="overflow-x-auto">
+            <table aria-label="Reseller credit balances" className="w-full min-w-[480px] text-[13px]">
+              <thead>
+                <tr>
+                  <th className={th}>Reseller</th>
+                  <th className={th}>Credit balance</th>
+                  <th className={th}>Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {(resellers.data ?? []).map((r) => {
+                  const low = hasLowCredits("reseller", r.credits);
+                  return (
+                    <tr key={r.id} className={low ? "bg-warn/5" : "transition-colors hover:bg-glass-strong"}>
+                      <td className={td}>
+                        <div className="font-medium">{r.display_name || r.email}</div>
+                        {r.display_name && <div className="mt-0.5 text-[11px] text-muted-foreground">{r.email}</div>}
+                      </td>
+                      <td className={`${td} font-mono tabular-nums ${low ? "font-semibold text-warn" : "text-foreground"}`}>{r.credits} credits</td>
+                      <td className={td}>
+                        {low ? (
+                          <span role="status" className="inline-flex items-center gap-1.5 rounded-md bg-warn/10 px-2 py-1 text-[11px] font-medium text-warn ring-1 ring-warn/20">
+                            <AlertTriangle className="size-3.5 shrink-0" aria-hidden="true" />Low credits
+                          </span>
+                        ) : <span className="text-[12px] text-muted-foreground">Sufficient credits</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {resellers.isPending && <tr><td colSpan={3} className={`${td} text-muted-foreground`}>Loading reseller balances…</td></tr>}
+                {resellers.isError && <tr><td colSpan={3} role="alert" className={`${td} text-destructive`}>Could not load reseller balances.</td></tr>}
+                {resellers.isSuccess && !resellers.data.length && <tr><td colSpan={3} className={`${td} text-muted-foreground`}>No resellers yet.</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </Panel>
+      )}
 
       <Panel title="Recent subscription lines" sub={`${active} active · ${lines.length - active} expired`} actions={<Link to="/lines" className="text-[12px] font-medium text-primary">View all →</Link>}>
         <div className="overflow-x-auto">
