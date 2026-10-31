@@ -79,7 +79,7 @@ export async function handleXtreamRequest(request: Request) {
     return json(movies.map((m, i) => ({
       num: i + 1, name: m.name, stream_type: "movie", stream_id: i + 1, stream_icon: m.logo ?? "",
       rating: "", added: "0", category_id: String(vc.indexOf(m.group_title ?? "Uncategorized") + 1),
-      container_extension: mediaExtension(m.url), custom_sid: "", direct_source: playbackUrl(base, "movie", auth.username, auth.password, i + 1, m.url),
+      container_extension: mediaExtension(m.url), custom_sid: "", direct_source: playbackUrl(base, "movie", auth.username, auth.password, i + 1, m.url, m),
     })).filter((s) => !filter || s.category_id === filter));
   }
   const sc = cats(series);
@@ -101,7 +101,7 @@ export async function handleXtreamRequest(request: Request) {
       (episodes[String(e.season)] ??= []).push({
         id: String(e.id), episode_num: e.episode, title: e.name, container_extension: mediaExtension(e.url),
         info: { movie_image: e.logo ?? s.cover ?? "" }, season: e.season, custom_sid: "", added: "0",
-        direct_source: playbackUrl(base, "series", auth.username, auth.password, e.id, e.url),
+        direct_source: playbackUrl(base, "series", auth.username, auth.password, e.id, e.url, e),
       });
     }
     return json({
@@ -129,7 +129,7 @@ export async function handleXtreamRequest(request: Request) {
           custom_sid: "",
           tv_archive: 0,
           container_extension: mediaExtension(c.url),
-          direct_source: playbackUrl(base, "live", auth.username, auth.password, i + 1, c.url),
+          direct_source: playbackUrl(base, "live", auth.username, auth.password, i + 1, c.url, c),
           requires_referer: needsProxy(c),
           tv_archive_duration: 0,
         }))

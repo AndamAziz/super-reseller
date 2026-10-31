@@ -77,7 +77,7 @@ const isTag = (t: string) => t.startsWith("#") || /^EXT-?X?-?[A-Z-]*:/i.test(t) 
 export async function rewritePlaylist(text: string, from: string, prefix: string, scope: string): Promise<string> {
   const abs = async (uri: string) => {
     const full = new URL(uri.trim(), from).toString();
-    return `${prefix}?u=${b64u(full)}&s=${await signTarget(scope, full)}`;
+    return `${prefix}${prefix.includes("?") ? "&" : "?"}u=${b64u(full)}&s=${await signTarget(scope, full)}`;
   };
   const out: string[] = [];
   for (const line of text.replace(/^\uFEFF/, "").split(/\r\n|\r|\n/)) {
@@ -113,7 +113,23 @@ export async function proxyFetch(request: Request, target: URL, channel: M3UChan
   try {
     for (let hop = 0; hop < 6; hop++) {
       if (isPrivateHost(current.hostname)) return plain("Forbidden target", 403);
-      res = await fetch(current, { headers, redirect: "manual", signal: AbortSignal.timeout(15000) });
+      for (let attempt = 0; attempt < 2; attempt++) {
+        // Limit time to receive headers, not the lifetime of an MP3/MP4 body.
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 15000);
+        try {
+          res = await fetch(current, { headers, redirect: "manual", signal: controller.signal });
+        } catch (error) {
+          if (attempt === 1) throw error;
+          continue;
+        } finally { clearTimeout(timer); }
+        if (attempt === 0 && [502, 503, 504].includes(res.status)) {
+          await res.body?.cancel();
+          continue;
+        }
+        break;
+      }
+      if (!res) return plain("Stream origin unreachable", 502);
       const loc = res.status >= 300 && res.status < 400 ? res.headers.get("location") : null;
       if (!loc) break;
       current = new URL(loc, current);

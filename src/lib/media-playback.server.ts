@@ -1,6 +1,7 @@
 import { authLine, loadCatalog, plain } from "./playlist-auth.server";
 import { checkStreamLimit, proxyFetch, allowedUrl, unb64u } from "./stream-proxy.server";
 import type { MediaKind } from "./media";
+import { resolveChannel } from "./media";
 
 export async function handleMediaPlayback(request: Request, username: string, password: string, stream: string, kind: MediaKind, segment = false): Promise<Response> {
   const auth = await authLine(username, password);
@@ -10,9 +11,12 @@ export async function handleMediaPlayback(request: Request, username: string, pa
   const loaded = await loadCatalog();
   if (!loaded.ok) return plain(loaded.message, loaded.status);
   const items = kind === "live" ? loaded.catalog.live : kind === "movie" ? loaded.catalog.movies : loaded.catalog.episodes;
-  const channel = items[id - 1];
+  const identity = new URL(request.url).searchParams.get("channel");
+  if (identity && !/^[a-f0-9]{16}$/.test(identity)) return plain("Invalid channel", 400);
+  const channel = resolveChannel(items, id, identity);
   if (!channel) return plain("Stream not found", 404);
-  const scope = kind === "live" ? `${auth.username}:${id}` : `${auth.username}:${kind}:${id}`;
+  const streamKey = identity ?? String(id);
+  const scope = kind === "live" ? `${auth.username}:${streamKey}` : `${auth.username}:${kind}:${streamKey}`;
   let target: URL;
   if (segment) {
     const params = new URL(request.url).searchParams;
@@ -26,7 +30,7 @@ export async function handleMediaPlayback(request: Request, username: string, pa
   }
   const limited = await checkStreamLimit(request, auth);
   if (limited) return limited;
-  const prefix = `${new URL(request.url).origin}/api/public/media-proxy/${kind}/${encodeURIComponent(auth.username)}/${encodeURIComponent(auth.password)}/${id}`;
+  const prefix = `${new URL(request.url).origin}/api/public/media-proxy/${kind}/${encodeURIComponent(auth.username)}/${encodeURIComponent(auth.password)}/${id}${identity ? `?channel=${identity}` : ""}`;
   return proxyFetch(request, target, channel, prefix, scope);
 }
 
