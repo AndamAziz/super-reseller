@@ -40,8 +40,8 @@ export async function loadSourceText(): Promise<{ ok: true; text: string } | { o
   if (!data?.value) return { ok: false, status: 503, message: "Playlist not configured" };
   try {
     const source = new URL(data.value);
-    // Avoid a stale raw-GitHub edge response when polling for recent edits.
-    if (source.hostname === "raw.githubusercontent.com") source.searchParams.set("_refresh", String(Math.floor(Date.now() / 60_000)));
+    // Every source read gets a fresh GitHub cache key, including forced refreshes.
+    if (source.hostname === "raw.githubusercontent.com") source.searchParams.set("_refresh", String(Date.now()));
     const res = await fetch(source, { cache: "no-store", headers: { "Cache-Control": "no-cache" }, signal: AbortSignal.timeout(20000) });
     if (!res.ok) return { ok: false, status: 502, message: `Playlist source unavailable (HTTP ${res.status})` };
     return { ok: true, text: await res.text() };

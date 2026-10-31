@@ -16,7 +16,7 @@
 - The admin dashboard reads reseller balances from the shared reseller query, refreshed every 30 seconds, and reuses the low-credit helper per reseller to keep warning thresholds consistent.
 - Stream proxy targets are authorized by an HMAC signature (scope user:stream) added when our rewriter emits each URI, so any host in a channel's playlist chain is allowed without a host allowlist; private hosts stay blocked on every redirect hop.
 - Generated media URLs use authenticated /api/public playback handlers and preserve source extensions, so audio/video files avoid HLS misidentification and the site access wall; catalog classification still follows tvg-type only.
-- Catalog refresh is request-driven through a coalesced last-good cache with short retries, so source outages do not discard a working playlist.
+- Catalog refresh and outage retries use a five-second request-driven coalesced last-good cache; each GitHub source fetch uses a fresh cache key, so minute-long edge cache keys do not delay additions and source outages do not discard a working playlist.
 - Generated direct-source links carry a channel identity derived from name and group, propagated through signed HLS links, so catalog reordering and source URL rotation keep the selected channel; legacy numeric-only links retain their behavior.
 - Upstream timeouts apply only until response headers arrive, with one retry for network errors or 502/503/504, so long MP3/MP4 bodies are not aborted by the header deadline.
 - Routing tests load the real route tree with deterministic signed-out auth and omit only the document shell in the div-based test renderer, so redirects and not-found state are tested without invalid nested HTML or hosted auth calls.
