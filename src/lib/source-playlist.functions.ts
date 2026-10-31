@@ -13,8 +13,7 @@ export const getSourcePlaylist = createServerFn({ method: "GET" })
     const { loadCatalog } = await import("./playlist-auth.server");
     const loaded = await loadCatalog();
     if (!loaded.ok) throw new Error(loaded.message);
-    const { live, movies, episodes } = loaded.catalog;
-    return [...live, ...movies, ...episodes].map((channel, index) => ({
+    return loaded.catalog.channels.map((channel, index) => ({
       ...channel, id: `source:${index}:${channel.name}`,
     }));
   });

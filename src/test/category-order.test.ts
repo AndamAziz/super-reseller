@@ -12,4 +12,8 @@ describe("category order follows the GitHub playlist", () => {
   it("reordering the playlist reorders categories", () => {
     expect(order(src(["News", "Kurdish", "Sport"]))).toEqual(["News", "Kurdish", "Sport"]);
   });
+  it("preserves source category order across live, movies and series", () => {
+    const catalog = buildCatalog(parseM3U('#EXTM3U\n#EXTINF:-1 tvg-type="series" group-title="Drama",Show - S01E01\nhttps://x.test/episode.mp4\n#EXTINF:-1 group-title="News",News\nhttps://x.test/live.m3u8\n#EXTINF:-1 tvg-type="movie" group-title="Films",Film\nhttps://x.test/movie.mp4'));
+    expect(catalog.channels.map((c) => c.group_title)).toEqual(["Drama", "News", "Films"]);
+  });
 });
