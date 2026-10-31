@@ -52,7 +52,7 @@ export async function loadSourceText(): Promise<{ ok: true; text: string } | { o
 
 export type Episode = M3UChannel & { id: number; season: number; episode: number };
 export type Series = { id: number; title: string; category: string; cover: string | null; episodes: Episode[] };
-export type Catalog = { live: M3UChannel[]; movies: M3UChannel[]; series: Series[]; episodes: Episode[] };
+export type Catalog = { channels: M3UChannel[]; live: M3UChannel[]; movies: M3UChannel[]; series: Series[]; episodes: Episode[] };
 
 export function buildCatalog(all: M3UChannel[]): Catalog {
   const live: M3UChannel[] = [], movies: M3UChannel[] = [], episodes: Episode[] = [];
@@ -69,7 +69,7 @@ export function buildCatalog(all: M3UChannel[]): Catalog {
       episodes.push(ep); s.episodes.push(ep);
     } else live.push(c);
   }
-  return { live, movies, series: [...byTitle.values()], episodes };
+  return { channels: all, live, movies, series: [...byTitle.values()], episodes };
 }
 
 const readCatalog = createPlaylistCache(async () => {

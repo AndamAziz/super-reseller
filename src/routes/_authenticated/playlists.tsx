@@ -10,10 +10,14 @@ import { parseM3U, buildM3U, type M3UChannel } from "@/lib/m3u";
 import { cn } from "@/lib/utils";
 import { useServerFn } from "@tanstack/react-start";
 import { testStream, type StreamTestStep } from "@/lib/stream-test.functions";
+import { getSourcePlaylist } from "@/lib/source-playlist.functions";
+import { sourcePlaylistQueryOptions } from "@/lib/source-playlist-query";
+import { Button } from "@/components/ui/button";
 
 type TestResult = { loading: true } | { loading: false; ok: boolean; steps: StreamTestStep[]; error?: string };
 
 export const Route = createFileRoute("/_authenticated/playlists")({
+  loader: ({ context }) => context.queryClient.ensureQueryData(sourcePlaylistQueryOptions()),
   head: () => ({ meta: [{ title: "Playlists — Kurdistan IPTV" },
     { name: "description", content: "Manage and test Kurdistan IPTV audio, video and live playlists." },
     { property: "og:title", content: "Playlists — Kurdistan IPTV" },
@@ -48,7 +52,10 @@ function PlaylistsPage() {
   const [progress, setProgress] = useState<string | null>(null);
   const [group, setGroup] = useState<string>("all");
   const [q, setQ] = useState("");
-  const current = selected ?? playlists[0]?.id ?? null;
+  const current = selected ?? "github";
+  const isSource = current === "github";
+  const fetchSource = useServerFn(getSourcePlaylist);
+  const source = useQuery(sourcePlaylistQueryOptions(() => fetchSource()));
   const runTest = useServerFn(testStream);
   const [tests, setTests] = useState<Record<string, TestResult>>({});
 
@@ -62,24 +69,27 @@ function PlaylistsPage() {
     }
   }
 
-  const { data: channels = [], isLoading } = useQuery({
+  const imported = useQuery({
     queryKey: ["channels", current],
-    enabled: !!current,
-    queryFn: () => fetchAllChannels(current!),
+    enabled: !isSource,
+    queryFn: () => fetchAllChannels(current),
   });
+  const channels = isSource ? source.data ?? [] : imported.data ?? [];
+  const isLoading = isSource ? source.isLoading : imported.isLoading;
 
   const groups = useMemo(() => {
     const m = new Map<string, number>();
     channels.forEach((c) => m.set(c.group_title ?? "Uncategorized", (m.get(c.group_title ?? "Uncategorized") ?? 0) + 1));
     return [...m.entries()];
   }, [channels]);
+  const activeGroup = group === "all" || groups.some(([name]) => name === group) ? group : "all";
 
   const shown = useMemo(() => {
     const s = q.toLowerCase();
     return channels.filter(
-      (c) => (group === "all" || (c.group_title ?? "Uncategorized") === group) && (!s || c.name.toLowerCase().includes(s)),
+      (c) => (activeGroup === "all" || (c.group_title ?? "Uncategorized") === activeGroup) && (!s || c.name.toLowerCase().includes(s)),
     );
-  }, [channels, group, q]);
+  }, [channels, activeGroup, q]);
 
   async function onFile(file: File) {
     try {
@@ -147,17 +157,20 @@ function PlaylistsPage() {
       {isAdmin && <StreamIdTester />}
 
       <div className="flex flex-wrap gap-2">
+        <Button variant={isSource ? "default" : "outline"} className="h-auto py-2" onClick={() => { setSelected("github"); setGroup("all"); }}>
+          <span className="text-left"><span className="block">GitHub playlist</span><span className="block font-mono text-[10px]">{source.data?.length ?? 0} channels</span></span>
+        </Button>
         {playlists.map((p) => (
           <div key={p.id} className={cn("glass flex items-center gap-2 px-3 py-2", p.id === current && "ring-2 ring-primary/40")}>
-            <button onClick={() => setSelected(p.id)} className="text-left">
+            <button onClick={() => { setSelected(p.id); setGroup("all"); }} className="text-left">
               <div className="text-[13px] font-medium">{p.name}</div>
               <div className="font-mono text-[10px] text-muted-foreground">{p.channel_count} channels</div>
             </button>
             {isAdmin && <button className={dangerBtn} onClick={() => remove(p.id)}>×</button>}
           </div>
         ))}
-        {!playlists.length && <p className="text-muted-foreground">No playlists yet{isAdmin ? " — import an .m3u file to get started." : "."}</p>}
       </div>
+      {isSource && source.isError && <p role="alert" className="text-destructive">{errMsg(source.error)}</p>}
 
       {current && (
         <section className="rise grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
@@ -168,13 +181,13 @@ function PlaylistsPage() {
               {preview}
             </pre>
             <div className="mt-4 flex flex-wrap gap-2">
-              <button onClick={() => setGroup("all")} className={cn("rounded-full px-3 py-1 text-[11px] font-medium ring-1 ring-border", group === "all" ? "bg-primary text-primary-foreground" : "bg-glass-strong")}>
+                <Button size="sm" onClick={() => setGroup("all")} className={cn("h-auto rounded-full px-3 py-1 text-[11px] font-medium ring-1 ring-border", activeGroup === "all" ? "bg-primary text-primary-foreground" : "bg-glass-strong text-foreground")}>
                 All · {channels.length}
-              </button>
+                </Button>
               {groups.map(([g, n]) => (
-                <button key={g} onClick={() => setGroup(g)} className={cn("rounded-full px-3 py-1 text-[11px] font-medium ring-1 ring-border", group === g ? "bg-primary text-primary-foreground" : "bg-glass-strong")}>
+                <Button key={g} size="sm" onClick={() => setGroup(g)} className={cn("h-auto whitespace-normal rounded-full px-3 py-1 text-[11px] font-medium ring-1 ring-border", activeGroup === g ? "bg-primary text-primary-foreground" : "bg-glass-strong text-foreground")}>
                   {g} · {n}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
