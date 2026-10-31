@@ -1,5 +1,7 @@
 // Shared auth + source loading for the public playlist endpoints (M3U and Xtream-compatible).
 import { buildM3U, parseM3U, type M3UChannel } from "./m3u";
+import { createPlaylistCache } from "./playlist-cache";
+import { playbackUrl } from "./media";
 
 export type AuthResult =
   | { ok: true; lineId: string; username: string; password: string; expiresAt: string; createdAt: string | null; maxConnections: number }
@@ -37,7 +39,10 @@ export async function loadSourceText(): Promise<{ ok: true; text: string } | { o
   const { data } = await supabaseAdmin.from("app_settings").select("value").eq("key", "m3u_source_url").maybeSingle();
   if (!data?.value) return { ok: false, status: 503, message: "Playlist not configured" };
   try {
-    const res = await fetch(data.value, { signal: AbortSignal.timeout(20000) });
+    const source = new URL(data.value);
+    // Avoid a stale raw-GitHub edge response when polling for recent edits.
+    if (source.hostname === "raw.githubusercontent.com") source.searchParams.set("_refresh", String(Math.floor(Date.now() / 60_000)));
+    const res = await fetch(source, { cache: "no-store", headers: { "Cache-Control": "no-cache" }, signal: AbortSignal.timeout(20000) });
     if (!res.ok) return { ok: false, status: 502, message: `Playlist source unavailable (HTTP ${res.status})` };
     return { ok: true, text: await res.text() };
   } catch {
@@ -48,9 +53,6 @@ export async function loadSourceText(): Promise<{ ok: true; text: string } | { o
 export type Episode = M3UChannel & { id: number; season: number; episode: number };
 export type Series = { id: number; title: string; category: string; cover: string | null; episodes: Episode[] };
 export type Catalog = { live: M3UChannel[]; movies: M3UChannel[]; series: Series[]; episodes: Episode[] };
-
-let cache: { at: number; catalog: Catalog } | null = null;
-const TTL = 30 * 60 * 1000;
 
 export function buildCatalog(all: M3UChannel[]): Catalog {
   const live: M3UChannel[] = [], movies: M3UChannel[] = [], episodes: Episode[] = [];
@@ -70,12 +72,17 @@ export function buildCatalog(all: M3UChannel[]): Catalog {
   return { live, movies, series: [...byTitle.values()], episodes };
 }
 
-export async function loadCatalog(force = false): Promise<{ ok: true; catalog: Catalog } | { ok: false; status: number; message: string }> {
-  if (!force && cache && Date.now() - cache.at < TTL) return { ok: true, catalog: cache.catalog };
+const readCatalog = createPlaylistCache(async () => {
   const src = await loadSourceText();
-  if (!src.ok) return cache ? { ok: true, catalog: cache.catalog } : src;
-  cache = { at: Date.now(), catalog: buildCatalog(parseM3U(src.text)) };
-  return { ok: true, catalog: cache.catalog };
+  if (!src.ok) throw new Error(src.message);
+  const channels = parseM3U(src.text);
+  if (!channels.length) throw new Error("Playlist source contains no playable entries");
+  return buildCatalog(channels);
+});
+
+export async function loadCatalog(force = false): Promise<{ ok: true; catalog: Catalog } | { ok: false; status: number; message: string }> {
+  try { return { ok: true, catalog: await readCatalog(force) }; }
+  catch (error) { return { ok: false, status: 502, message: error instanceof Error ? error.message : "Playlist source unreachable" }; }
 }
 
 /** Live channels only (series/movies are excluded). */
@@ -90,16 +97,15 @@ export async function handlePlaylistRequest(request: Request): Promise<Response>
   const url = new URL(request.url);
   const auth = await authLine(url.searchParams.get("username") ?? "", url.searchParams.get("password") ?? "");
   if (!auth.ok) return plain(auth.message, auth.status);
-  const loaded = await loadCatalog();
+  const loaded = await loadCatalog(url.searchParams.get("refresh") === "1");
   if (!loaded.ok) return plain(loaded.message, loaded.status);
   // Rewrite every stream URL through this app so auth, max-connections and referer rules apply.
   const origin = url.origin;
-  const u = encodeURIComponent(auth.username), p = encodeURIComponent(auth.password);
   const { live, movies, episodes } = loaded.catalog;
   const rewritten: M3UChannel[] = [
-    ...live.map((c, i) => ({ ...c, url: `${origin}/live/${u}/${p}/${i + 1}.m3u8` })),
-    ...movies.map((m, i) => ({ ...m, url: `${origin}/movie/${u}/${p}/${i + 1}.m3u8` })),
-    ...episodes.map((e) => ({ ...e, url: `${origin}/series/${u}/${p}/${e.id}.m3u8` })),
+    ...live.map((c, i) => ({ ...c, url: playbackUrl(origin, "live", auth.username, auth.password, i + 1, c.url) })),
+    ...movies.map((m, i) => ({ ...m, url: playbackUrl(origin, "movie", auth.username, auth.password, i + 1, m.url) })),
+    ...episodes.map((e) => ({ ...e, url: playbackUrl(origin, "series", auth.username, auth.password, e.id, e.url) })),
   ];
   return new Response(buildM3U(rewritten), {
     headers: {
