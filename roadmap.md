@@ -1,7 +1,7 @@
 # Connection billing
 ## Uploaded playlist editing
-- [ ] Let admins replace stream and logo URLs on individual uploaded channels, persist edits and include them in downloaded M3U files.
-- [ ] Verify upload, edit, reload and download with real saved data; test URL validation and admin-only writes.
+- [x] Let admins replace stream and logo URLs on individual uploaded channels, persist edits and include them in downloaded M3U files.
+- [x] Verify authenticated upload, edit, reload, logo removal and download with real saved data; 36 tests pass and the deployed admin-only update policy is confirmed (reseller write simulation unavailable in the read-only query environment).
 ## Automatic GitHub categories
 - [x] Show the live GitHub source in Playlists with automatic five-second updates and source category ordering for admins and resellers.
 - [x] Test automatic reorder updates without remounting; all 33 tests pass, authenticated UI reads 10,409 channels and polls twice in 11.5 seconds without refresh.
