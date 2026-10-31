@@ -184,7 +184,7 @@ function PlaylistsPage() {
             <pre className="mt-3 max-h-48 overflow-auto rounded-xl border border-border bg-ink p-4 font-mono text-[11.5px] leading-relaxed text-ink-foreground">
               {preview}
             </pre>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-4 flex max-h-44 flex-wrap gap-2 overflow-y-auto sm:max-h-none sm:overflow-visible">
                 <Button size="sm" onClick={() => setGroup("all")} className={cn("h-auto rounded-full px-3 py-1 text-[11px] font-medium ring-1 ring-border", activeGroup === "all" ? "bg-primary text-primary-foreground" : "bg-glass-strong text-foreground")}>
                 All · {channels.length}
                 </Button>
