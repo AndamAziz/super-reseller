@@ -1,4 +1,8 @@
 # Connection billing
+## Admin credit overview
+- [x] Show every reseller balance and the existing below-10 warning in the admin dashboard.
+- [x] Verify authenticated dashboard balances against both real reseller records; all 26 tests pass, including low-credit boundary tests.
+
 ## Test suite
 - [x] Fix the two page tests without changing application behavior.
 - [x] Run the full test suite and confirm all 26 tests pass.

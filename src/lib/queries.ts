@@ -39,6 +39,7 @@ export function useLines() {
 export function useResellers() {
   return useQuery({
     queryKey: ["resellers"],
+    refetchInterval: 30000,
     queryFn: async () => {
       const { data: roles, error: rErr } = await supabase.from("user_roles").select("user_id").eq("role", "reseller");
       if (rErr) throw rErr;
