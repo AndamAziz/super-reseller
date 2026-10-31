@@ -387,6 +387,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      swap_channel_positions: {
+        Args: { _channel_id: string; _neighbor_id: string }
+        Returns: undefined
+      }
       test_used: { Args: { _customer: string }; Returns: Json }
       update_line: {
         Args: {

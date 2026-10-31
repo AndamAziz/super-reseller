@@ -16,6 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 import { ChannelLinksDialog } from "@/components/channel-links-dialog";
 import { useDeleteChannel } from "@/lib/channel-delete";
+import { channelNeighbor } from "@/lib/channel-order";
+import { ChannelOrderButtons } from "@/components/channel-order-buttons";
 
 type TestResult = { loading: true } | { loading: false; ok: boolean; steps: StreamTestStep[]; error?: string };
 
@@ -38,6 +40,7 @@ async function fetchAllChannels(playlistId: string) {
       .select("id, name, group_title, logo, url, referrer")
       .eq("playlist_id", playlistId)
       .order("position")
+        .order("id")
       .range(from, from + 999);
     if (error) throw error;
     all.push(...data);
@@ -64,6 +67,7 @@ function PlaylistsPage() {
   const runTest = useServerFn(testStream);
   const [tests, setTests] = useState<Record<string, TestResult>>({});
   const [editing, setEditing] = useState<(M3UChannel & { id: string }) | null>(null);
+  const [moving, setMoving] = useState(false);
 
   async function test(c: M3UChannel & { id: string }) {
     setTests((t) => ({ ...t, [c.id]: { loading: true } }));
@@ -96,6 +100,19 @@ function PlaylistsPage() {
       (c) => (activeGroup === "all" || (c.group_title ?? "Uncategorized") === activeGroup) && (!s || c.name.toLowerCase().includes(s)),
     );
   }, [channels, activeGroup, q]);
+
+  async function moveChannel(id: string, direction: -1 | 1) {
+    const neighbor = channelNeighbor(shown, id, direction);
+    if (!isAdmin || isSource || moving || !neighbor) return;
+    setMoving(true);
+    try {
+      const { error } = await supabase.rpc("swap_channel_positions", { _channel_id: id, _neighbor_id: neighbor.id });
+      if (error) throw error;
+      await qc.invalidateQueries({ queryKey: ["channels", current] });
+      toast.success("Channel order saved");
+    } catch (e) { toast.error(errMsg(e)); }
+    finally { setMoving(false); }
+  }
 
   async function onFile(file: File) {
     try {
@@ -206,7 +223,7 @@ function PlaylistsPage() {
                 <div className="font-mono text-[10px] text-muted-foreground">{groups.length} categories</div>
               </div>
             </div>
-            <button onClick={download} disabled={!channels.length} className={`${softBtn} mt-5 w-full py-3 sm:py-2`}>Download .m3u</button>
+            <Button onClick={download} disabled={!channels.length || moving} variant="outline" className="mt-5 w-full py-3 sm:py-2">Download .m3u</Button>
           </div>
         </section>
       )}
@@ -230,6 +247,7 @@ function PlaylistsPage() {
                   )}
                 </div>
                 <div className="truncate font-mono text-[11px] text-muted-foreground">{c.url}</div>
+                {isAdmin && !isSource && <ChannelOrderButtons name={c.name} canUp={!!channelNeighbor(shown, c.id, -1)} canDown={!!channelNeighbor(shown, c.id, 1)} busy={moving || busyId != null} onMove={(direction) => moveChannel(c.id, direction)} />}
 
                 {isAdmin && (
                   <div>
@@ -251,6 +269,7 @@ function PlaylistsPage() {
                   <th className={th}>Requires referer</th>
                   {isAdmin && <th className={th}>Test stream</th>}
                   {isAdmin && !isSource && <th className={th}>Edit</th>}
+                  {isAdmin && !isSource && <th className={th}>Order</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -276,6 +295,7 @@ function PlaylistsPage() {
                     {isAdmin && !isSource && <td className={td}>
                       <Button variant="ghost" size="icon" title={`Edit channel ${c.name}`} aria-label={`Edit channel ${c.name}`} onClick={() => setEditing(c)}><Pencil /></Button>
                     </td>}
+                    {isAdmin && !isSource && <td className={td}><ChannelOrderButtons name={c.name} canUp={!!channelNeighbor(shown, c.id, -1)} canDown={!!channelNeighbor(shown, c.id, 1)} busy={moving || busyId != null} onMove={(direction) => moveChannel(c.id, direction)} /></td>}
                   </tr>
                 ))}
               </tbody>

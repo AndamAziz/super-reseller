@@ -113,6 +113,13 @@
       "when": 1793472472768,
       "tag": "0015_admin_edit_channel_details",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1793479049342,
+      "tag": "0016_admin_reorder_uploaded_channels",
+      "breakpoints": true
     }
   ]
 }
