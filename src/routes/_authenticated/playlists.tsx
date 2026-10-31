@@ -13,8 +13,9 @@ import { testStream, type StreamTestStep } from "@/lib/stream-test.functions";
 import { getSourcePlaylist } from "@/lib/source-playlist.functions";
 import { sourcePlaylistQueryOptions } from "@/lib/source-playlist-query";
 import { Button } from "@/components/ui/button";
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { ChannelLinksDialog } from "@/components/channel-links-dialog";
+import { useDeleteChannel } from "@/lib/channel-delete";
 
 type TestResult = { loading: true } | { loading: false; ok: boolean; steps: StreamTestStep[]; error?: string };
 
@@ -57,6 +58,7 @@ function PlaylistsPage() {
   // Default to the newest imported playlist so the Edit links column is visible on load.
   const current = selected ?? playlists[0]?.id ?? "github";
   const isSource = current === "github";
+  const { removeChannel, busyId } = useDeleteChannel(current);
   const fetchSource = useServerFn(getSourcePlaylist);
   const source = useQuery(sourcePlaylistQueryOptions(() => fetchSource()));
   const runTest = useServerFn(testStream);
@@ -221,10 +223,14 @@ function PlaylistsPage() {
                     <div className="truncate text-[12px] text-muted-foreground">{c.group_title ?? "—"}{c.referrer ? " · Proxied" : ""}</div>
                   </div>
                   {isAdmin && !isSource && (
-                    <Button variant="outline" className="h-11 shrink-0 px-3" aria-label={`Edit channel ${c.name}`} onClick={() => setEditing(c)}><Pencil /> Edit</Button>
+                    <div className="grid h-11 shrink-0 grid-flow-col gap-2">
+                      <Button variant="outline" className="h-11 px-3" aria-label={`Edit channel ${c.name}`} onClick={() => setEditing(c)}><Pencil /> Edit</Button>
+                      <Button variant="destructive" className="h-11 px-3" aria-label={`Delete channel ${c.name}`} disabled={busyId === c.id} onClick={() => removeChannel(c.id, c.name)}><Trash2 /></Button>
+                    </div>
                   )}
                 </div>
                 <div className="truncate font-mono text-[11px] text-muted-foreground">{c.url}</div>
+
                 {isAdmin && (
                   <div>
                     <button className={`${softBtn} py-2`} disabled={tests[c.id]?.loading} onClick={() => test(c)}>{tests[c.id]?.loading ? "Testing…" : "Test stream"}</button>

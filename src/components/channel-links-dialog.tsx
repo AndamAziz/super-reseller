@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { channelLinksSchema } from "@/lib/channel-links";
+import { useDeleteChannel } from "@/lib/channel-delete";
 import { errMsg } from "@/hooks/use-me";
 import { inputCls } from "@/components/panel";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ export function ChannelLinksDialog({ channel, playlistId, onClose }: {
   channel: Channel; playlistId: string; onClose: () => void;
 }) {
   const qc = useQueryClient();
+  const { removeChannel, busyId } = useDeleteChannel(playlistId, onClose);
   const [name, setName] = useState(channel.name);
   const [group, setGroup] = useState(channel.group_title ?? "");
   const [referrer, setReferrer] = useState(channel.referrer ?? "");
@@ -42,24 +44,11 @@ export function ChannelLinksDialog({ channel, playlistId, onClose }: {
   }
 
   async function remove() {
-    if (!confirm(`Delete "${channel.name}" from this playlist?`)) return;
-    setSaving(true); setError(null);
-    try {
-      const { data, error: delError } = await supabase.from("channels")
-        .delete().eq("id", channel.id).eq("playlist_id", playlistId).select("id");
-      if (delError) throw delError;
-      if (!data?.length) throw new Error("Channel could not be deleted");
-      const { count } = await supabase.from("channels").select("id", { count: "exact", head: true }).eq("playlist_id", playlistId);
-      if (count != null) await supabase.from("playlists").update({ channel_count: count }).eq("id", playlistId);
-      await Promise.all([
-        qc.invalidateQueries({ queryKey: ["channels", playlistId] }),
-        qc.invalidateQueries({ queryKey: ["playlists"] }),
-      ]);
-      toast.success("Channel deleted");
-      onClose();
-    } catch (e) { setError(errMsg(e)); }
+    setSaving(true);
+    try { await removeChannel(channel.id, channel.name); }
     finally { setSaving(false); }
   }
+
 
   return <Dialog open onOpenChange={(open) => { if (!open && !saving) onClose(); }}>
     <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-[min(32rem,calc(100%-1.5rem))] overflow-y-auto p-4 sm:p-6">
@@ -86,7 +75,7 @@ export function ChannelLinksDialog({ channel, playlistId, onClose }: {
         </label>
         {error && <p role="alert" className="break-words text-sm text-destructive">{error}</p>}
         <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
-          <Button type="button" variant="destructive" className="col-span-2 h-11 sm:mr-auto sm:h-9" disabled={saving} onClick={remove}><Trash2 />Delete channel</Button>
+          <Button type="button" variant="destructive" className="col-span-2 h-11 sm:mr-auto sm:h-9" disabled={saving || busyId != null} onClick={remove}><Trash2 />Delete channel</Button>
           <Button type="button" variant="outline" className="h-11 sm:h-9" disabled={saving} onClick={onClose}>Cancel</Button>
           <Button type="submit" className="h-11 sm:h-9" disabled={saving}><Save />{saving ? "Saving…" : "Save"}</Button>
         </div>
