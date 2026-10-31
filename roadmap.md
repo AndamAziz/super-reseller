@@ -1,4 +1,6 @@
 # Connection billing
+## Channel-link permission verification
+- [ ] Run real admin/reseller/signed-out channel-link permission checks, fix any failures, and retain a repeatable test.
 ## Uploaded playlist editing
 - [x] Let admins replace stream and logo URLs on individual uploaded channels, persist edits and include them in downloaded M3U files.
 - [x] Verify authenticated upload, edit, reload, logo removal and download with real saved data; 36 tests pass and the deployed admin-only update policy is confirmed (reseller write simulation unavailable in the read-only query environment).
