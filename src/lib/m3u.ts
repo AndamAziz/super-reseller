@@ -146,7 +146,7 @@ function updatedDirectives(channel: M3UChannel, metadata: M3UMetadata): string[]
   return rows;
 }
 
-export function buildM3U(channels: M3UChannel[], document?: { header?: string; newline?: string }): string {
+export function buildM3U(channels: M3UChannel[], document?: { header?: string | undefined; newline?: string | undefined }): string {
   const rows = [document?.header ?? "#EXTM3U"];
   for (const c of channels) {
     const metadata = c.m3u_metadata;
