@@ -1,0 +1,1 @@
+GRANT UPDATE (name, group_title, referrer) ON public.channels TO authenticated;
