@@ -8,7 +8,8 @@
 - [x] Run the full test suite and confirm all 26 tests pass.
 
 ## Playlist playback
-- [ ] Reduce catalog and GitHub cache delay to a few seconds, test additions and outage fallback, and verify real catalog requests.
+- [x] Reduce catalog freshness and outage retry delays to five seconds, remove minute-bucketed GitHub cache keys, and pass all 29 tests (live/movie/series additions, coalescing and last-good fallback).
+- [ ] Verify additions through a real authenticated catalog request; blocked because the available test line is inactive and the requesting user's preview session could not be minted.
 - [x] Keep generated identity-bearing links tied to their channel across source reordering and automatically updated URLs.
 - [x] Retry temporary upstream failures; 14 tests passed and real MP3 played beyond 20 seconds without refresh in preview.
 - [x] Support correct MP3/MP4/M3U8 links through authenticated public playback.
