@@ -56,6 +56,7 @@ function PlaylistsPage() {
   const [q, setQ] = useState("");
   // Default to the newest imported playlist so the Edit links column is visible on load.
   const current = selected ?? playlists[0]?.id ?? "github";
+  const isSource = current === "github";
   const fetchSource = useServerFn(getSourcePlaylist);
   const source = useQuery(sourcePlaylistQueryOptions(() => fetchSource()));
   const runTest = useServerFn(testStream);
