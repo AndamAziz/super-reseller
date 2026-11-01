@@ -56,9 +56,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="font-display text-[14px] font-semibold">KURDISTAN IPTV</div>
           <div className="label-mono tracking-[0.18em]">{me?.role === "admin" ? "Super Admin" : "Reseller Ops"}</div>
         </div>
-        <button className="ml-auto lg:hidden" onClick={() => setOpen(false)} aria-label="Close menu">
+        <Button variant="ghost" className="ml-auto size-11 shrink-0 lg:hidden" onClick={() => setOpen(false)} aria-label="Close menu">
           <X className="size-4" />
-        </button>
+        </Button>
       </div>
       <nav className="flex flex-col gap-1">
         {NAV.filter((n) => !n.admin || me?.role === "admin").map((n) => {
@@ -97,9 +97,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="truncate text-[12px] font-medium">{me?.email}</div>
           <div className="font-mono text-[10px] text-muted-foreground">{me?.role ?? "no role"}</div>
         </div>
-        <button onClick={signOut} className="ml-auto rounded-lg p-1.5 text-muted-foreground hover:bg-glass-strong hover:text-foreground" aria-label="Sign out">
+        <Button variant="ghost" onClick={signOut} className="ml-auto size-11 shrink-0 text-muted-foreground" aria-label="Sign out">
           <LogOut className="size-4" />
-        </button>
+        </Button>
       </div>
     </aside>
   );
@@ -107,13 +107,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="relative min-h-screen overflow-hidden text-sm">
       <div className="sheen-bg pointer-events-none absolute inset-0" />
-      <div className="relative mx-auto max-w-[1440px] px-4 py-5 lg:px-8 lg:py-7">
-        <div className="sticky top-2 z-40 mb-4 flex items-center gap-3 lg:hidden">
-          <button onClick={() => setOpen(true)} className="glass p-3" aria-label="Open menu">
+      <div className="relative mx-auto max-w-[1440px] px-4 pb-24 pt-3 lg:px-8 lg:py-7">
+        <div className="sticky top-0 z-40 mb-4 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 border-b border-border bg-background/95 py-2 backdrop-blur-sm lg:hidden">
+          <Button variant="outline" onClick={() => setOpen(true)} className="size-11" aria-label="Open menu" aria-expanded={open}>
             <Menu className="size-4" />
-          </button>
-          <img src={logoAsset.url} alt="Kurdistan IPTV" className="size-7 rounded-lg object-cover ring-1 ring-border" />
-          <span className="font-display font-semibold">KURDISTAN IPTV</span>
+          </Button>
+          <div className="flex min-w-0 items-center gap-2"><img src={logoAsset.url} alt="Kurdistan IPTV" className="size-8 shrink-0 rounded-lg object-cover ring-1 ring-border" />
+          <span className="truncate font-display font-semibold">KURDISTAN IPTV</span></div>
         </div>
         <div className="grid gap-5 lg:grid-cols-[248px_minmax(0,1fr)]">
           <div className={cn("lg:block", open ? "fixed inset-0 z-50 overflow-y-auto bg-background/70 p-4 backdrop-blur-sm" : "hidden")}>
@@ -136,27 +136,34 @@ export function AppShell({ children }: { children: ReactNode }) {
           </main>
         </div>
       </div>
+      <nav aria-label="Quick navigation" className="fixed inset-x-0 bottom-0 z-40 grid grid-flow-col auto-cols-fr border-t border-border bg-popover/95 px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-sm lg:hidden">
+        {NAV.filter((n) => ["/dashboard", "/resellers", "/lines", "/credits"].includes(n.to) && (!n.admin || me?.role === "admin")).map((n) => (
+          <Link key={n.to} to={n.to} aria-current={path === n.to ? "page" : undefined} className={cn("grid min-h-12 min-w-0 place-items-center rounded-lg px-1 text-[12px] font-medium", path === n.to ? "bg-primary/10 text-primary" : "text-muted-foreground")}>
+            {n.label}
+          </Link>
+        ))}
+      </nav>
     </div>
   );
 }
 
 export function PageHeader({ eyebrow, title, actions }: { eyebrow: string; title: string; actions?: ReactNode }) {
   return (
-    <header className="flex flex-wrap items-end justify-between gap-4">
-      <div>
+    <header className="grid min-w-0 gap-3 sm:flex sm:items-end sm:justify-between">
+      <div className="min-w-0">
         <div className="label-mono tracking-[0.22em]">{eyebrow}</div>
-        <h1 className="mt-1 text-balance font-display text-[26px] font-semibold tracking-tight">{title}</h1>
+        <h1 className="mt-1 break-words font-display text-[24px] font-semibold sm:text-[26px]">{title}</h1>
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {actions && <div className="flex min-w-0 flex-wrap items-center gap-2">{actions}</div>}
     </header>
   );
 }
 
 export function StatCard({ label, value, hint, tone, delay = 0 }: { label: string; value: ReactNode; hint?: string; tone?: "good" | "warn"; delay?: number }) {
   return (
-    <div className="glass rise p-5" style={{ animationDelay: `${delay}ms` }}>
+    <div className="glass rise min-w-0 p-4 sm:p-5" style={{ animationDelay: `${delay}ms` }}>
       <div className="label-mono">{label}</div>
-      <div className="mt-2 font-display text-[30px] font-semibold tracking-tight">{value}</div>
+      <div className="mt-2 break-words font-display text-[26px] font-semibold sm:text-[30px]">{value}</div>
       {hint && (
         <div className={cn("mt-1 text-[11px]", tone === "good" ? "font-medium text-good" : tone === "warn" ? "font-medium text-warn" : "text-muted-foreground")}>
           {hint}
@@ -182,13 +189,13 @@ export function StatusBadge({ active }: { active: boolean }) {
 
 export function Panel({ title, sub, actions, children, className }: { title: string; sub?: string; actions?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={cn("glass rise overflow-hidden", className)}>
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
-        <div>
+    <section className={cn("rise min-w-0 overflow-hidden border-y border-border bg-glass", className)}>
+      <div className="grid min-w-0 gap-3 border-b border-border px-4 py-4 sm:flex sm:items-center sm:justify-between sm:px-5">
+        <div className="min-w-0">
           <h2 className="font-display text-[16px] font-semibold tracking-tight">{title}</h2>
           {sub && <div className="label-mono mt-0.5">{sub}</div>}
         </div>
-        {actions && <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">{actions}</div>}
+        {actions && <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 sm:flex sm:flex-wrap">{actions}</div>}
       </div>
       {children}
     </section>
@@ -198,13 +205,13 @@ export function Panel({ title, sub, actions, children, className }: { title: str
 export const th = "label-mono px-4 py-3 text-left font-medium tracking-[0.14em] first:pl-5 last:pr-5";
 export const td = "px-4 py-3 first:pl-5 last:pr-5";
 export const inputCls =
-  "rounded-lg border border-glass-edge bg-glass-strong px-3 py-1.5 text-[12px] outline-none ring-1 ring-border placeholder:text-muted-foreground focus:ring-ring";
+  "min-h-11 min-w-0 rounded-lg border border-glass-edge bg-glass-strong px-3 py-2 text-[16px] outline-none ring-1 ring-border placeholder:text-muted-foreground focus:ring-ring sm:min-h-9 sm:text-[12px]";
 export const softBtn =
-  "rounded-lg border border-primary/25 bg-primary/10 px-3 py-1 text-[12px] font-medium text-primary transition-colors hover:bg-primary/15 disabled:opacity-50";
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-primary/25 bg-primary/10 px-3 py-2 text-[13px] font-medium text-primary transition-colors hover:bg-primary/15 disabled:opacity-50 sm:min-h-9 sm:text-[12px]";
 export const dangerBtn =
-  "rounded-lg border border-destructive/25 bg-destructive/10 px-3 py-1 text-[12px] font-medium text-destructive transition-colors hover:bg-destructive/15 disabled:opacity-50";
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-destructive/25 bg-destructive/10 px-3 py-2 text-[13px] font-medium text-destructive transition-colors hover:bg-destructive/15 disabled:opacity-50 sm:min-h-9 sm:text-[12px]";
 export const primaryBtn =
-  "rounded-xl bg-primary px-4 py-2 font-display text-[13px] font-semibold text-primary-foreground ring-1 ring-border transition-colors hover:bg-primary/90 disabled:opacity-50";
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 font-display text-[13px] font-semibold text-primary-foreground ring-1 ring-border transition-colors hover:bg-primary/90 disabled:opacity-50";
 
 export function FullBadge({ max }: { max: number }) {
   return (

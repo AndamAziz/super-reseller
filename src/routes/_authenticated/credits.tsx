@@ -24,13 +24,20 @@ function CreditsPage() {
   return (
     <>
       <PageHeader eyebrow="ledger" title="Credits" />
-      <section className="grid gap-4 sm:grid-cols-3">
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {!isAdmin && <StatCard label="Balance" value={me?.credits ?? 0} hint="1 credit = 1 month" tone="good" />}
         <StatCard label="Credits received" value={issued} delay={60} />
         <StatCard label="Credits spent" value={spent} delay={120} tone="warn" hint="on new lines & renewals" />
       </section>
       <Panel title="Transaction history" sub={`latest ${tx.length}`}>
-        <div className="overflow-x-auto">
+        <div className="divide-y divide-border md:hidden">
+          {tx.map((t) => <article key={t.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 px-4 py-4">
+            <div className="min-w-0"><p className="break-words font-medium">{t.reason || "Credit adjustment"}</p>{isAdmin && <p className="mt-1 break-all text-xs text-muted-foreground">{t.profiles?.display_name ?? t.profiles?.email}</p>}<p className="mt-2 font-mono text-[11px] text-muted-foreground">{new Date(t.created_at).toISOString().slice(0, 16).replace("T", " ")}</p></div>
+            <p className={cn("font-mono text-lg font-semibold", t.amount > 0 ? "text-good" : "text-warn")}>{t.amount > 0 ? `+${t.amount}` : t.amount}</p>
+          </article>)}
+          {!tx.length && <p className="p-4 text-muted-foreground">No transactions yet.</p>}
+        </div>
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[620px] text-[13px]">
             <thead>
               <tr>
