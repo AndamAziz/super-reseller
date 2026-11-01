@@ -20,7 +20,7 @@ describe("Actual media detection", () => {
     } });
     const peek = await peekStream(stream);
     expect(detectMedia(peek.bytes, "video/mp2t", "https://media.test/live.TS")).toBe("hls");
-    expect(new Uint8Array(await new Response(peek.body).arrayBuffer())).toEqual(bytes);
+    expect([...new Uint8Array(await new Response(peek.body).arrayBuffer())]).toEqual([...bytes]);
   });
   it("does not classify an HTML error as a playlist", () => expect(detectMedia(new TextEncoder().encode("<!doctype html><html>error</html>"), "text/html", "https://media.test/a.m3u8")).toBe("unknown"));
   it("replays every byte after bounded signature inspection", async () => {
