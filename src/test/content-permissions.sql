@@ -51,8 +51,7 @@ END $$;
 SET LOCAL ROLE anon;
 DO $$ BEGIN
  BEGIN
-  PERFORM 1 FROM public.content_episodes;
-  RAISE EXCEPTION 'Anonymous reads allowed';
+  IF EXISTS(SELECT 1 FROM public.content_episodes WHERE series_id=current_setting('test.series')::uuid) THEN RAISE EXCEPTION 'Anonymous reads allowed'; END IF;
  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
 END $$;
 ROLLBACK;

@@ -21,7 +21,7 @@ export const Route = createFileRoute('/_authenticated/youtube-episodes')({
 });
 
 type EpisodeForm = { id?: string; season_id: string; episode_number: number; title: string; original_url: string; poster_url: string; description: string; release_date: string; published: boolean };
-type SeriesForm = { id?: string; title: string; category: string; poster_url: string; description: string; source_identity?: string };
+type SeriesForm = { id?: string; title: string; category: string; poster_url: string; description: string; source_identity?: string | undefined };
 
 function EpisodeManager() {
   const { data } = useSuspenseQuery(managedContentOptions);
@@ -83,7 +83,7 @@ function EpisodeManager() {
   return <>
     <PageHeader eyebrow="Content · YouTube" title="YouTube Episode Manager" actions={<><Button variant="outline" onClick={() => setSeriesForm({ title: '', category: 'YouTube', poster_url: '', description: '' })}><Plus className="size-4" />New series</Button><Button onClick={newEpisode} disabled={!series}><Plus className="size-4" />Add episode</Button></>} />
     <div className="flex flex-wrap items-end gap-4 border-y border-border py-4">
-      <label className="flex min-w-0 flex-1 flex-col gap-2 text-sm">Series<select className={`${inputCls} w-full py-2`} value={series?.id ?? ''} onChange={e => { setSelected(e.target.value); setSeasonFilter('all'); }}>{data.series.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}</select></label>
+      <label className="flex min-w-0 basis-full flex-col gap-2 text-sm sm:flex-1 sm:basis-64">Series<select className={`${inputCls} w-full py-2`} value={series?.id ?? ''} onChange={e => { setSelected(e.target.value); setSeasonFilter('all'); }}>{data.series.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}</select></label>
       <label className="flex flex-col gap-2 text-sm">Season<select className={`${inputCls} py-2`} value={seasonFilter} onChange={e => setSeasonFilter(e.target.value)}><option value="all">All seasons</option>{seasons.map(s => <option key={s.id} value={s.id}>Season {String(s.season_number).padStart(2, '0')}</option>)}</select></label>
       <Button variant="outline" disabled={!series} onClick={() => { setSeasonNumber(Math.max(0, ...seasons.map(s => s.season_number)) + 1); setSeasonOpen(true); }}><Plus className="size-4" />Season</Button>
       <Button variant="ghost" size="icon" aria-label="Edit series" title="Edit series" disabled={!series} onClick={() => { if (series) setSeriesForm({ ...series, source_identity: series.source_identity ?? undefined, poster_url: series.poster_url ?? '' }); }}><Pencil className="size-4" /></Button>
