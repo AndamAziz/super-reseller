@@ -15,9 +15,10 @@ beforeAll(async () => {
     CREATE FUNCTION storage.foldername(text) RETURNS text[] LANGUAGE sql AS $$ SELECT string_to_array($1,'/') $$;
     CREATE FUNCTION storage.extension(text) RETURNS text LANGUAGE sql AS $$ SELECT split_part($1,'.',-1) $$;
     CREATE TABLE storage.objects(bucket_id text, name text);
-    GRANT SELECT, INSERT, DELETE ON storage.objects TO authenticated, anon;
+    GRANT SELECT, INSERT, UPDATE, DELETE ON storage.objects TO authenticated, anon;
     ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;`);
   await db.exec(readFileSync('drizzle/migrations/0024_admin_public_mp4_storage.sql', 'utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0027_admin_replace_public_mp4_bytes.sql', 'utf8'));
 }, 30000);
 beforeEach(async () => {
   await db.exec("RESET ROLE; DELETE FROM storage.objects; SELECT set_config('test.admin','yes',false); SET ROLE authenticated;");
@@ -46,4 +47,16 @@ it('denies anonymous uploads', async () => {
 it('rejects non-MP4 uploads and other ownership paths', async () => {
   await expect(db.exec(`INSERT INTO storage.objects VALUES ('public-videos','${owner}/video.webm')`)).rejects.toMatchObject({ code: '42501' });
   await expect(db.exec("INSERT INTO storage.objects VALUES ('public-videos','other/video.mp4')")).rejects.toMatchObject({ code: '42501' });
+});
+it('allows only an admin to replace their own MP4 file', async () => {
+  await db.exec(`INSERT INTO storage.objects VALUES ('public-videos','${owner}/video.mp4')`);
+  expect((await db.query(`UPDATE storage.objects SET name='${owner}/updated.mp4' RETURNING name`)).rows).toHaveLength(1);
+  await db.exec("SELECT set_config('test.admin','no',false)");
+  expect((await db.query(`UPDATE storage.objects SET name='${owner}/reseller.mp4' RETURNING name`)).rows).toHaveLength(0);
+  await db.exec('RESET ROLE; SET ROLE anon');
+  expect((await db.query(`UPDATE storage.objects SET name='${owner}/anonymous.mp4' RETURNING name`)).rows).toHaveLength(0);
+});
+it('denies even an admin replacement outside their own folder', async () => {
+  await db.exec("RESET ROLE; INSERT INTO storage.objects VALUES ('public-videos','other/video.mp4'); SET ROLE authenticated;");
+  expect((await db.query("UPDATE storage.objects SET name='other/replaced.mp4' RETURNING name")).rows).toHaveLength(0);
 });
