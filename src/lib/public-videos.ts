@@ -14,7 +14,7 @@ export function shortVideoUrl(origin: string, path: string) {
   return `${origin}/api/public/v/${encodeURIComponent(shortVideoName(path))}`;
 }
 export function videoPublicUrl(path: string) {
-  return shortVideoUrl(window.location.origin, path);
+  return shortVideoUrl('https://super-reseller.lovable.app', path);
 }
 export function sanitizeVideoName(name: string) {
   const base = name.replace(/\.mp4$/i, '').replace(/[^\p{L}\p{N}._-]+/gu, '-').replace(/^[.-]+|[.-]+$/g, '').slice(0, 80);
@@ -50,21 +50,13 @@ export async function listPublicVideos(): Promise<PublicVideo[]> {
   }
   return videos.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
-export async function uploadPublicVideo(file: File, onProgress: (percent: number) => void, signal: AbortSignal, existingNames: string[] = []) {
+export async function uploadPublicVideo(file: File, onProgress: (percent: number) => void, signal: AbortSignal, existingNames: string[] = [], movieName = file.name) {
   validateMp4(file);
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) throw new Error('Sign in again to upload.');
-  const path = `${user.id}/${pickUniqueVideoName(sanitizeVideoName(file.name), existingNames)}`;
+  const path = `${user.id}/${pickUniqueVideoName(sanitizeVideoName(movieName), existingNames)}`;
   signal.throwIfAborted();
-  if (file.size <= 6 * 1024 ** 2) {
-    const { error: uploadError } = await supabase.storage.from(VIDEO_BUCKET).upload(path, file, { contentType: 'video/mp4', cacheControl: '3600', upsert: false });
-    if (uploadError) throw uploadError;
-    if (signal.aborted) {
-      await supabase.storage.from(VIDEO_BUCKET).remove([path]);
-      signal.throwIfAborted();
-    }
-    onProgress(100);
-  } else {
+  {
     const { Upload } = await import('tus-js-client');
     await new Promise<void>((resolve, reject) => {
       const endpoint = `${import.meta.env['VITE_SUPABASE_URL']}/storage/v1/upload/resumable`;
@@ -88,6 +80,22 @@ export async function uploadPublicVideo(file: File, onProgress: (percent: number
     });
   }
   return videoPublicUrl(path);
+}
+export async function renamePublicVideo(path: string, movieName: string, existingNames: string[]) {
+  const name = sanitizeVideoName(movieName);
+  if (name === shortVideoName(path)) return;
+  if (existingNames.some((item) => item.toLowerCase() === name.toLowerCase())) throw new Error('A video with this name already exists.');
+  const folder = path.slice(0, path.lastIndexOf('/'));
+  const target = `${folder}/${name}`;
+  const bucket = supabase.storage.from(VIDEO_BUCKET);
+  // Use the storage API, never directly rename managed storage records.
+  const { error: copyError } = await bucket.copy(path, target);
+  if (copyError) throw copyError;
+  const { error: removeError } = await bucket.remove([path]);
+  if (removeError) {
+    await bucket.remove([target]);
+    throw removeError;
+  }
 }
 export async function deletePublicVideo(path: string) {
   const { error } = await supabase.storage.from(VIDEO_BUCKET).remove([path]);
