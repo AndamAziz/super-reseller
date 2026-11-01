@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { pickUniqueVideoName, sanitizeVideoName, shortVideoName, shortVideoUrl } from '@/lib/public-videos';
+import { pickUniqueVideoName, sanitizeVideoName, shortVideoName, shortVideoUrl, videoPublicUrl } from '@/lib/public-videos';
 
 describe('short public video links', () => {
   it('strips the legacy uuid prefix from storage filenames', () => {
@@ -9,6 +9,12 @@ describe('short public video links', () => {
 
   it('builds a short token-free link on our own origin', () => {
     expect(shortVideoUrl('https://super-reseller.lovable.app', 'uid/video-2026-11-01.mp4')).toBe('https://super-reseller.lovable.app/api/public/v/video-2026-11-01.mp4');
+  });
+  it('never copies a private preview origin or a token', () => {
+    const url = new URL(videoPublicUrl('uid/film.mp4'));
+    expect(url.origin).toBe('https://super-reseller.lovable.app');
+    expect(url.pathname).toBe('/api/public/v/film.mp4');
+    expect(url.search).toBe('');
   });
 
   it('sanitizes uploaded filenames into short safe names', () => {
