@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AdminOnly } from "@/components/admin-only";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -30,7 +31,7 @@ export const Route = createFileRoute("/_authenticated/playlists")({
     { property: "og:description", content: "Manage and test Kurdistan IPTV audio, video and live playlists." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
   ] }),
-  component: PlaylistsPage,
+  component: () => <AdminOnly><PlaylistsPage /></AdminOnly>,
 });
 
 async function fetchAllChannels(playlistId: string) {

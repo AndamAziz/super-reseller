@@ -41,7 +41,7 @@ function Dashboard() {
               <span className="font-mono text-[11px] text-muted-foreground">live · {active} active lines</span>
             </div>
             <Link to="/lines" className={primaryBtn}>New line</Link>
-            <Link to="/youtube-episodes" className="text-sm font-medium text-primary">YouTube Episode Manager →</Link>
+            {isAdmin && <Link to="/youtube-episodes" className="text-sm font-medium text-primary">YouTube Episode Manager →</Link>}
           </>
         }
       />
@@ -56,7 +56,7 @@ function Dashboard() {
         {isAdmin ? (
           <StatCard label="Credits held" value={creditsOut} hint="across all resellers" delay={240} />
         ) : (
-          <StatCard label="Playlists" value={playlists.length} delay={240} />
+          <StatCard label="Lines" value={lines.length} delay={240} />
         )}
       </section>
 
