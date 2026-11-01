@@ -416,7 +416,7 @@ function LinesPage() {
                       <Button type="button" variant="outline" className={softBtn} title="Copy M3U link" onClick={() => copyLink(customerLinks(l).m3u, "M3U link")}><Copy className="size-3.5" /> M3U</Button>
                       <Button type="button" variant="outline" className={softBtn} title="Copy provider host" onClick={() => copyLink(customerLinks(l).provider, "Provider host")}><Copy className="size-3.5" /> Host</Button>
                       <Button type="button" variant="outline" className={softBtn} title="Copy combined M3U + YouTube catalogue link" onClick={() => copyLink(customerLinks(l).content, "Combined catalogue link")}><Copy className="size-3.5" /> M3U + YouTube</Button>
-                    </div>
+                    </div> : <span className="text-muted-foreground">—</span>}
                   </td>
                   <td className={`${td} text-right`}>
                     <div className="inline-flex items-center gap-1.5">
