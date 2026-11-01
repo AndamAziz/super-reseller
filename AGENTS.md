@@ -26,10 +26,10 @@
 - Generated direct-source links carry a channel identity derived from name and group, propagated through signed HLS links, so catalog reordering and source URL rotation keep the selected channel; legacy numeric-only links retain their behavior.
 - Upstream timeouts apply only until response headers arrive, with one retry for network errors or 502/503/504, so long MP3/MP4 bodies are not aborted by the header deadline.
 - Routing tests use the real tree, deterministic signed-out auth and omit the document shell to avoid nested HTML and hosted auth.
-- Core screens use mobile stacked records, shared touch controls and role-aware navigation; billing remains unchanged.
+- Core screens use mobile records and role-aware touch navigation; billing unchanged.
 - Admin stream tests probe the selected URL with its own Referer and User-Agent independently of GitHub; success requires media bytes after signed playlist traversal, with one recheck for transient failures, and diagnostic origin codes do not change playback response semantics.
 - Playback protocol detection uses bounded signature inspection with byte replay; DASH resources use scoped exact-URL or constrained signed-template authorization, never a browser-accessible arbitrary signing endpoint.
-- The isolated admin playback-check route dynamically loads browser engines and separates HTTP, frame, audio-signal and continuity evidence; ordinary panel layout and records remain unchanged.
+- Admin playback-check dynamically loads engines and separates HTTP, frame, audio and continuity evidence; records unchanged.
 - Browser TS playback uses mpegts.js transmuxing, while TS URLs detected as HLS use the HLS engine; live detection probes avoid Range requests rejected by origins.
 - Shared signature inspection collects fragmented network chunks and replays all bytes; verified TS signatures override misleading upstream MIME types on provider responses.
 - Shared catalogs carry a full-content revision hash; polling replaces source arrays and never appends updates or mutates reseller assignments.
@@ -38,3 +38,4 @@
 - YouTube uses official embeds; Android branches by source_type. Customer APIs add only admin-shared published GitHub episodes; owner-scoped CRUD stays unchanged.
 - Connection RPCs enforce ownership and saved limits; service-role playback follows line auth; policies unchanged.
 - Customer links share a live-host builder; M3U, host and combined catalogue stay distinct.
+- Legacy YouTube manager URL serves admin MP4 management; blocked hosting disables uploads, never fakes links.
