@@ -54,6 +54,12 @@ function isPrivateHost(h: string) {
   return a === 10 || a === 127 || a === 0 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127) || a >= 224;
 }
 
+/** Host written as a numeric IPv4/IPv6 address rather than a domain name. */
+export function isIpLiteral(h: string): boolean {
+  h = h.replace(/^\[|\]$/g, "");
+  return /^\d{1,3}(?:\.\d{1,3}){3}$/.test(h) || h.includes(":");
+}
+
 /** Chain signature: every URL we emit in a rewritten playlist is HMAC-signed for (user, stream). */
 async function hmacKey() {
   const secret = process.env["SUPABASE_SERVICE_ROLE_KEY"] || process.env["SUPABASE_URL"] || "stream-proxy";
@@ -122,7 +128,7 @@ export interface ProxyOptions {
    * origin does for direct playback. Players that choose their engine from the URL
    * extension would otherwise try to demux HLS text as MPEG-TS.
    */
-  manifestRedirect?: Partial<Record<"hls" | "dash", string>>;
+  manifestRedirect?: Partial<Record<"hls" | "dash" | "ts", string>>;
 }
 
 /** Fetch target with the channel's headers; rewrite playlists, stream everything else. */
@@ -140,6 +146,11 @@ export async function proxyFetch(request: Request, target: URL, channel: M3UChan
   try {
     for (let hop = 0; hop < 6; hop++) {
       if (isPrivateHost(current.hostname)) return plain("Forbidden target", 403);
+      // The hosting refuses server-side fetches to bare IP addresses (403), so for any public
+      // IP-addressed origin hand the player the origin URL itself, exactly like direct playback.
+      if (isIpLiteral(current.hostname)) {
+        return new Response(null, { status: 302, headers: { ...CORS, Location: current.toString(), "Cache-Control": "no-store", "X-Media-Protocol": "direct" } });
+      }
       for (let attempt = 0; attempt < 2; attempt++) {
         // Limit time to receive headers, not the lifetime of an MP3/MP4 body.
         const controller = new AbortController();
@@ -190,6 +201,11 @@ export async function proxyFetch(request: Request, target: URL, channel: M3UChan
       } else body = await rewritePlaylist(manifest, current.toString(), prefix, scope);
     } catch { return plain("Unsupported or invalid media manifest", 502); }
     return new Response(body, { headers: { ...CORS, "Content-Type": protocolMime[protocol], "Cache-Control": "private, max-age=3", "X-Media-Protocol": protocol } });
+  }
+  // A manifest-style entry link whose origin is actually raw MPEG-TS: send the player to the .ts link.
+  if (protocol === "ts" && options.manifestRedirect?.ts && startsAtZero) {
+    await peeked.body?.cancel().catch(() => undefined);
+    return new Response(null, { status: 302, headers: { ...CORS, Location: options.manifestRedirect.ts, "Cache-Control": "no-store", "X-Media-Protocol": protocol } });
   }
   const genericType = !ct || /^(application\/octet-stream|binary\/octet-stream)(;|$)/i.test(ct);
   const inferred = protocol !== "unknown" ? protocolMime[protocol] : mediaContentType(current.toString());

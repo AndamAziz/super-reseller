@@ -42,11 +42,16 @@ export async function handleMediaPlayback(request: Request, username: string, pa
 }
 
 /**
- * Entry links keep the source extension (e.g. `2902.ts`). When that source actually
- * redirects to an HLS/DASH manifest, mirror the origin: redirect the player to the same
- * app link with `.m3u8` / `.mpd`, preserving the channel identity query.
+ * Provider-independent format mirroring, decided from the bytes the origin actually
+ * returns (never from provider names or a blanket .ts → .m3u8 rewrite):
+ * - an entry link such as `2902.ts` whose source answers with an HLS/DASH manifest is
+ *   redirected to the same app link with `.m3u8` / `.mpd`;
+ * - a manifest-style or extensionless link (e.g. an Xtream player asking for `7.m3u8`)
+ *   whose source answers with raw MPEG-TS is redirected to the same app link with `.ts`.
+ * The channel identity query is preserved; the origin URL (path, query, tokens) is
+ * always fetched unchanged from the catalog.
  */
-export function manifestRedirects(requestUrl: string, stream: string, id: number): Partial<Record<"hls" | "dash", string>> {
+export function manifestRedirects(requestUrl: string, stream: string, id: number): Partial<Record<"hls" | "dash" | "ts", string>> {
   const ext = /\.([a-z0-9]+)$/i.exec(stream)?.[1]?.toLowerCase();
   const url = new URL(requestUrl);
   const swap = (next: string) => {
@@ -54,9 +59,10 @@ export function manifestRedirects(requestUrl: string, stream: string, id: number
     copy.pathname = copy.pathname.replace(/\/[^/]*$/, `/${id}.${next}`);
     return copy.toString();
   };
-  const out: Partial<Record<"hls" | "dash", string>> = {};
+  const out: Partial<Record<"hls" | "dash" | "ts", string>> = {};
   if (ext !== "m3u8" && ext !== "m3u") out.hls = swap("m3u8");
   if (ext !== "mpd") out.dash = swap("mpd");
+  if (!ext || ext === "m3u8" || ext === "m3u" || ext === "mpd") out.ts = swap("ts");
   return out;
 }
 
