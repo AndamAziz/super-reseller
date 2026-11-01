@@ -1,4 +1,4 @@
-import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
+import { DOMParser, XMLSerializer, type Element as XmlElement } from "@xmldom/xmldom";
 import { signTarget, unb64u, allowedUrl } from "./stream-proxy.server";
 
 const encode = (value: string) => btoa(String.fromCharCode(...new TextEncoder().encode(value))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -28,7 +28,7 @@ export async function rewriteDash(text: string, from: string, prefix: string, sc
   if (/<!DOCTYPE|<!ENTITY/i.test(text)) throw new Error("Unsupported DASH document declarations");
   const doc = new DOMParser({ onError: (level, message) => { if (level === "fatalError" || level === "error") throw new Error(message); } }).parseFromString(text, "application/xml");
   if (doc.documentElement.localName !== "MPD") throw new Error("Invalid DASH manifest");
-  const children = (el: Element, name?: string) => Array.from(el.childNodes).filter((node): node is Element => node.nodeType === 1 && (!name || (node as Element).localName === name));
+  const children = (el: XmlElement, name?: string) => Array.from(el.childNodes).filter((node): node is XmlElement => node.nodeType === 1 && (!name || (node as XmlElement).localName === name));
   const link = async (value: string, base: string) => {
     const full = new URL(value, base).toString();
     if (!/^https?:/.test(full)) throw new Error("Unsupported DASH resource scheme");
@@ -41,7 +41,7 @@ export async function rewriteDash(text: string, from: string, prefix: string, sc
     }
     return `${prefix}${separator}u=${encode(full)}&s=${await signTarget(scope, full)}`;
   };
-  const walk = async (el: Element, inheritedBase: string, inheritedTemplates: Element[]) => {
+  const walk = async (el: XmlElement, inheritedBase: string, inheritedTemplates: XmlElement[]) => {
     if (el.hasAttribute("xlink:href")) throw new Error("DASH external XML links are unsupported");
     const bases = children(el, "BaseURL");
     const base = bases[0]?.textContent?.trim() ? new URL(bases[0].textContent.trim(), inheritedBase).toString() : inheritedBase;
@@ -50,7 +50,7 @@ export async function rewriteDash(text: string, from: string, prefix: string, sc
     const inherited = [...inheritedTemplates];
     for (const item of own) {
       const previous = inherited.find((old) => old.localName === item.localName);
-      const merged = item.cloneNode(true) as Element;
+      const merged = item.cloneNode(true) as XmlElement;
       if (previous) {
         for (const attr of Array.from(previous.attributes)) if (!merged.hasAttribute(attr.name)) merged.setAttribute(attr.name, attr.value);
         if (!children(merged).length) for (const child of children(previous)) merged.appendChild(child.cloneNode(true));
@@ -80,6 +80,6 @@ export async function rewriteDash(text: string, from: string, prefix: string, sc
       } else await walk(child, base, inherited);
     }
   };
-  await walk(doc.documentElement as unknown as Element, from, []);
+  await walk(doc.documentElement, from, []);
   return new XMLSerializer().serializeToString(doc);
 }

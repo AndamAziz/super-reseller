@@ -2,6 +2,8 @@
 import type { M3UChannel } from "./m3u";
 import { plain } from "./playlist-auth.server";
 import { mediaContentType } from "./media";
+import { detectMedia, protocolMime } from "./media-detection";
+import { peekStream } from "./stream-peek";
 
 export const needsProxy = (c: M3UChannel) => !!(c.referrer?.trim() || c.user_agent?.trim());
 
@@ -142,13 +144,26 @@ export async function proxyFetch(request: Request, target: URL, channel: M3UChan
   if (!res) return plain("Too many redirects", 502);
   if (!res.ok && res.status !== 206) return plain(`Stream origin error (HTTP ${res.status})`, 502);
   const ct = res.headers.get("content-type") ?? "";
-  const isPlaylist = /mpegurl/i.test(ct) || /\.m3u8?$/i.test(current.pathname);
-  if (isPlaylist) {
-    const body = await rewritePlaylist(await res.text(), current.toString(), prefix, scope);
-    return new Response(body, { headers: { ...CORS, "Content-Type": "application/vnd.apple.mpegurl", "Cache-Control": "public, max-age=3" } });
+  // Do not inspect nonzero byte ranges as if they start at a container header.
+  const startsAtZero = !range || /^bytes=0-/i.test(range);
+  let peeked;
+  try { peeked = startsAtZero ? await peekStream(res.body) : { bytes: new Uint8Array(), body: res.body }; }
+  catch { return plain("No media data received within 15 seconds", 502); }
+  const protocol = detectMedia(peeked.bytes, ct, current.toString());
+  if (protocol === "hls" || protocol === "dash") {
+    const manifest = await new Response(peeked.body).text();
+    let body: string;
+    try {
+      if (protocol === "dash") {
+        const { rewriteDash } = await import("./dash-manifest.server");
+        body = await rewriteDash(manifest, current.toString(), prefix, scope);
+      } else body = await rewritePlaylist(manifest, current.toString(), prefix, scope);
+    } catch { return plain("Unsupported or invalid media manifest", 502); }
+    return new Response(body, { headers: { ...CORS, "Content-Type": protocolMime[protocol], "Cache-Control": "private, max-age=3", "X-Media-Protocol": protocol } });
   }
   const genericType = !ct || /^(application\/octet-stream|binary\/octet-stream)(;|$)/i.test(ct);
-  const out = new Headers({ ...CORS, "Content-Type": genericType ? mediaContentType(current.toString()) : ct, "Cache-Control": "no-store" });
+  const inferred = protocol !== "unknown" ? protocolMime[protocol] : mediaContentType(current.toString());
+  const out = new Headers({ ...CORS, "Content-Type": genericType ? inferred : ct, "Cache-Control": "no-store", "X-Media-Protocol": protocol });
   for (const h of ["content-length", "content-range", "accept-ranges"]) { const v = res.headers.get(h); if (v) out.set(h, v); }
-  return new Response(res.body, { status: res.status, headers: out });
+  return new Response(peeked.body, { status: res.status, headers: out });
 }

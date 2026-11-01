@@ -23,6 +23,11 @@ async function probeOnce(channel: M3UChannel) {
         break;
       }
       if (!/mpegurl/i.test(res.headers.get("content-type") ?? "")) {
+        if (/dash\+xml/i.test(res.headers.get("content-type") ?? "")) {
+          await res.body?.cancel();
+          steps.push({ step: "DASH manifest", url: target.toString(), status: res.status, ok: false, error: "Manifest reachable; decoded DASH playback requires the browser playback check", ms: Date.now() - started });
+          break;
+        }
         // Headers alone do not prove playback: require a byte, then close the live stream.
         const reader = res.body?.getReader();
         let received = false;
