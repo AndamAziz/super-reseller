@@ -2,7 +2,7 @@
 ## Admin public MP4 uploads
 - [x] Replace the YouTube management screen and navigation with admin-only MP4 uploads and an honest unavailable state; existing customer content retained.
 - [x] Enable public storage, admin upload, progress and copy-public-link controls.
-- [ ] Verify admin-only storage writes, anonymous playback, range support and non-admin denial.
+- [x] Verify real admin small/TUS upload, reload, clipboard and delete; anonymous MP4 range returned 206/1024 bytes without credentials. Five database-backed policy tests enforce admin writes and reseller/anonymous denial; all 170 tests passed, build OK. Not published; VLC decoding not tested.
 ## Mobile panel usability
 - [x] Improve dashboard, reseller accounts, lines and credit history with stacked records, touch controls and quick navigation; permissions and billing unchanged.
 - [x] Verify signed-in mobile pages at 390px and 320px without overflow, line search, edit dialog/cancel and navigation; desktop table visible, no browser errors.
