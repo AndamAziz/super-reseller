@@ -118,7 +118,8 @@ function PlaylistsPage() {
 
   async function onFile(file: File) {
     try {
-      const text = await file.text();
+      // File.text() strips the BOM; retain it with the original header for export.
+      const text = new TextDecoder("utf-8", { ignoreBOM: true }).decode(await file.arrayBuffer());
       const document = parseM3UDocument(text);
       const parsed = document.channels;
       if (!parsed.length) return void toast.error("No channels found in this file");
@@ -197,6 +198,7 @@ function PlaylistsPage() {
         ))}
       </div>
       {isSource && source.isError && <p role="alert" className="text-destructive">{errMsg(source.error)}</p>}
+      {!isSource && !isLoading && channels.some((c) => !c.m3u_metadata) && <p role="alert" className="text-warn">This older import is missing original M3U attributes. Import the original file again to restore media sections and download its original format.</p>}
 
       <div role="tablist" aria-label="Media sections" className="flex flex-wrap gap-2">
         {([ ["all", "All"], ["live", "Live TV"], ["movie", "Movies"], ["series", "Series"] ] as const).map(([value, label]) => (

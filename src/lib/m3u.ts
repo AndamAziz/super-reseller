@@ -1,7 +1,9 @@
 export type M3UMetadata = {
   extinf: string;
   directives: string[];
-  original: { name: string; group_title: string | null; logo: string | null; referrer: string | null; type: string | null; user_agent: string | null };
+  raw_url?: string;
+  after_url?: string[];
+  original: { name: string; group_title: string | null; logo: string | null; referrer: string | null; type: string | null; user_agent: string | null; url?: string };
 };
 
 export type M3UChannel = {
@@ -22,8 +24,7 @@ export function mediaSection(channel: Pick<M3UChannel, "type">): "live" | "movie
 
 /** Keeps the document header and line-ending convention alongside channel metadata. */
 export function parseM3UDocument(text: string) {
-  const clean = text.replace(/^\uFEFF/, "");
-  const lines = clean.split(/\r?\n/);
+  const lines = text.split(/\r?\n/);
   const firstEntry = lines.findIndex((line) => line.trim().startsWith("#EXTINF"));
   const header = firstEntry >= 0 ? lines.slice(0, firstEntry).join("\n") : "#EXTM3U";
   return { channels: parseM3U(text), header, newline: text.includes("\r\n") ? "\r\n" : "\n" };
@@ -39,15 +40,20 @@ export function parseM3U(text: string): M3UChannel[] {
 
   for (const raw of lines) {
     const line = raw.trim();
-    if (!line) continue;
+    if (!line) {
+      if (pending) directives.push(raw);
+      else out.at(-1)?.m3u_metadata?.after_url?.push(raw);
+      continue;
+    }
     if (line.startsWith("#EXTINF")) {
       extinf = raw;
       directives = [];
       const attrs: Record<string, string> = {};
-      for (const m of line.matchAll(/([\w:-]+)="([^"]*)"/g)) {
-        if (m[1] && m[2] !== undefined) attrs[m[1].toLowerCase()] = m[2];
-      }
       const idx = nameSeparator(line);
+      const attributes = idx >= 0 ? line.slice(0, idx) : line;
+      for (const m of attributes.matchAll(/([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s,]+))/g)) {
+        if (m[1]) attrs[m[1].toLowerCase()] = m[2] ?? m[3] ?? m[4] ?? "";
+      }
       const name = (idx >= 0 ? line.slice(idx + 1) : "").trim();
       const ref = attrs["http-referrer"] || attrs[":http-referrer"] || "";
       pending = {
@@ -58,7 +64,7 @@ export function parseM3U(text: string): M3UChannel[] {
         user_agent: attrs["http-user-agent"] || null,
         type: (attrs["tvg-type"] || "").toLowerCase() || null,
       };
-    } else if (line.startsWith("#EXTVLCOPT:http-referrer=")) {
+    } else if (/^#EXTVLCOPT:http-referrer=/i.test(line)) {
       directives.push(raw);
       if (pending) pending.referrer = line.split("=").slice(1).join("=").trim() || pending.referrer;
     } else if (/^#EXTVLCOPT:http-user-agent=/i.test(line)) {
@@ -84,21 +90,26 @@ export function parseM3U(text: string): M3UChannel[] {
       }
     } else if (line.startsWith("#")) {
       if (pending) directives.push(raw);
+      else out.at(-1)?.m3u_metadata?.after_url?.push(raw);
       continue;
     } else if (pending) {
-      const original = { name: pending.name, group_title: pending.group_title, logo: pending.logo, referrer: pending.referrer, type: pending.type ?? null, user_agent: pending.user_agent ?? null };
-      out.push({ ...pending, url: line, m3u_metadata: { extinf, directives, original } });
+      const original = { name: pending.name, group_title: pending.group_title, logo: pending.logo, referrer: pending.referrer, type: pending.type ?? null, user_agent: pending.user_agent ?? null, url: line };
+      out.push({ ...pending, url: line, m3u_metadata: { extinf, directives, original, raw_url: raw, after_url: [] } });
       pending = null;
+    } else {
+      out.at(-1)?.m3u_metadata?.after_url?.push(raw);
     }
   }
   return out;
 }
 
 function nameSeparator(line: string): number {
-  let quoted = false;
+  let quote: string | null = null;
   for (let i = 0; i < line.length; i++) {
-    if (line[i] === '"') quoted = !quoted;
-    if (line[i] === "," && !quoted) return i;
+    const char = line[i];
+    if (char === quote) quote = null;
+    else if (!quote && (char === '"' || char === "'")) quote = char;
+    if (char === "," && !quote) return i;
   }
   return -1;
 }
@@ -107,9 +118,15 @@ function setAttribute(line: string, key: string, value: string | null): string {
   const separator = nameSeparator(line);
   let attrs = separator < 0 ? line : line.slice(0, separator);
   const suffix = separator < 0 ? "" : line.slice(separator);
-  const pattern = new RegExp(`\\s+${key}="[^"]*"`, "ig");
-  attrs = attrs.replace(pattern, "");
-  if (value) attrs += ` ${key}="${value.replace(/"/g, "'")}"`;
+  const pattern = new RegExp(`(^|[\\s"'])(${key}\\s*=\\s*)(?:"[^"]*"|'[^']*'|[^\\s,]+)`, "ig");
+  let found = false;
+  attrs = attrs.replace(pattern, (match, prefix: string, assignment: string) => {
+    found = true;
+    if (value === null) return prefix;
+    const quote = match.slice(prefix.length + assignment.length)[0] === "'" ? "'" : '"';
+    return prefix + assignment + quote + value.replaceAll(quote, quote === '"' ? "'" : '"') + quote;
+  });
+  if (!found && value !== null) attrs += ` ${key}="${value.replace(/"/g, "'")}"`;
   return attrs + suffix;
 }
 
@@ -156,16 +173,15 @@ export function buildM3U(channels: M3UChannel[], document?: { header?: string | 
       if (c.name !== original.name) {
         const idx = nameSeparator(line);
         line = (idx < 0 ? line + "," : line.slice(0, idx + 1)) + c.name;
-        if (/\stvg-name="/i.test(line)) line = setAttribute(line, "tvg-name", c.name);
       }
       for (const [key, value, before] of [
         ["tvg-logo", c.logo, original.logo], ["group-title", c.group_title, original.group_title],
-        ["tvg-type", c.type ?? null, original.type], ["http-referrer", c.referrer, original.referrer],
-        ["http-user-agent", c.user_agent ?? null, original.user_agent],
+        ["http-referrer", c.referrer, original.referrer],
+        [":http-referrer", c.referrer, original.referrer],
       ]) {
-        if (value !== before && key) line = setAttribute(line, key, value ?? null);
+        if (value !== before && key && (key !== "http-referrer" && key !== ":http-referrer" || line.includes(`${key}=`))) line = setAttribute(line, key, value ?? null);
       }
-      rows.push(line, ...updatedDirectives(c, metadata), c.url);
+      rows.push(line, ...updatedDirectives(c, metadata), c.url === original.url ? metadata.raw_url ?? c.url : c.url, ...metadata.after_url ?? []);
       continue;
     }
     const attrs = [`tvg-name="${c.name}"`];
