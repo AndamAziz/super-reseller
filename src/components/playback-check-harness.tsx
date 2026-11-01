@@ -39,7 +39,11 @@ export default function PlaybackCheckHarness() {
       destroy.current = engine.destroy;
       const player = engine.player;
       const started = performance.now();
-      await video.play();
+      let playTimer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        await Promise.race([video.play(), new Promise<never>((_, reject) => { playTimer = setTimeout(() => reject(new Error("Decoded playback did not start within 30 seconds")), 30000); })]);
+      } catch (error) { await engine.destroy(); throw error; }
+      finally { clearTimeout(playTimer); }
       const initialTime = video.currentTime;
       let peak = 0, stalls = 0, frames = 0;
       let lastTime = initialTime;
