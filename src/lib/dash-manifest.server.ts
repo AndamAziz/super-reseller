@@ -27,7 +27,8 @@ export async function resolveDashTarget(params: URLSearchParams, scope: string):
 export async function rewriteDash(text: string, from: string, prefix: string, scope: string): Promise<string> {
   if (/<!DOCTYPE|<!ENTITY/i.test(text)) throw new Error("Unsupported DASH document declarations");
   const doc = new DOMParser({ onError: (level, message) => { if (level === "fatalError" || level === "error") throw new Error(message); } }).parseFromString(text, "application/xml");
-  if (doc.documentElement.localName !== "MPD") throw new Error("Invalid DASH manifest");
+  const root = doc.documentElement;
+  if (!root || root.localName !== "MPD") throw new Error("Invalid DASH manifest");
   const children = (el: XmlElement, name?: string) => Array.from(el.childNodes).filter((node): node is XmlElement => node.nodeType === 1 && (!name || (node as XmlElement).localName === name));
   const link = async (value: string, base: string) => {
     const full = new URL(value, base).toString();
@@ -46,7 +47,7 @@ export async function rewriteDash(text: string, from: string, prefix: string, sc
     const bases = children(el, "BaseURL");
     const base = bases[0]?.textContent?.trim() ? new URL(bases[0].textContent.trim(), inheritedBase).toString() : inheritedBase;
     for (const item of bases) el.removeChild(item);
-    const own = children(el).filter((item) => ["SegmentTemplate", "SegmentList", "SegmentBase"].includes(item.localName));
+    const own = children(el).filter((item) => ["SegmentTemplate", "SegmentList", "SegmentBase"].includes(item.localName ?? ""));
     const inherited = [...inheritedTemplates];
     for (const item of own) {
       const previous = inherited.find((old) => old.localName === item.localName);
@@ -61,7 +62,7 @@ export async function rewriteDash(text: string, from: string, prefix: string, sc
     }
     if (el.localName === "Representation") {
       if (inherited.length) for (const template of inherited) el.appendChild(template.cloneNode(true));
-      const rewrittenBase = doc.createElementNS(doc.documentElement.namespaceURI, "BaseURL");
+      const rewrittenBase = doc.createElementNS(root.namespaceURI, "BaseURL");
       rewrittenBase.textContent = await link(base, inheritedBase);
       el.insertBefore(rewrittenBase, el.firstChild);
       for (const resource of Array.from(el.getElementsByTagName("*"))) {
@@ -72,7 +73,7 @@ export async function rewriteDash(text: string, from: string, prefix: string, sc
       return;
     }
     for (const child of children(el)) {
-      if (["Location", "PatchLocation"].includes(child.localName)) {
+      if (["Location", "PatchLocation"].includes(child.localName ?? "")) {
         if (child.localName === "PatchLocation") throw new Error("DASH patches are unsupported");
         child.textContent = await link(child.textContent ?? "", base);
       } else if (child.localName === "UTCTiming" && /http/.test(child.getAttribute("schemeIdUri") ?? "")) {
@@ -80,6 +81,6 @@ export async function rewriteDash(text: string, from: string, prefix: string, sc
       } else await walk(child, base, inherited);
     }
   };
-  await walk(doc.documentElement, from, []);
+  await walk(root, from, []);
   return new XMLSerializer().serializeToString(doc);
 }
