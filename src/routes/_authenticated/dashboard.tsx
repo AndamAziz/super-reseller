@@ -45,7 +45,7 @@ function Dashboard() {
           </>
         }
       />
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         {isAdmin ? (
           <StatCard label="Resellers" value={resellers.data?.length ?? 0} delay={60} />
         ) : (
@@ -62,7 +62,19 @@ function Dashboard() {
 
       {isAdmin && (
         <Panel title="Reseller credit balances" sub={`${lowBalanceCount} low-credit ${lowBalanceCount === 1 ? "account" : "accounts"}`} actions={<Link to="/resellers" className="text-[12px] font-medium text-primary">Manage resellers →</Link>}>
-          <div className="overflow-x-auto">
+          <div className="divide-y divide-border md:hidden">
+            {(resellers.data ?? []).map((r) => {
+              const low = hasLowCredits("reseller", r.credits);
+              return <article key={r.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 px-4 py-4">
+                <div className="min-w-0"><p className="break-words font-medium">{r.display_name || r.email}</p>{r.display_name && <p className="mt-1 break-all text-xs text-muted-foreground">{r.email}</p>}{low && <p role="status" className="mt-2 flex items-center gap-1 text-xs text-warn"><AlertTriangle className="size-3.5" />Low credits</p>}</div>
+                <p className={`font-mono text-lg ${low ? "text-warn" : "text-foreground"}`}>{r.credits}<span className="mt-1 block text-right text-[10px] text-muted-foreground">credits</span></p>
+              </article>;
+            })}
+            {resellers.isPending && <p className="p-4 text-muted-foreground">Loading reseller balances…</p>}
+            {resellers.isError && <p role="alert" className="p-4 text-destructive">Could not load reseller balances.</p>}
+            {resellers.isSuccess && !resellers.data.length && <p className="p-4 text-muted-foreground">No resellers yet.</p>}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table aria-label="Reseller credit balances" className="w-full min-w-[480px] text-[13px]">
               <thead>
                 <tr>
@@ -101,7 +113,14 @@ function Dashboard() {
       )}
 
       <Panel title="Recent subscription lines" sub={`${active} active · ${lines.length - active} expired`} actions={<Link to="/lines" className="text-[12px] font-medium text-primary">View all →</Link>}>
-        <div className="overflow-x-auto">
+        <div className="divide-y divide-border md:hidden">
+          {lines.slice(0, 6).map((l) => <article key={l.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 px-4 py-4">
+            <div className="min-w-0"><p className="break-all font-mono font-medium">{l.username}</p>{isAdmin && <p className="mt-1 break-all text-xs text-muted-foreground">{l.profiles?.display_name ?? l.profiles?.email}</p>}<p className="mt-2 text-xs text-muted-foreground">Expires <span className="font-mono">{fmtDate(l.expires_at)}</span></p></div>
+            <div><StatusBadge active={isActive(l.expires_at)} /></div>
+          </article>)}
+          {!lines.length && <p className="p-4 text-muted-foreground">No lines yet.</p>}
+        </div>
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[640px] text-[13px]">
             <thead>
               <tr>

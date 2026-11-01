@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { createReseller, deleteReseller } from "@/lib/admin.functions";
 import { PageHeader, Panel, td, th, inputCls, softBtn, dangerBtn, primaryBtn } from "@/components/panel";
 import { useMe, fmtDate, errMsg, isActive } from "@/hooks/use-me";
+import { Button } from "@/components/ui/button";
+import { Plus, Minus, Trash2 } from "lucide-react";
 import { useLines, useResellers } from "@/lib/queries";
 
 export const Route = createFileRoute("/_authenticated/resellers")({
@@ -77,7 +79,7 @@ function ResellersPage() {
   return (
     <>
       <PageHeader eyebrow="accounts" title="Resellers" />
-      <form onSubmit={create} className="glass rise grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_110px_auto] lg:items-end">
+      <form onSubmit={create} className="rise grid gap-4 border-y border-border bg-glass px-4 py-5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_110px_auto] lg:items-end">
         {(
           [
             ["displayName", "Name", "text"],
@@ -86,7 +88,7 @@ function ResellersPage() {
             ["credits", "Credits", "number"],
           ] as const
         ).map(([k, label, type]) => (
-          <label key={k} className="space-y-1.5">
+          <label key={k} className="min-w-0 space-y-1.5">
             <span className="label-mono">{label}</span>
             <input
               required
@@ -98,11 +100,34 @@ function ResellersPage() {
             />
           </label>
         ))}
-        <button disabled={busy} className={primaryBtn}>{busy ? "Creating…" : "Create reseller"}</button>
+        <Button disabled={busy} className={primaryBtn}>{busy ? "Creating…" : "Create reseller"}</Button>
       </form>
 
       <Panel title="Reseller accounts" sub={`${resellers.length} accounts`}>
-        <div className="overflow-x-auto">
+        <div className="divide-y divide-border xl:hidden">
+          {resellers.map((r) => {
+            const own = lines.filter((l) => l.reseller_id === r.id);
+            const act = own.filter((l) => isActive(l.expires_at)).length;
+            return <article key={r.id} className="min-w-0 space-y-4 px-4 py-5">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+                <div className="min-w-0"><h3 className="break-words font-semibold">{r.display_name || r.email}</h3><p className="mt-1 break-all text-xs text-muted-foreground">{r.email}</p></div>
+                <Button variant="outline" className={`${dangerBtn} size-11 p-0`} title="Delete reseller" aria-label={`Delete ${r.display_name || r.email}`} onClick={() => remove(r.id, r.email)}><Trash2 /></Button>
+              </div>
+              <dl className="grid grid-cols-3 gap-2 text-xs">
+                <div><dt className="text-muted-foreground">Credits</dt><dd className="mt-1 font-mono text-lg text-primary">{r.credits.toLocaleString()}</dd></div>
+                <div><dt className="text-muted-foreground">Active / total</dt><dd className="mt-1 font-mono text-lg">{act} / {own.length}</dd></div>
+                <div><dt className="text-muted-foreground">Created</dt><dd className="mt-2 font-mono">{fmtDate(r.created_at)}</dd></div>
+              </dl>
+              <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2">
+                <input type="number" inputMode="numeric" min={1} aria-label={`Credit amount for ${r.display_name || r.email}`} placeholder="Credits" className={`${inputCls} w-full`} value={amounts[r.id] ?? ""} onChange={(e) => setAmounts({ ...amounts, [r.id]: e.target.value })} />
+                <Button variant="outline" className={softBtn} onClick={() => adjust(r.id, 1)}><Plus />Add</Button>
+                <Button variant="outline" className={softBtn} onClick={() => adjust(r.id, -1)}><Minus />Remove</Button>
+              </div>
+            </article>;
+          })}
+          {!resellers.length && <p className="px-4 py-6 text-muted-foreground">No resellers yet.</p>}
+        </div>
+        <div className="hidden overflow-x-auto xl:block">
           <table className="w-full min-w-[860px] text-[13px]">
             <thead>
               <tr>
@@ -139,12 +164,12 @@ function ResellersPage() {
                           value={amounts[r.id] ?? ""}
                           onChange={(e) => setAmounts({ ...amounts, [r.id]: e.target.value })}
                         />
-                        <button className={softBtn} onClick={() => adjust(r.id, 1)}>+ Add</button>
-                        <button className={softBtn} onClick={() => adjust(r.id, -1)}>− Remove</button>
+                        <Button className={softBtn} onClick={() => adjust(r.id, 1)}>+ Add</Button>
+                        <Button className={softBtn} onClick={() => adjust(r.id, -1)}>− Remove</Button>
                       </div>
                     </td>
                     <td className={`${td} text-right`}>
-                      <button className={dangerBtn} onClick={() => remove(r.id, r.email)}>Delete</button>
+                      <Button className={dangerBtn} onClick={() => remove(r.id, r.email)}>Delete</Button>
                     </td>
                   </tr>
                 );

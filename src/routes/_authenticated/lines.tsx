@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Copy, Link2, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, Panel, StatusBadge, FullBadge, td, th, inputCls, softBtn, dangerBtn, primaryBtn } from "@/components/panel";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { connectionUpgradeCost, renewalCost } from "@/lib/connection-pricing";
 import { customerLinks } from "@/lib/customer-links";
@@ -215,8 +216,8 @@ function LinesPage() {
       <PageHeader eyebrow="customers" title="Subscription lines" />
 
       {isAdmin && (
-        <form onSubmit={saveSource} className="glass rise flex flex-wrap items-end gap-3 p-5">
-          <label className="min-w-[240px] flex-1 space-y-1.5">
+        <details className="rise border-y border-border bg-glass px-4 py-3"><summary className="cursor-pointer py-2 font-medium">Protected M3U source</summary><form onSubmit={saveSource} className="grid gap-3 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+          <label className="min-w-0 space-y-1.5">
             <span className="label-mono inline-flex items-center gap-1.5"><Link2 className="size-3.5" /> Protected M3U source</span>
             <input
               className={`${inputCls} w-full py-2 font-mono text-[12px]`}
@@ -226,11 +227,11 @@ function LinesPage() {
             />
             <span className="block text-[11px] text-muted-foreground">Clients never see this address — they get their own link that checks username, password and expiry.</span>
           </label>
-          <button className={primaryBtn}>Save source</button>
-        </form>
+          <Button className={primaryBtn}>Save source</Button>
+        </form></details>
       )}
 
-      <form onSubmit={recommend} className="glass rise grid gap-3 p-5 lg:grid-cols-[1fr_auto] lg:items-end">
+      <details className="rise border-y border-border bg-glass px-4 py-3"><summary className="cursor-pointer py-2 font-medium">Duration advisor</summary><form onSubmit={recommend} className="grid gap-3 py-3 lg:grid-cols-[1fr_auto] lg:items-end">
         <label className="space-y-1.5">
           <span className="label-mono inline-flex items-center gap-1.5"><Sparkles className="size-3.5" /> Duration advisor</span>
           <input
@@ -240,17 +241,17 @@ function LinesPage() {
             onChange={(e) => setNeeds(e.target.value)}
           />
         </label>
-        <button disabled={recBusy} className={softBtn}>{recBusy ? "Thinking…" : "Recommend"}</button>
+        <Button disabled={recBusy} className={softBtn}>{recBusy ? "Thinking…" : "Recommend"}</Button>
         {rec && (
           <div className="flex flex-wrap items-center gap-3 text-[13px] lg:col-span-2">
             <span className="font-mono">{rec.months === 0 ? "24H test" : `${rec.months} month${rec.months > 1 ? "s" : ""}`}</span>
             <span className="text-muted-foreground">{rec.explanation}</span>
-            <button type="button" className={softBtn} onClick={() => setForm((f) => ({ ...f, months: rec.months }))}>Use this</button>
+            <Button type="button" className={softBtn} onClick={() => setForm((f) => ({ ...f, months: rec.months }))}>Use this</Button>
           </div>
         )}
-      </form>
+      </form></details>
 
-      <form onSubmit={create} className="glass rise grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto_auto] lg:items-end">
+      <form onSubmit={create} className="rise grid gap-4 border-y border-border bg-glass px-4 py-5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto_auto] lg:items-end">
         <label className="space-y-1.5">
           <span className="label-mono">Username</span>
           <input className={`${inputCls} w-full py-2`} value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
@@ -282,9 +283,9 @@ function LinesPage() {
             {testUsed && !testUsed.used && <span className="block text-[12px] text-muted-foreground">Free test available for this customer.</span>}
           </label>
         )}
-        <button disabled={busy || (form.months === 0 && !!testUsed?.used)} className={primaryBtn}>
+        <Button disabled={busy || (form.months === 0 && !!testUsed?.used)} className={primaryBtn}>
           {busy ? "Creating…" : isAdmin ? "Create line" : `Create · ${cost} credit${cost > 1 ? "s" : ""}`}
-        </button>
+        </Button>
         {!isAdmin && (
           <p className="text-[11px] text-muted-foreground sm:col-span-2 lg:col-span-5">
             Balance: <span className="font-mono">{me?.credits ?? 0}</span> credits · 1 credit = 1 month
@@ -292,9 +293,10 @@ function LinesPage() {
         )}
       </form>
 
-      {editing && (
-        <form onSubmit={saveEdit} className="glass rise grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto_auto_auto_auto] lg:items-end">
-          <p className="label-mono sm:col-span-2 lg:col-span-6">Edit line · {editing.username}</p>
+      <Dialog open={!!editing} onOpenChange={(open) => { if (!open) setEditing(null); }}>
+        {editing && <DialogContent aria-describedby={undefined} className="max-h-[85dvh] w-[calc(100%-2rem)] overflow-y-auto rounded-lg p-5">
+        <DialogHeader><DialogTitle className="break-all pr-6">Edit line · {editing.username}</DialogTitle></DialogHeader>
+        <form onSubmit={saveEdit} className="grid min-w-0 gap-4 sm:grid-cols-2">
           <label className="space-y-1.5">
             <span className="label-mono">Password</span>
             <input className={`${inputCls} w-full py-2`} value={editing.password} onChange={(e) => setEditing({ ...editing, password: e.target.value })} />
@@ -330,22 +332,23 @@ function LinesPage() {
           </Button>
           <Button type="button" variant="outline" className={softBtn} onClick={() => setEditing(null)}>Cancel</Button>
           {!isAdmin && (
-            <p className="text-[12px] text-muted-foreground sm:col-span-2 lg:col-span-6">
+            <p className="text-[12px] text-muted-foreground sm:col-span-2">
               Additional connections: 1 credit each per remaining month (partial months rounded up).
               {` Balance: ${me?.credits ?? 0} credits. Reductions do not refund credits.`}
               {insufficientUpgradeCredits && <span className="ml-2 text-destructive">Insufficient credits.</span>}
             </p>
           )}
         </form>
-      )}
+        </DialogContent>}
+      </Dialog>
 
       <Panel
         title="All lines"
-        sub={`${active} active · ${lines.length - active} expired · red rows have reached their Max connections limit`}
+        sub={`${active} active · ${lines.length - active} expired`}
         actions={
           <>
-            <input placeholder="search username or reseller" value={q} onChange={(e) => setQ(e.target.value)} className={`${inputCls} w-48`} />
-            <select value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)} className={inputCls}>
+            <input aria-label="Search lines" placeholder="Search lines" value={q} onChange={(e) => setQ(e.target.value)} className={`${inputCls} w-full sm:w-48`} />
+            <select aria-label="Line status" value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)} className={inputCls}>
               <option value="all">All</option>
               <option value="active">Active</option>
               <option value="expired">Expired</option>
@@ -353,7 +356,38 @@ function LinesPage() {
           </>
         }
       >
-        <div className="overflow-x-auto">
+        <div className="divide-y divide-border xl:hidden">
+          {shown.map((l) => {
+            const max = l.max_connections ?? 1;
+            const live = l.active_connections ?? 0;
+            const full = live >= max;
+            return <article key={l.id} data-full={full ? "true" : undefined} className={cn("min-w-0 space-y-4 px-4 py-5", full && "border-l-2 border-destructive bg-destructive/8")}>
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+                <div className="min-w-0"><h3 className="break-all font-mono text-sm font-semibold">{l.username}</h3>{isAdmin && <p className="mt-1 break-all text-xs text-muted-foreground">{l.profiles?.display_name ?? l.profiles?.email}</p>}{l.is_test && <p className="mt-1 text-xs text-muted-foreground">24H test</p>}</div>
+                <StatusBadge active={isActive(l.expires_at)} />
+              </div>
+              <dl className="grid grid-cols-2 gap-3 text-xs">
+                <div className="min-w-0"><dt className="text-muted-foreground">Password</dt><dd className="mt-1 break-all font-mono">{l.password}</dd></div>
+                <div><dt className="text-muted-foreground">Expiry</dt><dd className="mt-1 font-mono">{fmtDate(l.expires_at)}</dd></div>
+                <div className="col-span-2"><dt className="text-muted-foreground">Connections</dt><dd className="mt-1 flex items-center gap-2"><span className={cn("font-mono", full && "text-destructive")}>{live}/{max}</span>{full && <FullBadge max={max} />}</dd>
+                {(l.active_devices ?? []).map((d, i) => <p key={i} className="mt-1 break-words text-muted-foreground">{d.label}</p>)}</div>
+              </dl>
+              {isAdmin && <div className="flex flex-wrap gap-2">
+                <Button variant="outline" className={softBtn} onClick={() => copyLink(customerLinks(l).m3u, "M3U link")}><Copy />M3U</Button>
+                <Button variant="outline" className={softBtn} onClick={() => copyLink(customerLinks(l).provider, "Provider host")}><Copy />Host</Button>
+                <Button variant="outline" className={softBtn} onClick={() => copyLink(customerLinks(l).content, "Combined catalogue link")}><Copy />M3U + YouTube</Button>
+              </div>}
+              <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-2">
+                <select aria-label={`Renew months for ${l.username}`} className={inputCls} value={renewMonths[l.id] ?? 1} onChange={(e) => setRenewMonths({ ...renewMonths, [l.id]: Number(e.target.value) })}>{MONTHS.map((m) => <option key={m} value={m}>{m}m</option>)}</select>
+                <Button variant="outline" className={cn(softBtn, "whitespace-normal px-2")} onClick={() => renew(l.id)}>{isAdmin ? "Renew" : `Renew · ${renewalCost(renewMonths[l.id] ?? 1, max)} credits`}</Button>
+                <Button variant="outline" className={cn(softBtn, "size-11 p-0")} aria-label={`Edit ${l.username}`} title="Edit line" onClick={() => setEditing({ id: l.id, username: l.username, password: l.password, host: l.custom_host ?? "", expires: fmtDate(l.expires_at), maxConn: max })}><Pencil /></Button>
+                <Button variant="outline" className={cn(dangerBtn, "size-11 p-0")} aria-label={`Delete ${l.username}`} title="Delete line" onClick={() => remove(l.id, l.username)}><Trash2 /></Button>
+              </div>
+            </article>;
+          })}
+          {!shown.length && <p className="px-4 py-6 text-muted-foreground">No lines found.</p>}
+        </div>
+        <div className="hidden overflow-x-auto xl:block">
           <table className="w-full min-w-[820px] text-[13px]">
             <thead>
               <tr>
@@ -431,7 +465,7 @@ function LinesPage() {
                       <Button type="button" variant="outline" className={softBtn} onClick={() => renew(l.id)}>
                         {isAdmin ? "Renew" : `Renew · ${renewalCost(renewMonths[l.id] ?? 1, l.max_connections ?? 1)} credits`}
                       </Button>
-                      <button
+                      <Button
                         className={softBtn}
                         aria-label={`Edit ${l.username}`}
                         onClick={() =>
@@ -439,10 +473,10 @@ function LinesPage() {
                         }
                       >
                         <Pencil className="size-3.5" />
-                      </button>
-                      <button className={dangerBtn} aria-label={`Delete ${l.username}`} onClick={() => remove(l.id, l.username)}>
+                      </Button>
+                      <Button className={dangerBtn} aria-label={`Delete ${l.username}`} onClick={() => remove(l.id, l.username)}>
                         <Trash2 className="size-3.5" />
-                      </button>
+                      </Button>
                     </div>
                   </td>
                 </tr>
