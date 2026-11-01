@@ -1,4 +1,7 @@
 # Connection billing
+## Mobile panel usability
+- [ ] Improve dashboard, reseller accounts, lines and credit history for touch screens; preserve permissions and billing.
+- [ ] Verify real signed-in mobile navigation, search and line editing, plus desktop layout.
 ## Customer test account and delivery links
 - [x] Created requested free 24-hour customer test; saved/reloaded and published M3U HTTP 200, provider auth=1, combined HTTP 200 with 17 Setayesh episodes verified.
 - [x] Default copies use published host; separate M3U, Host and M3U + YouTube buttons verified from clipboard. Eleven targeted tests pass; build OK. Button changes await publication.
