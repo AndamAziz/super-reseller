@@ -23,7 +23,7 @@ describe("HLS master and media playlists", () => {
     const lines = out.split("\n");
     expect(lines[1]).toBe("#EXT-X-VERSION:6");
     expect(lines[3]).toBe("#EXT-X-STREAM-INF:BANDWIDTH=800000,RESOLUTION=1280x720");
-    expect(unb64u(new URL(lines[4]).searchParams.get("u")!)).toBe("https://cdn.test/live/hd/index.m3u8");
+    expect(unb64u(new URL(lines[4]!).searchParams.get("u")!)).toBe("https://cdn.test/live/hd/index.m3u8");
     expect(unb64u(new URL(/URI="([^"]+)"/.exec(lines[2])![1]).searchParams.get("u")!)).toBe("https://cdn.test/live/audio.m3u8");
     expect(unb64u(new URL(/URI="([^"]+)"/.exec(lines[5])![1]).searchParams.get("u")!)).toBe("https://cdn.test/live/iframes.m3u8");
   });
@@ -33,7 +33,7 @@ describe("HLS master and media playlists", () => {
     const out = await rewritePlaylist(media, "https://cdn.test/vod/a.m3u8", P, "u:1");
     expect(unb64u(new URL(/URI="([^"]+)"/.exec(out.split("\n")[1])![1]).searchParams.get("u")!)).toBe("https://cdn.test/vod/init.mp4");
     expect(unb64u(new URL(/URI="([^"]+)"/.exec(out.split("\n")[2])![1]).searchParams.get("u")!)).toBe("https://cdn.test/vod/k.key");
-    expect(unb64u(new URL(out.split("\n")[4]).searchParams.get("u")!)).toBe("https://cdn.test/vod/seg1.ts");
+    expect(unb64u(new URL(out.split("\n")[4]!).searchParams.get("u")!)).toBe("https://cdn.test/vod/seg1.ts");
   });
 
   it("serves an audio-only HLS playlist through the proxy with the right MIME type", async () => {
