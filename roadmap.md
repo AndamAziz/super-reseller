@@ -1,7 +1,7 @@
 # Connection billing
 ## Provider TS playback follow-up
-- [ ] Fix fragmented protocol inspection and misleading TS response types on the shared provider playback path, with regression tests.
-- [ ] Verify the provider request and signed media chain; distinguish source failures from decoded device playback.
+- [x] Fix fragmented protocol inspection and misleading TS response types on the shared provider playback path; all 94 tests pass and build OK.
+- [x] Verify authenticated provider catalog (79 TS channels) and signed media chain: AVA Media, RUDAW TV and Kurdsat TV return HLS then TS media bytes with HTTP 200. Decoded target-device playback remains unverified; changes are not published.
 ## Phase 2 real playback
 - [x] Add TS transmuxing and detect HLS behind .TS; remove Range prerequisite rejected by some origins. Regression tests pass; real H.264/AAC decoding is blocked by the sandbox browser's absent codecs.
 - [x] Add bounded protocol detection and verify decoded playback separately from HTTP connectivity.
