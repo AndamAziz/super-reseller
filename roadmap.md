@@ -1,8 +1,8 @@
 # Connection billing
 ## Admin public MP4 uploads
 - [x] Replace the YouTube management screen and navigation with admin-only MP4 uploads and an honest unavailable state; existing customer content retained.
-- [ ] Enable upload, progress and copy-public-link controls; blocked by workspace public_buckets_blocked restriction (rechecked).
-- [ ] Enforce admin-only storage writes and verify anonymous playback, range support and non-admin denial after public storage is enabled.
+- [x] Enable public storage, admin upload, progress and copy-public-link controls.
+- [ ] Verify admin-only storage writes, anonymous playback, range support and non-admin denial.
 ## Mobile panel usability
 - [x] Improve dashboard, reseller accounts, lines and credit history with stacked records, touch controls and quick navigation; permissions and billing unchanged.
 - [x] Verify signed-in mobile pages at 390px and 320px without overflow, line search, edit dialog/cancel and navigation; desktop table visible, no browser errors.
