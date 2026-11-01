@@ -31,8 +31,17 @@ export function ChannelLinksDialog({ channel, playlistId, onClose }: {
     if (!parsed.success) { setError(parsed.error.issues[0]?.message ?? "Check the URLs"); return; }
     setSaving(true); setError(null);
     try {
+      // Validation normalizes values; do not write normalized untouched fields.
+      const changes = {
+        ...(name !== channel.name ? { name: parsed.data.name } : {}),
+        ...(group !== (channel.group_title ?? "") ? { group_title: parsed.data.group_title } : {}),
+        ...(referrer !== (channel.referrer ?? "") ? { referrer: parsed.data.referrer } : {}),
+        ...(url !== channel.url ? { url: parsed.data.url } : {}),
+        ...(logo !== (channel.logo ?? "") ? { logo: parsed.data.logo } : {}),
+      };
+      if (!Object.keys(changes).length) { onClose(); return; }
       const { data, error: updateError } = await supabase.from("channels")
-        .update(parsed.data).eq("id", channel.id).eq("playlist_id", playlistId)
+        .update(changes).eq("id", channel.id).eq("playlist_id", playlistId)
         .select("id").single();
       if (updateError) throw updateError;
       if (!data) throw new Error("Channel could not be saved");

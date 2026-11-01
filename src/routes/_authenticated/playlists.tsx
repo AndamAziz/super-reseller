@@ -118,7 +118,8 @@ function PlaylistsPage() {
 
   async function onFile(file: File) {
     try {
-      const text = await file.text();
+      // File.text() strips the BOM; retain it with the original header for export.
+      const text = new TextDecoder("utf-8", { ignoreBOM: true }).decode(await file.arrayBuffer());
       const document = parseM3UDocument(text);
       const parsed = document.channels;
       if (!parsed.length) return void toast.error("No channels found in this file");

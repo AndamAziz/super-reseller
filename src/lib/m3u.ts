@@ -179,7 +179,7 @@ export function buildM3U(channels: M3UChannel[], document?: { header?: string | 
         ["http-referrer", c.referrer, original.referrer],
         [":http-referrer", c.referrer, original.referrer],
       ]) {
-        if (value !== before && key && (key !== ":http-referrer" || line.includes(":http-referrer="))) line = setAttribute(line, key, value ?? null);
+        if (value !== before && key && (key !== "http-referrer" && key !== ":http-referrer" || line.includes(`${key}=`))) line = setAttribute(line, key, value ?? null);
       }
       rows.push(line, ...updatedDirectives(c, metadata), c.url === original.url ? metadata.raw_url ?? c.url : c.url, ...metadata.after_url ?? []);
       continue;
