@@ -39,11 +39,22 @@ describe("Playlist media", () => {
     expect(await res.text()).toBe("audio");
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
-  it.each(["mp3", "mp4", "m3u8"])("preserves %s for player playback", (format) => {
+  it.each(["mp3", "mp4", "m3u8", "ts"])("preserves %s for player playback", (format) => {
     const source = `https://media.test/quran.${format}?token=public`;
     expect(mediaExtension(source)).toBe(format);
     expect(playbackUrl("https://app.test", "live", "user", "pass", 1, source)).toBe(`https://app.test/api/public/live/user/pass/1.${format}`);
     expect(parseM3U(`#EXTM3U\n#EXTINF:-1 tvg-name="Quran",Quran\n${source}`)[0]?.url).toBe(source);
+  });
+  it.each(["text/plain", "video/mp4", "application/x-mpegURL"])("serves fragmented TS as video/mp2t despite upstream %s", async (type) => {
+    const bytes = new Uint8Array(752); bytes[0] = bytes[188] = bytes[376] = bytes[564] = 0x47;
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(new ReadableStream({ start(controller) {
+      controller.enqueue(bytes.slice(0, 2)); controller.enqueue(bytes.slice(2, 200)); controller.enqueue(bytes.slice(200)); controller.close();
+    } }), { headers: { "Content-Type": type } })));
+    const url = "https://media.test/live.TS";
+    const res = await proxyFetch(new Request("https://app.test"), new URL(url), { name: "TV", group_title: null, logo: null, referrer: null, url }, "https://app.test/proxy", "u:1");
+    expect(res.headers.get("content-type")).toBe("video/mp2t");
+    expect(res.headers.get("x-media-protocol")).toBe("ts");
+    expect(new Uint8Array(await res.arrayBuffer())).toEqual(bytes);
   });
   it.each(["live", "movie", "series"])("refreshes new %s entries after five seconds", async (kind) => {
     let at = 0;

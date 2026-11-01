@@ -1,14 +1,14 @@
 import { detectMedia, type MediaProtocol } from "./media-detection";
+import { peekStream } from "./stream-peek";
 
 /** Browser-only entry point; no DOM access or engine import during SSR. */
 export async function loadBrowserPlayback(video: HTMLVideoElement, url: string) {
   // Live TS/HLS origins frequently reject Range; cancel after the first chunk instead.
   const response = await fetch(url, { signal: AbortSignal.timeout(20000) });
   if (!response.ok) { await response.body?.cancel(); throw new Error(`Playback HTTP ${response.status}`); }
-  const reader = response.body?.getReader();
-  const first = await reader?.read();
-  await reader?.cancel();
-  const protocol: MediaProtocol = detectMedia(first?.value ?? new Uint8Array(), response.headers.get("content-type") ?? "", url);
+  const peek = await peekStream(response.body, 4096, 20000);
+  await peek.body?.cancel();
+  const protocol: MediaProtocol = detectMedia(peek.bytes, response.headers.get("content-type") ?? "", url);
   if (protocol === "flv" || protocol === "avi" || /^rtmps?:/i.test(url)) throw new Error("Unsupported container or protocol in this browser; use a compatible external player or an approved conversion service.");
   if (protocol === "ts") {
     const { default: mpegts } = await import("mpegts.js");
