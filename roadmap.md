@@ -1,5 +1,6 @@
 # Connection billing
 ## Admin public MP4 uploads
+- [x] Fixed Kurdish movie-name saving with reversible ASCII storage keys; real admin rename to جومونگ 21 persisted after reload, anonymous playback returned 206 video/mp4, fixture removed, eleven tests passed. Existing user video untouched.
 - [x] Selected filename, editable movie name and TUS progress verified with real admin upload; rename persisted after reload, clipboard uses published host, anonymous redirect returned 206 video/mp4 (1024 bytes); temporary video deleted, no page errors, ten targeted tests passed.
 - [ ] Public short-link availability requires publication approval; copied origin corrected, published route currently returns 404.
 - [x] Replace the YouTube management screen and navigation with admin-only MP4 uploads and an honest unavailable state; existing customer content retained.

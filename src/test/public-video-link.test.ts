@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { pickUniqueVideoName, sanitizeVideoName, shortVideoName, shortVideoUrl, videoPublicUrl } from '@/lib/public-videos';
+import { displayVideoName, storageVideoName } from '@/lib/video-names';
 
 describe('short public video links', () => {
+  it('stores the requested Kurdish movie name with a safe reversible ASCII key', () => {
+    const name = sanitizeVideoName('جومونگ 21');
+    const key = storageVideoName(name);
+    expect(key).toMatch(/^[a-zA-Z0-9._-]+\.mp4$/);
+    expect(displayVideoName(key)).toBe('جومونگ-21.mp4');
+    expect(shortVideoName(`owner/${key}`)).toBe('جومونگ-21.mp4');
+    expect(new URL(videoPublicUrl(`owner/${key}`)).pathname).toBe(`/api/public/v/${key}`);
+  });
   it('strips the legacy uuid prefix from storage filenames', () => {
     expect(shortVideoName('uid/7537981d-2352-4e3d-aa99-1e96829cb26c_video_2026-11-01_05-43-18.mp4')).toBe('video_2026-11-01_05-43-18.mp4');
     expect(shortVideoName('uid/video-2026-11-01.mp4')).toBe('video-2026-11-01.mp4');
