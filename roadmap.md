@@ -1,16 +1,19 @@
 # Connection billing
+## Combined provider series catalogue
+- [ ] Audit and minimally merge authorised GitHub M3U and owned YouTube series by provider/TMDB, preserving playback URLs and episode variants.
+- [ ] Display combined provider episodes and verify a real customer line receives Setayesh from both sources; report playback and permission evidence.
 ## Direct provider YouTube episodes
 - [x] Add structured provider form, atomic owner/provider/TMDB association, database-generated names and language/poster display without altering M3U delivery.
 - [x] Verify exact Setayesh S01E17 save/reload, supplied poster, real customer API HTTP 200 and official embedded decoded playback at 16.06 seconds; 141 tests passed; dashboard versus Android report delivered.
 - [ ] Execute new transactional database-role permission test; blocked because sandbox connection cannot assume authenticated role (existing API auth/ownership regressions passed).
-- [ ] Integrate actual Android display/playback; blocked by absent native Android source and device access.
+- Native Android changes are outside the clarified provider/backend scope.
 ## YouTube episode integration
 - [x] Audit existing series APIs, ownership and Android integration boundary; no native Android source found.
 - [x] Add database-backed, owner-scoped series/seasons/YouTube episodes and management page, without changing existing IPTV playback or billing.
 - [x] Add validated YouTube URLs, permitted metadata, private poster uploads and official embedded playback; decoded Google Developers sample reached 12.98 seconds at 854×480 in browser.
 - [x] Expose customer-line-scoped series/season/episode/source APIs with publication filtering, revisions and five-second refresh contract; provide exact Android integration requirements.
 - [x] Verify real admin/reseller save/edit/reload, private poster, customer API, draft filtering, duplicate/ownership checks and existing media regressions; remove temporary fixtures and report limitations.
-- [ ] Integrate and build native Android client, then verify automatic series display and YouTube playback on-device; blocked by absent Android source/device access.
+- Native Android changes are outside the clarified provider/backend scope; no on-device claims.
 ## Phase 3B provider-specific diagnosis
 - [x] Trace existing Provider API and M3U paths: both use the same source/catalog/playback handlers; AVA Media, RUDAW TV and Kurdsat TV emit identical URLs and reach signed TS media bytes. No separate configured upstream provider found in application code.
 - [ ] Reproduce the reported provider-only failure and fix only verified defects; blocked by missing customer player name/configuration and failing channel identification (clarification skipped). No playback changes made for Phase 3B.
