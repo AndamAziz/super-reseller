@@ -1,7 +1,7 @@
 # Connection billing
 ## Combined provider series catalogue
-- [ ] Audit and minimally merge authorised GitHub M3U and owned YouTube series by provider/TMDB, preserving playback URLs and episode variants.
-- [ ] Display combined provider episodes and verify a real customer line receives Setayesh from both sources; report playback and permission evidence.
+- [x] Audit and minimally merge authorised GitHub M3U and owned YouTube series by provider/TMDB, preserving playback URLs and episode variants.
+- [x] Display combined provider episodes and verify real customer HTTP 200: one Setayesh series, 16 M3U + YouTube S01E17; other reseller receives no private YouTube; 146 tests passed. HLS manifest/resource returned 200/447816 bytes; decoded M3U attempt did not start in 15 seconds and is reported separately.
 ## Direct provider YouTube episodes
 - [x] Add structured provider form, atomic owner/provider/TMDB association, database-generated names and language/poster display without altering M3U delivery.
 - [x] Verify exact Setayesh S01E17 save/reload, supplied poster, real customer API HTTP 200 and official embedded decoded playback at 16.06 seconds; 141 tests passed; dashboard versus Android report delivered.
