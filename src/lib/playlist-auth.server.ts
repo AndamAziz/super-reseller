@@ -2,6 +2,7 @@
 import { buildM3U, parseM3U, type M3UChannel } from "./m3u";
 import { createPlaylistCache } from "./playlist-cache";
 import { playbackUrl } from "./media";
+import { playlistVersion } from "./playlist-version";
 
 export type AuthResult =
   | { ok: true; lineId: string; username: string; password: string; expiresAt: string; createdAt: string | null; maxConnections: number }
@@ -52,7 +53,7 @@ export async function loadSourceText(): Promise<{ ok: true; text: string } | { o
 
 export type Episode = M3UChannel & { id: number; season: number; episode: number };
 export type Series = { id: number; title: string; category: string; cover: string | null; episodes: Episode[] };
-export type Catalog = { channels: M3UChannel[]; live: M3UChannel[]; movies: M3UChannel[]; series: Series[]; episodes: Episode[] };
+export type Catalog = { channels: M3UChannel[]; live: M3UChannel[]; movies: M3UChannel[]; series: Series[]; episodes: Episode[]; version?: string };
 
 export function buildCatalog(all: M3UChannel[]): Catalog {
   const live: M3UChannel[] = [], movies: M3UChannel[] = [], episodes: Episode[] = [];
@@ -77,7 +78,7 @@ const readCatalog = createPlaylistCache(async () => {
   if (!src.ok) throw new Error(src.message);
   const channels = parseM3U(src.text);
   if (!channels.length) throw new Error("Playlist source contains no playable entries");
-  return buildCatalog(channels);
+  return { ...buildCatalog(channels), version: await playlistVersion(src.text) };
 });
 
 export async function loadCatalog(force = false): Promise<{ ok: true; catalog: Catalog } | { ok: false; status: number; message: string }> {

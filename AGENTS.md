@@ -25,3 +25,6 @@
 - Upstream timeouts apply only until response headers arrive, with one retry for network errors or 502/503/504, so long MP3/MP4 bodies are not aborted by the header deadline.
 - Routing tests load the real route tree with deterministic signed-out auth and omit only the document shell in the div-based test renderer, so redirects and not-found state are tested without invalid nested HTML or hosted auth calls.
 - Admin stream tests probe the selected URL with its own Referer and User-Agent independently of GitHub; success requires media bytes after signed playlist traversal, with one recheck for transient failures, and diagnostic origin codes do not change playback response semantics.
+- Playback protocol detection uses bounded signature inspection with byte replay; DASH resources use scoped exact-URL or constrained signed-template authorization, never a browser-accessible arbitrary signing endpoint.
+- The isolated admin playback-check route dynamically loads browser engines and separates HTTP, frame, audio-signal and continuity evidence; ordinary panel layout and records remain unchanged.
+- Shared catalogs carry a full-content revision hash; polling replaces source arrays and never appends updates or mutates reseller assignments.
