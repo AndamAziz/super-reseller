@@ -1,3 +1,11 @@
+import { sha256 } from '@noble/hashes/sha2.js';
+import { bytesToHex } from '@noble/hashes/utils.js';
+
+// The public identifier is not an access token: public storage needs no credentials.
+export function compactVideoName(path: string) {
+  return `v-${bytesToHex(sha256(new TextEncoder().encode(path))).slice(0, 12)}.mp4`;
+}
+
 export function storageVideoName(name: string) {
   if (/^[\x00-\x7f]*$/.test(name) && !name.startsWith('utf8-')) return name;
   const base = name.replace(/\.mp4$/i, '');

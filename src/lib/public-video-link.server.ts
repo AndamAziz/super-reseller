@@ -13,5 +13,5 @@ export async function handlePublicVideoLink(rawName: string): Promise<Response> 
   const base = process.env['SUPABASE_URL'] || process.env['VITE_SUPABASE_URL'] || import.meta.env['VITE_SUPABASE_URL'];
   if (!base) return new Response('Storage unavailable', { status: 503 });
   const target = `${base}/storage/v1/object/public/public-videos/${data.split('/').map(encodeURIComponent).join('/')}`;
-  return new Response(null, { status: 302, headers: { Location: target, 'Cache-Control': 'public, max-age=300' } });
+  return new Response(null, { status: 302, headers: { Location: target, 'Cache-Control': 'public, max-age=300', 'Access-Control-Allow-Origin': '*' } });
 }

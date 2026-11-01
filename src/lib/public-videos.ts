@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { displayVideoName, storageVideoName } from '@/lib/video-names';
+import { compactVideoName, displayVideoName, storageVideoName } from '@/lib/video-names';
 
 export const VIDEO_BUCKET = 'public-videos';
 export const MAX_VIDEO_BYTES = 5 * 1024 ** 3;
@@ -12,8 +12,7 @@ export function shortVideoName(path: string) {
   return displayVideoName((path.split('/').pop() ?? path).replace(/^[a-f0-9-]{36}_/, ''));
 }
 export function shortVideoUrl(origin: string, path: string) {
-  const storedName = (path.split('/').pop() ?? path).replace(/^[a-f0-9-]{36}_/, '');
-  return `${origin}/api/public/v/${encodeURIComponent(storedName)}`;
+  return `${origin}/api/public/v/${compactVideoName(path)}`;
 }
 export function videoPublicUrl(path: string) {
   return shortVideoUrl('https://super-reseller.lovable.app', path);
