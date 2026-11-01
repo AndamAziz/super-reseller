@@ -73,7 +73,7 @@ function PlaylistsPage() {
   async function test(c: M3UChannel & { id: string }) {
     setTests((t) => ({ ...t, [c.id]: { loading: true } }));
     try {
-      const r = await runTest({ data: { url: c.url, referrer: c.referrer } });
+      const r = await runTest({ data: { url: c.url, referrer: c.referrer, user_agent: c.user_agent } });
       setTests((t) => ({ ...t, [c.id]: { loading: false, ok: r.ok, steps: r.steps } }));
     } catch (e) {
       setTests((t) => ({ ...t, [c.id]: { loading: false, ok: false, steps: [], error: errMsg(e) } }));
