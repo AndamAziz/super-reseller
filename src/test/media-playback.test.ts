@@ -103,3 +103,26 @@ describe("Playlist media", () => {
     expect(fetcher.mock.calls[0]?.[1].headers).toMatchObject({ Range: "bytes=0-2", Referer: "https://quran.test/", "User-Agent": "QuranPlayer" });
   });
 });
+describe("TS links that redirect to HLS upstream", () => {
+  it("sends the player to the .m3u8 app link, keeping the channel identity", async () => {
+    const { manifestRedirects } = await import("@/lib/media-playback.server");
+    const out = manifestRedirects("https://app.test/api/public/live/u/p/2902.ts?channel=1234567890abcdef", "2902.ts", 2902);
+    expect(out.hls).toBe("https://app.test/api/public/live/u/p/2902.m3u8?channel=1234567890abcdef");
+    expect(manifestRedirects("https://app.test/api/public/live/u/p/7.m3u8", "7.m3u8", 7).hls).toBeUndefined();
+  });
+  it("redirects instead of serving playlist text on a .ts entry link", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("#EXTM3U\n#EXTINF:10,\nseg.ts\n", { headers: { "Content-Type": "application/x-mpegURL" } })));
+    const url = "https://origin.test/live/1/1/2902.ts";
+    const ch = { name: "AVA", group_title: null, logo: null, referrer: null, url };
+    const res = await proxyFetch(new Request("https://app.test"), new URL(url), ch, "https://app.test/p/2902", "u:1", { manifestRedirect: { hls: "https://app.test/live/u/p/2902.m3u8" } });
+    expect(res.status).toBe(302);
+    expect(res.headers.get("location")).toBe("https://app.test/live/u/p/2902.m3u8");
+  });
+  it("gives proxied segment links the origin's file extension", async () => {
+    const out = await rewritePlaylist("#EXTM3U\n#EXTINF:10,\nseg.ts\nnext.m3u8", "https://media.test/live.m3u8", "https://app.test/proxy/u/p/1?channel=1234567890abcdef", "u:1");
+    const [seg, next] = out.split("\n").filter((l) => l.startsWith("https://"));
+    expect(new URL(seg!).pathname).toBe("/proxy/u/p/1.ts");
+    expect(new URL(next!).pathname).toBe("/proxy/u/p/1.m3u8");
+    expect(new URL(seg!).searchParams.get("channel")).toBe("1234567890abcdef");
+  });
+});

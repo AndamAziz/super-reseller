@@ -4,6 +4,7 @@
 - [ ] Reproduce the reported provider-only failure and fix only verified defects; blocked by missing customer player name/configuration and failing channel identification (clarification skipped). No playback changes made for Phase 3B.
 - [ ] Verify decoded video/audio, 60-second continuity, supported seeking, interruption recovery and all-format decoded regressions; controlled AVA Media attempt did not start within 30 seconds. Target-player access required; publishing awaits results approval.
 ## Provider TS playback follow-up
+- [x] Fix .ts provider links that are HLS upstream: entry link now redirects to the .m3u8 app link (like the source does) and segment links keep .ts; verified AVA Media through the provider: 302 → playlist → video/mp2t segment. 97 tests pass. Not yet published; on-phone playback awaits user check.
 - [x] Fix fragmented protocol inspection and misleading TS response types on the shared provider playback path; all 94 tests pass and build OK.
 - [x] Verify authenticated provider catalog (79 TS channels) and signed media chain: AVA Media, RUDAW TV and Kurdsat TV return HLS then TS media bytes with HTTP 200. Decoded target-device playback remains unverified; changes are not published.
 ## Phase 2 real playback
