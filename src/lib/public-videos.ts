@@ -6,8 +6,26 @@ export function validateMp4(file: Pick<File, 'name' | 'size'>) {
   if (!/\.mp4$/i.test(file.name)) throw new Error('Choose an MP4 file.');
   if (file.size === 0 || file.size > MAX_VIDEO_BYTES) throw new Error('Choose a non-empty MP4 file up to 5 GB.');
 }
+// Short, token-free public link served by our own redirect route.
+export function shortVideoName(path: string) {
+  return (path.split('/').pop() ?? path).replace(/^[a-f0-9-]{36}_/, '');
+}
+export function shortVideoUrl(origin: string, path: string) {
+  return `${origin}/api/public/v/${encodeURIComponent(shortVideoName(path))}`;
+}
 export function videoPublicUrl(path: string) {
-  return supabase.storage.from(VIDEO_BUCKET).getPublicUrl(path).data.publicUrl;
+  return shortVideoUrl(window.location.origin, path);
+}
+export function sanitizeVideoName(name: string) {
+  const base = name.replace(/\.mp4$/i, '').replace(/[^\p{L}\p{N}._-]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, 80);
+  return `${base || 'video'}.mp4`;
+}
+export function pickUniqueVideoName(name: string, existing: string[]) {
+  const taken = new Set(existing.map((item) => item.toLowerCase()));
+  const base = name.replace(/\.mp4$/i, '');
+  let candidate = name;
+  for (let index = 2; taken.has(candidate.toLowerCase()); index += 1) candidate = `${base}-${index}.mp4`;
+  return candidate;
 }
 export type PublicVideo = { path: string; name: string; bytes: number; createdAt: string; url: string };
 export async function listPublicVideos(): Promise<PublicVideo[]> {
@@ -27,16 +45,16 @@ export async function listPublicVideos(): Promise<PublicVideo[]> {
     for (const file of await entries(folder.name)) {
       if (!file.id || !/\.mp4$/i.test(file.name)) continue;
       const path = `${folder.name}/${file.name}`;
-      videos.push({ path, name: file.name.replace(/^[a-f0-9-]{36}_/, ''), bytes: Number(file.metadata?.size ?? 0), createdAt: file.created_at ?? '', url: videoPublicUrl(path) });
+      videos.push({ path, name: shortVideoName(path), bytes: Number(file.metadata?.size ?? 0), createdAt: file.created_at ?? '', url: videoPublicUrl(path) });
     }
   }
   return videos.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
-export async function uploadPublicVideo(file: File, onProgress: (percent: number) => void, signal: AbortSignal) {
+export async function uploadPublicVideo(file: File, onProgress: (percent: number) => void, signal: AbortSignal, existingNames: string[] = []) {
   validateMp4(file);
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) throw new Error('Sign in again to upload.');
-  const path = `${user.id}/${crypto.randomUUID()}_${file.name.replace(/[^\p{L}\p{N}._-]/gu, '_')}`;
+  const path = `${user.id}/${pickUniqueVideoName(sanitizeVideoName(file.name), existingNames)}`;
   signal.throwIfAborted();
   if (file.size <= 6 * 1024 ** 2) {
     const { error: uploadError } = await supabase.storage.from(VIDEO_BUCKET).upload(path, file, { contentType: 'video/mp4', cacheControl: '3600', upsert: false });
