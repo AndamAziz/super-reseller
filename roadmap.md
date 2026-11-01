@@ -1,6 +1,6 @@
 # Connection billing
 ## Stream test accuracy
-- [ ] Use the selected uploaded channel's headers rather than a matching GitHub entry; verify the supplied redirecting TS link and add regression tests without changing playback or billing.
+- [x] Use selected channel headers independently of GitHub, require actual media bytes and recheck transient failures once; supplied AVA Media link verified in authenticated Playlists with playlist/first segment 200, all 75 tests pass and build OK. Playback and billing unchanged.
 ## Playback engine audit
 - [x] Audit parser, proxy, playback routes and reseller module against the compatibility checklist; add 22 playback-compatibility tests (master/media playlist rewriting, TS/MKV/AAC/WebM streaming, audio-only HLS, origin 403/404/500 mapping, redirect-to-private blocking, public redirect following, content-type mapping). All 69 tests pass, typecheck clean; no code fixes were required.
 ## Uploaded playlist format
