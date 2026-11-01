@@ -38,7 +38,26 @@ export async function handleMediaPlayback(request: Request, username: string, pa
   const limited = await checkStreamLimit(request, auth);
   if (limited) return limited;
   const prefix = `${new URL(request.url).origin}/api/public/media-proxy/${kind}/${encodeURIComponent(auth.username)}/${encodeURIComponent(auth.password)}/${id}${identity ? `?channel=${identity}` : ""}`;
-  return proxyFetch(request, target, channel, prefix, scope);
+  return proxyFetch(request, target, channel, prefix, scope, segment ? {} : { manifestRedirect: manifestRedirects(request.url, stream, id) });
+}
+
+/**
+ * Entry links keep the source extension (e.g. `2902.ts`). When that source actually
+ * redirects to an HLS/DASH manifest, mirror the origin: redirect the player to the same
+ * app link with `.m3u8` / `.mpd`, preserving the channel identity query.
+ */
+export function manifestRedirects(requestUrl: string, stream: string, id: number): Partial<Record<"hls" | "dash", string>> {
+  const ext = /\.([a-z0-9]+)$/i.exec(stream)?.[1]?.toLowerCase();
+  const url = new URL(requestUrl);
+  const swap = (next: string) => {
+    const copy = new URL(url);
+    copy.pathname = copy.pathname.replace(/\/[^/]*$/, `/${id}.${next}`);
+    return copy.toString();
+  };
+  const out: Partial<Record<"hls" | "dash", string>> = {};
+  if (ext !== "m3u8" && ext !== "m3u") out.hls = swap("m3u8");
+  if (ext !== "mpd") out.dash = swap("mpd");
+  return out;
 }
 
 export const playbackOptions = () => new Response(null, { status: 204, headers: {

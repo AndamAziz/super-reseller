@@ -176,6 +176,11 @@ export async function proxyFetch(request: Request, target: URL, channel: M3UChan
   catch { return plain("No media data received within 15 seconds", 502); }
   const protocol = detectMedia(peeked.bytes, ct, current.toString());
   if (protocol === "hls" || protocol === "dash") {
+    const redirectTo = options.manifestRedirect?.[protocol];
+    if (redirectTo) {
+      await peeked.body?.cancel().catch(() => undefined);
+      return new Response(null, { status: 302, headers: { ...CORS, Location: redirectTo, "Cache-Control": "no-store", "X-Media-Protocol": protocol } });
+    }
     const manifest = await new Response(peeked.body).text();
     let body: string;
     try {
