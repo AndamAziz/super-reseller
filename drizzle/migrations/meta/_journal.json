@@ -162,6 +162,13 @@
       "when": 1793516630817,
       "tag": "0022_restrict_connection_functions_to_line_owners",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1793517523782,
+      "tag": "0023_explicit_provider_episode_sharing",
+      "breakpoints": true
     }
   ]
 }

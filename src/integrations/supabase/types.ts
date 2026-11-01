@@ -124,6 +124,7 @@ export type Database = {
           original_url: string
           owner_id: string
           poster_url: string | null
+          provider_shared: boolean
           published: boolean
           release_date: string | null
           season_id: string
@@ -143,6 +144,7 @@ export type Database = {
           original_url: string
           owner_id?: string
           poster_url?: string | null
+          provider_shared?: boolean
           published?: boolean
           release_date?: string | null
           season_id: string
@@ -162,6 +164,7 @@ export type Database = {
           original_url?: string
           owner_id?: string
           poster_url?: string | null
+          provider_shared?: boolean
           published?: boolean
           release_date?: string | null
           season_id?: string

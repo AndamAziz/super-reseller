@@ -27,12 +27,34 @@ export async function handleContentApi(request: Request): Promise<Response> {
   const { data: line, error: lineError } = await supabaseAdmin.from('lines').select('reseller_id').eq('id', auth.lineId).single();
   if (lineError || !line) return json({ error: 'Content unavailable' }, 503);
   const records = await Promise.all([
-    collectContentPages((from, to) => supabaseAdmin.from('content_series').select('id,title,category,poster_url,description,source_identity,english_name,original_name,tmdb_id,provider_key,updated_at').eq('owner_id', line.reseller_id).order('title').order('id').range(from, to)),
+    collectContentPages((from, to) => supabaseAdmin.from('content_series').select('id,owner_id,title,category,poster_url,description,source_identity,english_name,original_name,tmdb_id,provider_key,updated_at').eq('owner_id', line.reseller_id).order('title').order('id').range(from, to)),
     collectContentPages((from, to) => supabaseAdmin.from('content_seasons').select('id,series_id,season_number,created_at').eq('owner_id', line.reseller_id).order('season_number').order('id').range(from, to)),
-    collectContentPages((from, to) => supabaseAdmin.from('content_episodes').select('id,series_id,season_id,season_number,episode_number,title,youtube_video_id,original_url,poster_url,description,release_date,language_label,source_type,updated_at').eq('owner_id', line.reseller_id).eq('published', true).order('season_number').order('episode_number').order('id').range(from, to)),
+    collectContentPages((from, to) => supabaseAdmin.from('content_episodes').select('id,owner_id,series_id,season_id,season_number,episode_number,title,youtube_video_id,original_url,poster_url,description,release_date,language_label,source_type,updated_at').eq('owner_id', line.reseller_id).eq('published', true).order('season_number').order('episode_number').order('id').range(from, to)),
   ]).catch(() => null);
   if (!records) return json({ error: 'Content temporarily unavailable' }, 503);
   const [allSeries, n, allEpisodes] = records;
+  // Every valid customer line already has access to the shared GitHub source.
+  // A request filter is NOT an entitlement to any other provider's shared content.
+  if (!provider_key || provider_key === 'github') {
+    const shared = await collectContentPages((from, to) => supabaseAdmin.from('content_episodes')
+      .select('id,owner_id,series_id,season_id,season_number,episode_number,title,youtube_video_id,original_url,poster_url,description,release_date,language_label,source_type,updated_at,provider_shared')
+      .eq('provider_shared', true).eq('published', true).order('id').range(from, to)).catch(() => null);
+    if (!shared) return json({ error: 'Content temporarily unavailable' }, 503);
+    // Resolve parents individually to keep database request sizes bounded.
+    for (const id of new Set(shared.map(x => x.series_id))) {
+      const parents = await collectContentPages((from, to) => supabaseAdmin.from('content_series')
+        .select('id,owner_id,title,category,poster_url,description,source_identity,english_name,original_name,tmdb_id,provider_key,updated_at')
+        .eq('id', id).eq('provider_key', 'github').order('id').range(from, to)).catch(() => null);
+      if (!parents) return json({ error: 'Content temporarily unavailable' }, 503);
+      const parent = parents[0];
+      if (!parent) continue;
+      if (!allSeries.some(x => x.id === parent.id)) allSeries.push(parent);
+      for (const episode of shared.filter(x => x.series_id === parent.id && x.owner_id === parent.owner_id)) {
+        if (!allEpisodes.some(x => x.id === episode.id)) allEpisodes.push(episode);
+        if (!n.some(x => x.id === episode.season_id)) n.push({ id: episode.season_id, series_id: parent.id, season_number: episode.season_number, created_at: '' });
+      }
+    }
+  }
   const s = allSeries.filter(x => !provider_key || x.provider_key === provider_key);
   const e = allEpisodes.filter(x => s.some(y => y.id === x.series_id) && (!language || x.language_label === language));
   const visibleSeries = s.filter(x => e.some(y => y.series_id === x.id));
@@ -41,10 +63,10 @@ export async function handleContentApi(request: Request): Promise<Response> {
   const loaded = !provider_key || provider_key === 'github' ? await loadCatalog() : null;
   if (loaded && !loaded.ok) return json({ error: 'Provider catalogue temporarily unavailable' }, 503);
   const revision = await playlistVersion(JSON.stringify([visibleSeries, visibleSeasons, e, loaded?.ok ? loaded.catalog.version ?? loaded.catalog.series : null]));
-  const managedSeries = await Promise.all(visibleSeries.map(async x => ({ ...x, poster_url: await displayPoster(supabaseAdmin, x.poster_url, line.reseller_id) })));
+  const managedSeries = await Promise.all(visibleSeries.map(async x => ({ ...x, poster_url: await displayPoster(supabaseAdmin, x.poster_url, x.owner_id) })));
   const managedEpisodes = await Promise.all(e.map(async x => {
     const parent = managedSeries.find(y => y.id === x.series_id);
-    return { ...x, episode_code: episodeCode(x.season_number, x.episode_number), poster_url: await displayPoster(supabaseAdmin, x.poster_url, line.reseller_id) ?? parent?.poster_url ?? null,
+    return { ...x, episode_code: episodeCode(x.season_number, x.episode_number), poster_url: await displayPoster(supabaseAdmin, x.poster_url, x.owner_id) ?? parent?.poster_url ?? null,
       playback: { source_type: 'youtube' as const, youtube_video_id: x.youtube_video_id, embed_url: `https://www.youtube.com/embed/${x.youtube_video_id}`, original_url: x.original_url } };
   }));
   const combined = mergeProviderCatalog(loaded?.ok ? loaded.catalog.series : [], { series: managedSeries, seasons: visibleSeasons, episodes: managedEpisodes }, { origin: new URL(request.url).origin, username: auth.username, password: auth.password });
