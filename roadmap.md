@@ -1,4 +1,10 @@
 # Connection billing
+## YouTube episode integration
+- [ ] Audit existing series APIs, ownership and Android integration boundary.
+- [ ] Add database-backed, owner-scoped series/seasons/YouTube episodes and management page, without changing existing IPTV playback or billing.
+- [ ] Add validated YouTube URLs, permitted metadata, posters and official embedded playback.
+- [ ] Expose authenticated series/season/episode/source APIs and automatic refresh; provide Android integration requirements if native source is unavailable.
+- [ ] Verify saved episode workflow, authorization and existing media regressions; report Android/device limitations separately.
 ## Phase 3B provider-specific diagnosis
 - [x] Trace existing Provider API and M3U paths: both use the same source/catalog/playback handlers; AVA Media, RUDAW TV and Kurdsat TV emit identical URLs and reach signed TS media bytes. No separate configured upstream provider found in application code.
 - [ ] Reproduce the reported provider-only failure and fix only verified defects; blocked by missing customer player name/configuration and failing channel identification (clarification skipped). No playback changes made for Phase 3B.
