@@ -1,4 +1,6 @@
 # Connection billing
+## Connection-function access
+- [ ] Restrict both connection RPCs to signed-in line owners while retaining trusted customer playback; verify denied calls and unchanged policies without publishing.
 ## Combined provider series catalogue
 - [x] Audit and minimally merge authorised GitHub M3U and owned YouTube series by provider/TMDB, preserving playback URLs and episode variants.
 - [x] Display combined provider episodes and verify real customer HTTP 200: one Setayesh series, 16 M3U + YouTube S01E17; other reseller receives no private YouTube; 146 tests passed. HLS manifest/resource returned 200/447816 bytes; decoded M3U attempt did not start in 15 seconds and is reported separately.

@@ -35,3 +35,4 @@
 - YouTube creation is atomic and owner/provider/TMDB-keyed; the line-scoped API and provider view merge GitHub series by TMDB (explicit source identity fallback), preserve episode alternatives and legacy playback URLs, and keep M3U delivery unchanged.
 - Uploaded episode posters live in a private owner-scoped bucket; store canonical locators and resolve short-lived signed display URLs so public-bucket restrictions do not expose drafts.
 - YouTube source descriptors use only official embeds, never direct-media URLs; Android must merge the additive content API and branch by source_type rather than passing YouTube to Media3.
+- Connection RPCs authorize signed-in line owners before any writes and use their saved device limits; trusted service-role playback remains allowed after line authentication, without broadening any table policy.
