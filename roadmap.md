@@ -1,4 +1,8 @@
 # Connection billing
+## Direct provider YouTube episodes
+- [ ] Add structured provider form, TMDB-based series association, automatic names and language/poster display without altering M3U delivery.
+- [ ] Verify Setayesh S01E17 persistence, customer content delivery, permissions and stream regressions; deliver dashboard versus Android report.
+- [ ] Integrate actual Android display/playback; blocked by absent native Android source and device access.
 ## YouTube episode integration
 - [x] Audit existing series APIs, ownership and Android integration boundary; no native Android source found.
 - [x] Add database-backed, owner-scoped series/seasons/YouTube episodes and management page, without changing existing IPTV playback or billing.
