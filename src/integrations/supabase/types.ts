@@ -114,6 +114,139 @@ export type Database = {
           },
         ]
       }
+      content_episodes: {
+        Row: {
+          created_at: string
+          description: string
+          episode_number: number
+          id: string
+          original_url: string
+          owner_id: string
+          poster_url: string | null
+          published: boolean
+          release_date: string | null
+          season_id: string
+          season_number: number
+          series_id: string
+          source_type: string
+          title: string
+          updated_at: string
+          youtube_video_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          episode_number: number
+          id?: string
+          original_url: string
+          owner_id?: string
+          poster_url?: string | null
+          published?: boolean
+          release_date?: string | null
+          season_id: string
+          season_number: number
+          series_id: string
+          source_type?: string
+          title: string
+          updated_at?: string
+          youtube_video_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          episode_number?: number
+          id?: string
+          original_url?: string
+          owner_id?: string
+          poster_url?: string | null
+          published?: boolean
+          release_date?: string | null
+          season_id?: string
+          season_number?: number
+          series_id?: string
+          source_type?: string
+          title?: string
+          updated_at?: string
+          youtube_video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_episodes_season_id_series_id_owner_id_season_numbe_fkey"
+            columns: ["season_id", "series_id", "owner_id", "season_number"]
+            isOneToOne: false
+            referencedRelation: "content_seasons"
+            referencedColumns: ["id", "series_id", "owner_id", "season_number"]
+          },
+        ]
+      }
+      content_seasons: {
+        Row: {
+          created_at: string
+          id: string
+          owner_id: string
+          season_number: number
+          series_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          season_number: number
+          series_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          season_number?: number
+          series_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_seasons_series_id_owner_id_fkey"
+            columns: ["series_id", "owner_id"]
+            isOneToOne: false
+            referencedRelation: "content_series"
+            referencedColumns: ["id", "owner_id"]
+          },
+        ]
+      }
+      content_series: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          id: string
+          owner_id: string
+          poster_url: string | null
+          source_identity: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          owner_id?: string
+          poster_url?: string | null
+          source_identity?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          owner_id?: string
+          poster_url?: string | null
+          source_identity?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           actor_id: string | null
