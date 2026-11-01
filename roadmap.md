@@ -1,7 +1,7 @@
 # Connection billing
 ## Customer test account and delivery links
-- [ ] Create the requested 24-hour customer test account and verify published M3U/provider and combined catalogue access.
-- [ ] Correct copied links to use the published host and provide separate provider/combined catalogue copy actions; verify the saved customer's buttons.
+- [x] Created requested free 24-hour customer test; saved/reloaded and published M3U HTTP 200, provider auth=1, combined HTTP 200 with 17 Setayesh episodes verified.
+- [x] Default copies use published host; separate M3U, Host and M3U + YouTube buttons verified from clipboard. Eleven targeted tests pass; build OK. Button changes await publication.
 ## Provider-wide Setayesh episode
 - [x] Share only published YouTube S01E17 with all already-authorised GitHub customer lines; preserve private content and raw playlists. Existing policies remain byte-equivalent by hash.
 - [x] All 8 active lines returned HTTP 200 and exactly 16 unchanged M3U + S01E17 in preview; official descriptor/poster verified, other provider detail 404; all 162 tests passed.
