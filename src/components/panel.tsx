@@ -14,8 +14,8 @@ const NAV = [
   { to: "/resellers", label: "Resellers", admin: true },
   { to: "/lines", label: "Lines", admin: false },
   { to: "/credits", label: "Credits", admin: false },
-  { to: "/playlists", label: "Playlists", admin: false },
-  { to: "/youtube-episodes", label: "YouTube episodes", admin: false },
+  { to: "/playlists", label: "Playlists", admin: true },
+  { to: "/youtube-episodes", label: "YouTube episodes", admin: true },
   { to: "/contact", label: "Contact", admin: false },
 ] as const;
 

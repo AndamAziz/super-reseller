@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { AdminOnly } from "@/components/admin-only";
 import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { useServerFn } from '@tanstack/react-start';
 import { useState, type FormEvent } from 'react';
@@ -18,7 +19,7 @@ import { EpisodePoster } from '@/components/episode-poster';
 export const Route = createFileRoute('/_authenticated/youtube-episodes')({
   head: () => ({ meta: [{ title: 'YouTube Episode Manager — Kurdistan IPTV' }, { name: 'description', content: 'Manage owned YouTube series, seasons and episodes in Kurdistan IPTV.' }, { property: 'og:title', content: 'YouTube Episode Manager — Kurdistan IPTV' }, { property: 'og:description', content: 'Manage owned YouTube series, seasons and episodes in Kurdistan IPTV.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }] }),
   loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(managedContentOptions), context.queryClient.ensureQueryData(existingSeriesOptions)]),
-  component: EpisodeManager,
+  component: () => <AdminOnly><EpisodeManager /></AdminOnly>,
 });
 
 type EpisodeForm = { id?: string; season_id: string; episode_number: number; title: string; original_url: string; poster_url: string; description: string; release_date: string; published: boolean; language_label?: string };
