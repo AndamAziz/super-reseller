@@ -148,3 +148,7 @@
     -webkit-font-smoothing: antialiased;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .rise, .sheen-bg, .pulse-dot { animation: none; }
+}
