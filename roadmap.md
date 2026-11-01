@@ -1,9 +1,9 @@
 # Connection billing
 ## Admin public MP4 uploads
-- [ ] Diagnose slow movie playback, shorten public links without tokens, verify and publish.
+- [x] Moved the existing movie's 5 MB index from the end to byte 32 without transcoding; audio/video hashes unchanged. Compact aliases copied through the real admin page, 182 tests passed; published short and legacy links returned anonymous 206, HEAD succeeded, five seconds of audio/video decoded. VLC device speed remains unmeasured.
 - [x] Fixed Kurdish movie-name saving with reversible ASCII storage keys; real admin rename to جومونگ 21 persisted after reload, anonymous playback returned 206 video/mp4, fixture removed, eleven tests passed. Existing user video untouched.
 - [x] Selected filename, editable movie name and TUS progress verified with real admin upload; rename persisted after reload, clipboard uses published host, anonymous redirect returned 206 video/mp4 (1024 bytes); temporary video deleted, no page errors, ten targeted tests passed.
-- [ ] Public short-link availability requires publication approval; copied origin corrected, published route currently returns 404.
+- [x] Public short-link availability verified after requested publication; copied links use the published origin and return anonymous MP4 bytes.
 - [x] Replace the YouTube management screen and navigation with admin-only MP4 uploads and an honest unavailable state; existing customer content retained.
 - [x] Enable public storage, admin upload, progress and copy-public-link controls.
 - [x] Verify real admin small/TUS upload, reload, clipboard and delete; anonymous MP4 range returned 206/1024 bytes without credentials. Five database-backed policy tests enforce admin writes and reseller/anonymous denial; all 170 tests passed, build OK. Not published; VLC decoding not tested.
