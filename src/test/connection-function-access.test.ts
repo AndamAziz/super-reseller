@@ -39,6 +39,13 @@ function call(extended: boolean, id = line, key = 'device') {
 }
 
 describe.each([false, true])('connection access (extended=%s)', (extended) => {
+  beforeAll(async () => {
+    await db.exec('RESET ROLE');
+    // Existing default arguments make three-argument SQL calls ambiguous.
+    // Isolate that legacy overload to exercise its actual body and grants.
+    if (!extended) await db.exec('DROP FUNCTION public.check_stream_limit(uuid,text,integer,text,text)');
+    else await db.exec(readFileSync('drizzle/migrations/0022_restrict_connection_functions_to_line_owners.sql', 'utf8'));
+  });
   it('denies anonymous execution', async () => {
     await session('anon');
     await expect(call(extended)).rejects.toMatchObject({code: '42501'});
@@ -66,5 +73,7 @@ describe.each([false, true])('connection access (extended=%s)', (extended) => {
 it('preserves trusted service-role customer playback', async () => {
   await session('service_role');
   expect((await call(true, foreignLine, 'trusted-device')).rows[0]?.allowed).toBe(true);
+  await db.exec('RESET ROLE; DROP FUNCTION public.check_stream_limit(uuid,text,integer,text,text)');
+  await session('service_role');
   expect((await call(false, foreignLine, 'trusted-device')).rows[0]?.allowed).toBe(true);
 });
