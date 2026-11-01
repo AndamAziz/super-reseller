@@ -1,8 +1,8 @@
 # Connection billing
 ## Phase 3B provider-specific diagnosis
-- [ ] Identify the exact customer-facing Provider path and authorized failing TS stream, then compare with working GitHub TS and Provider HLS.
-- [ ] Fix only reproduced provider-specific defects; preserve GitHub integration, interface, accounts and billing.
-- [ ] Verify decoded video/audio, 60-second continuity, supported seeking, interruption recovery and format regressions; report gaps and await results approval before publishing.
+- [x] Trace existing Provider API and M3U paths: both use the same source/catalog/playback handlers; AVA Media, RUDAW TV and Kurdsat TV emit identical URLs and reach signed TS media bytes. No separate configured upstream provider found in application code.
+- [ ] Reproduce the reported provider-only failure and fix only verified defects; blocked by missing customer player name/configuration and failing channel identification (clarification skipped). No playback changes made for Phase 3B.
+- [ ] Verify decoded video/audio, 60-second continuity, supported seeking, interruption recovery and all-format decoded regressions; controlled AVA Media attempt did not start within 30 seconds. Target-player access required; publishing awaits results approval.
 ## Provider TS playback follow-up
 - [x] Fix fragmented protocol inspection and misleading TS response types on the shared provider playback path; all 94 tests pass and build OK.
 - [x] Verify authenticated provider catalog (79 TS channels) and signed media chain: AVA Media, RUDAW TV and Kurdsat TV return HLS then TS media bytes with HTTP 200. Decoded target-device playback remains unverified; changes are not published.
