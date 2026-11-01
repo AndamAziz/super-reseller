@@ -4,7 +4,7 @@ import { allowedUrl, proxyFetch, unb64u } from "./stream-proxy.server";
 export type StreamTestStep = { step: string; url: string; status: number | null; ok: boolean; error: string | null; ms: number };
 
 /** Probe the selected channel, not a URL-matching entry in another catalog. */
-export async function probeStream(channel: M3UChannel) {
+async function probeOnce(channel: M3UChannel) {
   const scope = "admin-test:0";
   const prefix = "https://proxy.test/proxy/test/test/0";
   const steps: StreamTestStep[] = [];
@@ -62,4 +62,15 @@ export async function probeStream(channel: M3UChannel) {
     steps.push({ step: "First segment", url: target.toString(), status: null, ok: false, error: "Playlist chain exceeded the test depth limit", ms: 0 });
   }
   return { steps, ok: mediaReceived && steps.every((step) => step.ok) };
+}
+
+export async function probeStream(channel: M3UChannel) {
+  const first = await probeOnce(channel);
+  const failed = first.steps.find((step) => !step.ok);
+  // Some IPTV origins briefly reject a redirected request. Recheck once, not forever.
+  if (!first.ok && failed && (failed.status === null || [400, 502, 503, 504].includes(failed.status))) {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    return probeOnce(channel);
+  }
+  return first;
 }

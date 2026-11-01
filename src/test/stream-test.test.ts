@@ -30,6 +30,15 @@ describe("Admin stream probing", () => {
     expect(result.ok).toBe(false);
     expect(result.steps[0]?.status).toBe(403);
   });
+  it("rechecks a temporary origin 400 once and requires media bytes on the retry", async () => {
+    const fetcher = vi.fn().mockResolvedValueOnce(new Response("Bad request", { status: 400 }))
+      .mockResolvedValueOnce(new Response(new Uint8Array([71, 1]), { headers: { "content-type": "video/mp2t" } }));
+    vi.stubGlobal("fetch", fetcher);
+    const result = await probeStream(channel);
+    expect(result.ok).toBe(true);
+    expect(result.steps[0]?.status).toBe(200);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
   it("does not claim success for empty media", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 200 })));
     const result = await probeStream(channel);
