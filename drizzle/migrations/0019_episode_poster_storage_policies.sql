@@ -1,0 +1,3 @@
+CREATE POLICY episode_posters_read ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'episode-posters' AND ((storage.foldername(name))[1] = auth.uid()::text OR public.has_role(auth.uid(), 'admin')));
+CREATE POLICY episode_posters_insert ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'episode-posters' AND (storage.foldername(name))[1] = auth.uid()::text AND (public.has_role(auth.uid(), 'reseller') OR public.has_role(auth.uid(), 'admin')) AND lower(storage.extension(name)) IN ('jpg', 'jpeg', 'png', 'webp'));
+CREATE POLICY episode_posters_delete ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'episode-posters' AND ((storage.foldername(name))[1] = auth.uid()::text OR public.has_role(auth.uid(), 'admin')));

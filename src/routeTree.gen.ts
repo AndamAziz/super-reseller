@@ -21,6 +21,8 @@ import { Route as AuthenticatedLinesRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedPlaybackCheckRouteImport } from './routes/_authenticated/playback-check'
 import { Route as AuthenticatedPlaylistsRouteImport } from './routes/_authenticated/playlists'
 import { Route as AuthenticatedResellersRouteImport } from './routes/_authenticated/resellers'
+import { Route as AuthenticatedYoutubeEpisodesRouteImport } from './routes/_authenticated/youtube-episodes'
+import { Route as ApiPublicContentRouteImport } from './routes/api/public/content'
 import { Route as ApiPublicGetDotphpRouteImport } from './routes/api/public/get[.]php'
 import { Route as ApiPublicPlayer_apiDotphpRouteImport } from './routes/api/public/player_api[.]php'
 import { Route as ApiPublicPlaylistRouteImport } from './routes/api/public/playlist'
@@ -93,6 +95,17 @@ const AuthenticatedResellersRoute = AuthenticatedResellersRouteImport.update({
   id: '/resellers',
   path: '/resellers',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedYoutubeEpisodesRoute =
+  AuthenticatedYoutubeEpisodesRouteImport.update({
+    id: '/youtube-episodes',
+    path: '/youtube-episodes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const ApiPublicContentRoute = ApiPublicContentRouteImport.update({
+  id: '/api/public/content',
+  path: '/api/public/content',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicGetDotphpRoute = ApiPublicGetDotphpRouteImport.update({
   id: '/api/public/get.php',
@@ -175,6 +188,8 @@ export interface FileRoutesByFullPath {
   '/playback-check': typeof AuthenticatedPlaybackCheckRoute
   '/playlists': typeof AuthenticatedPlaylistsRoute
   '/resellers': typeof AuthenticatedResellersRoute
+  '/youtube-episodes': typeof AuthenticatedYoutubeEpisodesRoute
+  '/api/public/content': typeof ApiPublicContentRoute
   '/api/public/get.php': typeof ApiPublicGetDotphpRoute
   '/api/public/player_api.php': typeof ApiPublicPlayer_apiDotphpRoute
   '/api/public/playlist': typeof ApiPublicPlaylistRouteWithChildren
@@ -200,6 +215,8 @@ export interface FileRoutesByTo {
   '/playback-check': typeof AuthenticatedPlaybackCheckRoute
   '/playlists': typeof AuthenticatedPlaylistsRoute
   '/resellers': typeof AuthenticatedResellersRoute
+  '/youtube-episodes': typeof AuthenticatedYoutubeEpisodesRoute
+  '/api/public/content': typeof ApiPublicContentRoute
   '/api/public/get.php': typeof ApiPublicGetDotphpRoute
   '/api/public/player_api.php': typeof ApiPublicPlayer_apiDotphpRoute
   '/api/public/playlist': typeof ApiPublicPlaylistRouteWithChildren
@@ -227,6 +244,8 @@ export interface FileRoutesById {
   '/_authenticated/playback-check': typeof AuthenticatedPlaybackCheckRoute
   '/_authenticated/playlists': typeof AuthenticatedPlaylistsRoute
   '/_authenticated/resellers': typeof AuthenticatedResellersRoute
+  '/_authenticated/youtube-episodes': typeof AuthenticatedYoutubeEpisodesRoute
+  '/api/public/content': typeof ApiPublicContentRoute
   '/api/public/get.php': typeof ApiPublicGetDotphpRoute
   '/api/public/player_api.php': typeof ApiPublicPlayer_apiDotphpRoute
   '/api/public/playlist': typeof ApiPublicPlaylistRouteWithChildren
@@ -254,6 +273,8 @@ export interface FileRouteTypes {
     | '/playback-check'
     | '/playlists'
     | '/resellers'
+    | '/youtube-episodes'
+    | '/api/public/content'
     | '/api/public/get.php'
     | '/api/public/player_api.php'
     | '/api/public/playlist'
@@ -279,6 +300,8 @@ export interface FileRouteTypes {
     | '/playback-check'
     | '/playlists'
     | '/resellers'
+    | '/youtube-episodes'
+    | '/api/public/content'
     | '/api/public/get.php'
     | '/api/public/player_api.php'
     | '/api/public/playlist'
@@ -305,6 +328,8 @@ export interface FileRouteTypes {
     | '/_authenticated/playback-check'
     | '/_authenticated/playlists'
     | '/_authenticated/resellers'
+    | '/_authenticated/youtube-episodes'
+    | '/api/public/content'
     | '/api/public/get.php'
     | '/api/public/player_api.php'
     | '/api/public/playlist'
@@ -325,6 +350,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   GetDotphpRoute: typeof GetDotphpRoute
   Player_apiDotphpRoute: typeof Player_apiDotphpRoute
+  ApiPublicContentRoute: typeof ApiPublicContentRoute
   ApiPublicGetDotphpRoute: typeof ApiPublicGetDotphpRoute
   ApiPublicPlayer_apiDotphpRoute: typeof ApiPublicPlayer_apiDotphpRoute
   ApiPublicPlaylistRoute: typeof ApiPublicPlaylistRouteWithChildren
@@ -424,6 +450,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedResellersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/youtube-episodes': {
+      id: '/_authenticated/youtube-episodes'
+      path: '/youtube-episodes'
+      fullPath: '/youtube-episodes'
+      preLoaderRoute: typeof AuthenticatedYoutubeEpisodesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/public/content': {
+      id: '/api/public/content'
+      path: '/api/public/content'
+      fullPath: '/api/public/content'
+      preLoaderRoute: typeof ApiPublicContentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/get.php': {
       id: '/api/public/get.php'
       path: '/api/public/get.php'
@@ -519,6 +559,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlaybackCheckRoute: typeof AuthenticatedPlaybackCheckRoute
   AuthenticatedPlaylistsRoute: typeof AuthenticatedPlaylistsRoute
   AuthenticatedResellersRoute: typeof AuthenticatedResellersRoute
+  AuthenticatedYoutubeEpisodesRoute: typeof AuthenticatedYoutubeEpisodesRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -529,6 +570,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlaybackCheckRoute: AuthenticatedPlaybackCheckRoute,
   AuthenticatedPlaylistsRoute: AuthenticatedPlaylistsRoute,
   AuthenticatedResellersRoute: AuthenticatedResellersRoute,
+  AuthenticatedYoutubeEpisodesRoute: AuthenticatedYoutubeEpisodesRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -551,6 +593,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   GetDotphpRoute: GetDotphpRoute,
   Player_apiDotphpRoute: Player_apiDotphpRoute,
+  ApiPublicContentRoute: ApiPublicContentRoute,
   ApiPublicGetDotphpRoute: ApiPublicGetDotphpRoute,
   ApiPublicPlayer_apiDotphpRoute: ApiPublicPlayer_apiDotphpRoute,
   ApiPublicPlaylistRoute: ApiPublicPlaylistRouteWithChildren,

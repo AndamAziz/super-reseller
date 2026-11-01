@@ -41,6 +41,7 @@ function Dashboard() {
               <span className="font-mono text-[11px] text-muted-foreground">live · {active} active lines</span>
             </div>
             <Link to="/lines" className={primaryBtn}>New line</Link>
+            <Link to="/youtube-episodes" className="text-sm font-medium text-primary">YouTube Episode Manager →</Link>
           </>
         }
       />

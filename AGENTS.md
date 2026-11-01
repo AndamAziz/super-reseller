@@ -32,3 +32,6 @@
 - Browser TS playback uses mpegts.js transmuxing, while TS URLs detected as HLS use the HLS engine; live detection probes avoid Range requests rejected by origins.
 - Shared signature inspection collects fragmented network chunks and replays all bytes; verified TS signatures override misleading upstream MIME types on provider responses.
 - Shared catalogs carry a full-content revision hash; polling replaces source arrays and never appends updates or mutates reseller assignments.
+- Managed YouTube content uses owned relational series/seasons/episodes, authenticated CRUD and a separate customer-line-scoped content API; GitHub series links use title/category identity so existing numeric playback IDs and M3U delivery remain untouched.
+- Uploaded episode posters live in a private owner-scoped bucket; store canonical locators and resolve short-lived signed display URLs so public-bucket restrictions do not expose drafts.
+- YouTube source descriptors use only official embeds, never direct-media URLs; Android must merge the additive content API and branch by source_type rather than passing YouTube to Media3.

@@ -1,0 +1,1 @@
+REVOKE ALL ON public.content_series, public.content_seasons, public.content_episodes FROM anon;
