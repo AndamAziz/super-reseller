@@ -10,7 +10,7 @@ export async function handlePublicVideoLink(rawName: string): Promise<Response> 
   const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
   const { data, error } = await supabaseAdmin.rpc('public_video_path', { p_short: short });
   if (error || typeof data !== 'string' || !data) return new Response('Not found', { status: 404 });
-  const base = process.env['VITE_SUPABASE_URL'];
+  const base = process.env['SUPABASE_URL'] || process.env['VITE_SUPABASE_URL'] || import.meta.env['VITE_SUPABASE_URL'];
   if (!base) return new Response('Storage unavailable', { status: 503 });
   const target = `${base}/storage/v1/object/public/public-videos/${data.split('/').map(encodeURIComponent).join('/')}`;
   return new Response(null, { status: 302, headers: { Location: target, 'Cache-Control': 'public, max-age=300' } });
