@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { useServerFn } from '@tanstack/react-start';
 import { useState, type FormEvent } from 'react';
-import { Plus, Pencil, Trash2, Play, Upload, Image as ImageIcon } from 'lucide-react';
+import { Plus, Pencil, Trash2, Play, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader, inputCls } from '@/components/panel';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import { episodeCode, youtubeId } from '@/lib/youtube';
 import { YoutubePlayer } from '@/components/youtube-player';
 import { supabase } from '@/integrations/supabase/client';
 import { useMe } from '@/hooks/use-me';
+import { EpisodePoster } from '@/components/episode-poster';
 
 export const Route = createFileRoute('/_authenticated/youtube-episodes')({
   head: () => ({ meta: [{ title: 'YouTube Episode Manager — Kurdistan IPTV' }, { name: 'description', content: 'Manage owned YouTube series, seasons and episodes in Kurdistan IPTV.' }, { property: 'og:title', content: 'YouTube Episode Manager — Kurdistan IPTV' }, { property: 'og:description', content: 'Manage owned YouTube series, seasons and episodes in Kurdistan IPTV.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }] }),
@@ -20,7 +21,7 @@ export const Route = createFileRoute('/_authenticated/youtube-episodes')({
   component: EpisodeManager,
 });
 
-type EpisodeForm = { id?: string; season_id: string; episode_number: number; title: string; original_url: string; poster_url: string; description: string; release_date: string; published: boolean };
+type EpisodeForm = { id?: string; season_id: string; episode_number: number; title: string; original_url: string; poster_url: string; description: string; release_date: string; published: boolean; language_label?: string };
 type SeriesForm = { id?: string; title: string; category: string; poster_url: string; description: string; source_identity?: string | undefined };
 
 function EpisodeManager() {
@@ -96,7 +97,8 @@ function EpisodeManager() {
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{episodes.map(e => {
       const poster = e.display_poster ?? series?.display_poster;
       return <article key={e.id} className="overflow-hidden rounded-lg border border-border bg-card">
-        {poster ? <img src={poster} alt={e.title} className="aspect-video w-full object-cover" /> : <div className="grid aspect-video place-items-center bg-muted"><ImageIcon className="size-8 text-muted-foreground" /></div>}
+        <EpisodePoster url={poster} title={e.title} />
+        {e.language_label && <p className="px-4 pt-3 text-sm text-muted-foreground">{e.language_label}</p>}
         <div className="space-y-3 p-4"><div className="flex items-center justify-between gap-3"><span className="font-mono text-primary">{episodeCode(e.season_number, e.episode_number)}</span><span className={e.published ? 'text-good' : 'text-muted-foreground'}>{e.published ? 'Published' : 'Unpublished'}</span></div><h3 className="break-words font-semibold">{e.title}</h3>{e.release_date && <p className="text-xs text-muted-foreground">{e.release_date}</p>}<div className="flex gap-2"><Button variant="outline" onClick={() => setPreview({ id: e.youtube_video_id, title: e.title })}><Play className="size-4" />Preview</Button><Button variant="ghost" size="icon" aria-label={`Edit ${e.title}`} title="Edit episode" onClick={() => setForm({ ...e, poster_url: e.poster_url ?? '', release_date: e.release_date ?? '' })}><Pencil className="size-4" /></Button><Button variant="ghost" size="icon" aria-label={`Delete ${e.title}`} title="Delete episode" onClick={() => setRemove({ type: 'episode', id: e.id, title: e.title })}><Trash2 className="size-4 text-destructive" /></Button></div></div>
       </article>;
     })}</div>
@@ -105,6 +107,7 @@ function EpisodeManager() {
       <label className="grid gap-2">YouTube URL<input required type="url" className={inputCls} value={form.original_url} onBlur={() => void metadata()} onChange={e => setForm({ ...form, original_url: e.target.value })} /></label>{form.original_url && !youtubeId(form.original_url) && <p role="alert" className="text-destructive">Enter a supported HTTPS YouTube watch, short, embed or live URL.</p>}
       <Button type="button" variant="outline" disabled={!youtubeId(form.original_url) || metadataBusy} onClick={() => void metadata()}>{metadataBusy ? 'Loading metadata…' : 'Get video details'}</Button>
       <label className="grid gap-2">Episode title<input required maxLength={300} className={inputCls} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></label>
+      <label className="grid gap-2">Language / dubbing<input maxLength={200} className={inputCls} value={form.language_label ?? ''} onChange={e => setForm({ ...form, language_label: e.target.value })} /></label>
       <label className="grid gap-2">Poster URL<input type="url" className={inputCls} value={form.poster_url} onChange={e => setForm({ ...form, poster_url: e.target.value })} /></label><label className="flex items-center gap-2 text-sm"><Upload className="size-4" />Upload poster<input aria-label="Upload episode poster" type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={e => void upload(e.target.files?.[0], 'episode')} className="min-w-0 text-xs" /></label>
       <label className="grid gap-2">Description<textarea className={inputCls} rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></label><label className="grid gap-2">Release date<input type="date" className={inputCls} value={form.release_date} onChange={e => setForm({ ...form, release_date: e.target.value })} /></label><label className="flex items-center gap-2"><input type="checkbox" checked={form.published} onChange={e => setForm({ ...form, published: e.target.checked })} />Published</label>
       <Button disabled={busy || !youtubeId(form.original_url)} type="submit">{busy ? 'Saving…' : form.id ? 'Save episode' : 'Add episode'}</Button>
