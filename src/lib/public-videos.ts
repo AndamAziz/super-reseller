@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { displayVideoName, storageVideoName } from '@/lib/video-names';
 
 export const VIDEO_BUCKET = 'public-videos';
 export const MAX_VIDEO_BYTES = 5 * 1024 ** 3;
@@ -8,10 +9,11 @@ export function validateMp4(file: Pick<File, 'name' | 'size'>) {
 }
 // Short, token-free public link served by our own redirect route.
 export function shortVideoName(path: string) {
-  return (path.split('/').pop() ?? path).replace(/^[a-f0-9-]{36}_/, '');
+  return displayVideoName((path.split('/').pop() ?? path).replace(/^[a-f0-9-]{36}_/, ''));
 }
 export function shortVideoUrl(origin: string, path: string) {
-  return `${origin}/api/public/v/${encodeURIComponent(shortVideoName(path))}`;
+  const storedName = (path.split('/').pop() ?? path).replace(/^[a-f0-9-]{36}_/, '');
+  return `${origin}/api/public/v/${encodeURIComponent(storedName)}`;
 }
 export function videoPublicUrl(path: string) {
   return shortVideoUrl('https://super-reseller.lovable.app', path);
@@ -54,7 +56,7 @@ export async function uploadPublicVideo(file: File, onProgress: (percent: number
   validateMp4(file);
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) throw new Error('Sign in again to upload.');
-  const path = `${user.id}/${pickUniqueVideoName(sanitizeVideoName(movieName), existingNames)}`;
+  const path = `${user.id}/${storageVideoName(pickUniqueVideoName(sanitizeVideoName(movieName), existingNames))}`;
   signal.throwIfAborted();
   {
     const { Upload } = await import('tus-js-client');
@@ -86,7 +88,7 @@ export async function renamePublicVideo(path: string, movieName: string, existin
   if (name === shortVideoName(path)) return;
   if (existingNames.some((item) => item.toLowerCase() === name.toLowerCase())) throw new Error('A video with this name already exists.');
   const folder = path.slice(0, path.lastIndexOf('/'));
-  const target = `${folder}/${name}`;
+  const target = `${folder}/${storageVideoName(name)}`;
   const bucket = supabase.storage.from(VIDEO_BUCKET);
   // Use the storage API, never directly rename managed storage records.
   const { error: copyError } = await bucket.copy(path, target);

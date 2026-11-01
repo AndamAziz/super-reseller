@@ -1,4 +1,4 @@
-const SHORT_NAME = /^[\p{L}\p{N}._-]{1,120}\.mp4$/u;
+const SHORT_NAME = /^[\p{L}\p{N}._-]{1,700}\.mp4$/u;
 
 // Short token-free public links: /api/public/v/<name>.mp4 redirects to the
 // object in the public-videos bucket. The bucket itself is public, so the

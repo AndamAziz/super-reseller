@@ -1,5 +1,6 @@
 # Connection billing
 ## Admin public MP4 uploads
+- [ ] Fix Kurdish movie-name saving: storage rejects Unicode object keys; use reversible ASCII keys and retain Kurdish display names, verify real save/reload/playback.
 - [x] Selected filename, editable movie name and TUS progress verified with real admin upload; rename persisted after reload, clipboard uses published host, anonymous redirect returned 206 video/mp4 (1024 bytes); temporary video deleted, no page errors, ten targeted tests passed.
 - [ ] Public short-link availability requires publication approval; copied origin corrected, published route currently returns 404.
 - [x] Replace the YouTube management screen and navigation with admin-only MP4 uploads and an honest unavailable state; existing customer content retained.
