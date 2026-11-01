@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { youtubePlayerError } from '@/lib/youtube';
 import { Button } from '@/components/ui/button';
 
+type EmbeddedPlayer = { destroy: () => void };
+type YoutubeWindow = Window & { YT?: { Player: new (frame: HTMLIFrameElement, options: { events: { onError: (event: { data: number }) => void } }) => EmbeddedPlayer } };
+
 export function YoutubePlayer({ videoId, title }: { videoId: string; title: string }) {
   const ref = useRef<HTMLIFrameElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -9,23 +12,30 @@ export function YoutubePlayer({ videoId, title }: { videoId: string; title: stri
   useEffect(() => {
     setOrigin(window.location.origin);
     setError(null);
-    const listener = (event: MessageEvent) => {
-      if (event.origin !== 'https://www.youtube.com' || event.source !== ref.current?.contentWindow) return;
-      try {
-        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-        if (data?.event === 'onError') setError(youtubePlayerError(Number(data.info)));
-      } catch { /* Ignore unrelated player messages. */ }
-    };
-    window.addEventListener('message', listener);
-    return () => window.removeEventListener('message', listener);
   }, [videoId]);
-  function subscribe() {
-    const target = ref.current?.contentWindow;
-    target?.postMessage(JSON.stringify({ event: 'listening', id: videoId }), 'https://www.youtube.com');
-    target?.postMessage(JSON.stringify({ event: 'command', func: 'addEventListener', args: ['onError'] }), 'https://www.youtube.com');
-  }
+  useEffect(() => {
+    if (!origin) return;
+    let player: EmbeddedPlayer | undefined;
+    if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
+      const script = document.createElement('script');
+      script.src = 'https://www.youtube.com/iframe_api';
+      script.async = true; document.head.appendChild(script);
+    }
+    const deadline = Date.now() + 15000;
+    const timer = window.setInterval(() => {
+      const api = (window as YoutubeWindow).YT;
+      if (api?.Player && ref.current) {
+        window.clearInterval(timer);
+        player = new api.Player(ref.current, { events: { onError: event => setError(youtubePlayerError(event.data)) } });
+      } else if (Date.now() >= deadline) {
+        window.clearInterval(timer);
+        setError('YouTube could not load. Check your connection or open the video on YouTube.');
+      }
+    }, 100);
+    return () => { window.clearInterval(timer); player?.destroy(); };
+  }, [origin, videoId]);
   return <div className="space-y-3">
-    {origin && <iframe ref={ref} onLoad={subscribe} title={title} className="aspect-video min-h-[200px] w-full border-0" src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1&origin=${encodeURIComponent(origin)}&playsinline=1`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" />}
+    {origin && <iframe ref={ref} title={title} className="aspect-video min-h-[200px] w-full border-0" src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1&origin=${encodeURIComponent(origin)}&playsinline=1`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" />}
     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
     <Button asChild variant="outline" size="sm"><a href={`https://www.youtube.com/watch?v=${videoId}`} target="_blank" rel="noopener noreferrer">Open on YouTube</a></Button>
   </div>;
