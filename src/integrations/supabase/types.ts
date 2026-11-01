@@ -120,6 +120,7 @@ export type Database = {
           description: string
           episode_number: number
           id: string
+          language_label: string
           original_url: string
           owner_id: string
           poster_url: string | null
@@ -138,6 +139,7 @@ export type Database = {
           description?: string
           episode_number: number
           id?: string
+          language_label?: string
           original_url: string
           owner_id?: string
           poster_url?: string | null
@@ -156,6 +158,7 @@ export type Database = {
           description?: string
           episode_number?: number
           id?: string
+          language_label?: string
           original_url?: string
           owner_id?: string
           poster_url?: string | null
@@ -216,33 +219,45 @@ export type Database = {
           category: string
           created_at: string
           description: string
+          english_name: string | null
           id: string
+          original_name: string | null
           owner_id: string
           poster_url: string | null
+          provider_key: string
           source_identity: string | null
           title: string
+          tmdb_id: number | null
           updated_at: string
         }
         Insert: {
           category?: string
           created_at?: string
           description?: string
+          english_name?: string | null
           id?: string
+          original_name?: string | null
           owner_id?: string
           poster_url?: string | null
+          provider_key?: string
           source_identity?: string | null
           title: string
+          tmdb_id?: number | null
           updated_at?: string
         }
         Update: {
           category?: string
           created_at?: string
           description?: string
+          english_name?: string | null
           id?: string
+          original_name?: string | null
           owner_id?: string
           poster_url?: string | null
+          provider_key?: string
           source_identity?: string | null
           title?: string
+          tmdb_id?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -430,6 +445,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_provider_youtube_episode: {
+        Args: {
+          _english_name: string
+          _episode_number: number
+          _language_label: string
+          _original_name: string
+          _original_url: string
+          _owner_id: string
+          _poster_url: string
+          _provider_key: string
+          _season_number: number
+          _tmdb_id: number
+          _video_id: string
+        }
+        Returns: string
+      }
       adjust_credits: {
         Args: { _amount: number; _reason: string; _reseller_id: string }
         Returns: number

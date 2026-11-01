@@ -15,6 +15,13 @@ export function youtubeId(value: string): string | null {
 }
 
 export const episodeCode = (season: number, episode: number) => `S${String(season).padStart(2, '0')}E${String(episode).padStart(2, '0')}`;
+export const structuredEpisodeTitle = (english: string, original: string, tmdb: number, season: number, episode: number) => `${english.trim()} _ ${original.trim()} {tmdb-${tmdb}} - ${episodeCode(season, episode)}`;
+export const providerEpisodeSchema = z.object({
+  owner_id: z.string().uuid(), provider_key: z.string().refine(v => v === 'github' || z.string().uuid().safeParse(v).success),
+  english_name: z.string().trim().min(1).max(120), original_name: z.string().trim().min(1).max(120), tmdb_id: z.number().int().positive().max(2147483647),
+  season_number: z.number().int().min(1).max(999), episode_number: z.number().int().min(1).max(9999), language_label: z.string().trim().min(1).max(200),
+  original_url: z.string().trim().max(4000).refine(v => youtubeId(v) !== null), poster_url: z.string().trim().url().max(4000).refine(v => v.startsWith('https://')),
+});
 export const posterSchema = z.string().trim().max(4000).refine(v => !v || /^https:\/\/\S+$/.test(v), 'Use an HTTPS poster URL').transform(v => v || null);
 export const seriesSchema = z.object({ id: z.string().uuid().optional(), title: z.string().trim().min(1).max(300), category: z.string().trim().min(1).max(200).default('YouTube'), poster_url: posterSchema, description: z.string().max(10000).default(''), source_identity: z.string().max(1000).optional() });
 export const seasonSchema = z.object({ series_id: z.string().uuid(), season_number: z.number().int().min(1).max(999) });
@@ -24,6 +31,7 @@ export const episodeSchema = z.object({
   original_url: z.string().trim().max(4000).refine(v => youtubeId(v) !== null, 'Enter a supported HTTPS YouTube watch, short, embed or live URL'),
   poster_url: posterSchema, description: z.string().max(10000).default(''),
   release_date: z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal('')]).transform(v => v || null), published: z.boolean(),
+  language_label: z.string().trim().max(200).default(''),
 });
 export function youtubePlayerError(code: number): string {
   if (code === 100) return 'This video is private, deleted or unavailable.';

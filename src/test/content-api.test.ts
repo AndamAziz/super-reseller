@@ -27,6 +27,18 @@ beforeEach(() => {
   mocks.rows = { content_series: [{ id: sid, owner_id: 'owner-a', title: 'Jumong', poster_url: 'https://images.example/series.jpg' }], content_seasons: [{ id: 'season', owner_id: 'owner-a', series_id: sid, season_number: 1 }], content_episodes: [fixture, { ...fixture, id: 'draft', episode_number: 22, published: false }, { ...fixture, id: 'other', owner_id: 'owner-b' }] };
 });
 describe('customer content API', () => {
+  it('delivers provider TMDB metadata and language with unchanged poster and official source', async () => {
+    mocks.rows['content_series'] = [{ id: sid, owner_id: 'owner-a', title: 'Setayesh', tmdb_id: 94146, provider_key: 'github' }];
+    mocks.rows['content_episodes'] = [{ ...fixture, episode_number: 17, language_label: 'KURDISH-دۆبلاژ', original_url: 'https://www.youtube.com/watch?v=3leqKX7BsFw', youtube_video_id: '3leqKX7BsFw', poster_url: 'https://media.themoviedb.org/t/p/w600_and_h900_face/6e7Wkc5jckzksjKta4TELHCufs.jpg' }];
+    const data = await (await handleContentApi(request('?provider_key=github&language=KURDISH-%D8%AF%DB%86%D8%A8%D9%84%D8%A7%DA%98'))).json();
+    expect(data.series[0].tmdb_id).toBe(94146);
+    expect(data.episodes[0].episode_code).toBe('S01E17');
+    expect(data.episodes[0].language_label).toBe('KURDISH-دۆبلاژ');
+    expect(data.episodes[0].poster_url).toBe('https://media.themoviedb.org/t/p/w600_and_h900_face/6e7Wkc5jckzksjKta4TELHCufs.jpg');
+    expect(data.episodes[0].playback.source_type).toBe('youtube');
+    const filtered = await (await handleContentApi(request('?provider_key=other'))).json();
+    expect(filtered.episodes).toEqual([]);
+  });
   it('authenticates every request', async () => {
     mocks.auth.mockResolvedValue({ ok: false, status: 401, message: 'Invalid credentials' });
     expect((await handleContentApi(request())).status).toBe(401);
