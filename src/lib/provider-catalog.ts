@@ -14,15 +14,13 @@ export const seriesTmdbId = (title: string) => {
 export function mergeProviderCatalog(source: Series[], managed: { series: ProviderSeries[]; seasons: ProviderSeason[]; episodes: ProviderEpisode[] }, playback?: { origin: string; username: string; password: string }) {
   const series = managed.series.map(s => ({ ...s }));
   const episodes = managed.episodes.map(e => ({ ...e }));
-  const aliases = new Map<string, string>();
   for (const item of source) {
     const tmdb = seriesTmdbId(item.title);
     const identity = JSON.stringify([item.title, item.category]);
-    const matching = series.find(s => (s.provider_key ?? 'github') === 'github' && (tmdb ? s.tmdb_id === tmdb : s.source_identity === identity));
+    const matching = series.find(s => (s.provider_key ?? 'github') === 'github' && ((tmdb !== null && s.tmdb_id === tmdb) || (s.tmdb_id == null && s.source_identity === identity)));
     const canonical = matching ?? series.find(s => s.id === (tmdb ? `m3u:github:tmdb:${tmdb}` : `m3u:github:${channelIdentity({ name: item.title, group_title: item.category })}`));
     const id = canonical?.id ?? (tmdb ? `m3u:github:tmdb:${tmdb}` : `m3u:github:${channelIdentity({ name: item.title, group_title: item.category })}`);
     if (!canonical) series.push({ id, title: item.title, category: item.category, poster_url: item.cover, tmdb_id: tmdb, provider_key: 'github', source_identity: identity });
-    aliases.set(`m3u:github:${item.id}`, id);
     for (const e of item.episodes) episodes.push({
       id: `m3u:github:${channelIdentity(e)}:${e.id}`, series_id: id, season_id: `${id}:season:${e.season}`, season_number: e.season, episode_number: e.episode,
       title: e.name, poster_url: e.logo ?? canonical?.poster_url ?? item.cover, language_label: e.group_title ?? '', original_url: e.url, episode_code: episodeCode(e.season, e.episode), source_type: 'm3u',

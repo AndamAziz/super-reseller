@@ -6,6 +6,10 @@ import type { Series } from '@/lib/playlist-auth.server';
 const m3u: Series = { id: 5, title: 'Setayesh _ ستایش {tmdb-94146}', category: 'KURDISH-دۆبلاژ', cover: 'https://images.example/setayesh.jpg', episodes: [17, 2, 1].map(n => ({ id: n, season: 1, episode: n, name: `Setayesh _ ستایش {tmdb-94146} - S01E${String(n).padStart(2,'0')}`, group_title: 'KURDISH-دۆبلاژ', logo: 'https://images.example/setayesh.jpg', referrer: null, url: `https://streams.example/${n}.m3u8`, type: 'series' })) };
 const managed = { series: [{ id: 'saved', title: 'Setayesh', category: 'KURDISH-دۆبلاژ', poster_url: null, tmdb_id: 94146, provider_key: 'github' }], seasons: [{ id: 'season', series_id: 'saved', season_number: 1 }], episodes: [{ id: 'yt', series_id: 'saved', season_id: 'season', season_number: 1, episode_number: 17, title: 'Setayesh - S01E17', poster_url: 'https://images.example/yt.jpg', language_label: 'KURDISH-دۆبلاژ', original_url: 'https://www.youtube.com/watch?v=3leqKX7BsFw', playback: { source_type: 'youtube' as const, youtube_video_id: '3leqKX7BsFw', embed_url: 'https://www.youtube.com/embed/3leqKX7BsFw', original_url: 'https://www.youtube.com/watch?v=3leqKX7BsFw' } }] };
 describe('provider-level series merging', () => {
+  it('retains earlier explicit GitHub source identity links without TMDB columns', () => {
+    const result = mergeProviderCatalog([m3u], { ...managed, series: [{ ...managed.series[0], id: 'saved', title: 'Setayesh', category: '', poster_url: null, tmdb_id: null, source_identity: JSON.stringify([m3u.title,m3u.category]) }] });
+    expect(result.series.map(s => s.id)).toEqual(['saved']);
+  });
   it('merges TMDB 94146 into exactly one existing logical series', () => {
     const result = mergeProviderCatalog([m3u], managed);
     expect(result.series.map(s => s.id)).toEqual(['saved']);
