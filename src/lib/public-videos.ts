@@ -17,7 +17,7 @@ export function videoPublicUrl(path: string) {
   return shortVideoUrl(window.location.origin, path);
 }
 export function sanitizeVideoName(name: string) {
-  const base = name.replace(/\.mp4$/i, '').replace(/[^\p{L}\p{N}._-]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, 80);
+  const base = name.replace(/\.mp4$/i, '').replace(/[^\p{L}\p{N}._-]+/gu, '-').replace(/^[.-]+|[.-]+$/g, '').slice(0, 80);
   return `${base || 'video'}.mp4`;
 }
 export function pickUniqueVideoName(name: string, existing: string[]) {
