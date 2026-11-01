@@ -122,7 +122,7 @@ export interface ProxyOptions {
    * origin does for direct playback. Players that choose their engine from the URL
    * extension would otherwise try to demux HLS text as MPEG-TS.
    */
-  manifestRedirect?: Partial<Record<"hls" | "dash", string>>;
+  manifestRedirect?: Partial<Record<"hls" | "dash" | "ts", string>>;
 }
 
 /** Fetch target with the channel's headers; rewrite playlists, stream everything else. */
@@ -190,6 +190,11 @@ export async function proxyFetch(request: Request, target: URL, channel: M3UChan
       } else body = await rewritePlaylist(manifest, current.toString(), prefix, scope);
     } catch { return plain("Unsupported or invalid media manifest", 502); }
     return new Response(body, { headers: { ...CORS, "Content-Type": protocolMime[protocol], "Cache-Control": "private, max-age=3", "X-Media-Protocol": protocol } });
+  }
+  // A manifest-style entry link whose origin is actually raw MPEG-TS: send the player to the .ts link.
+  if (protocol === "ts" && options.manifestRedirect?.ts && startsAtZero) {
+    await peeked.body?.cancel().catch(() => undefined);
+    return new Response(null, { status: 302, headers: { ...CORS, Location: options.manifestRedirect.ts, "Cache-Control": "no-store", "X-Media-Protocol": protocol } });
   }
   const genericType = !ct || /^(application\/octet-stream|binary\/octet-stream)(;|$)/i.test(ct);
   const inferred = protocol !== "unknown" ? protocolMime[protocol] : mediaContentType(current.toString());
