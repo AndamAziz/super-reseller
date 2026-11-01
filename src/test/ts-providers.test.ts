@@ -151,6 +151,26 @@ describe("Global .ts support across providers", () => {
     expect(res.headers.get("content-type")).toBe("video/mp2t");
   });
 
+  it.each([
+    ["IPv4 with port", "http://203.0.113.55:4050/VideoInput/play.ts"],
+    ["IPv4 with query", "http://198.51.100.7/0.ts?auth=abc"],
+  ])("number-address provider (%s): the player is handed the exact origin URL", async (_n, url) => {
+    playlist = source([...ENTRIES, { name: "IP provider", url }]);
+    const channels = await customerPlaylist(true);
+    const link = channels.at(-1)!.url;
+    expect(new URL(link).pathname).toMatch(/\.ts$/);
+    const res = await play(link);
+    expect(res.status).toBe(302);
+    expect(res.headers.get("location")).toBe(url);
+    expect(originCalls).not.toContain(url); // never fetched server-side
+  });
+
+  it("private number addresses stay blocked", async () => {
+    playlist = source([...ENTRIES, { name: "Private", url: "http://192.168.1.10/0.ts" }]);
+    const channels = await customerPlaylist(true);
+    expect((await play(channels.at(-1)!.url)).status).toBe(403);
+  });
+
   it("keeps .m3u8, .mp4 and .mp3 behaviour unchanged", async () => {
     const channels = await customerPlaylist(true);
     const hlsRes = await play(channels[4]!.url);
