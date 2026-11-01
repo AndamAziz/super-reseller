@@ -2,13 +2,22 @@ import { detectMedia, type MediaProtocol } from "./media-detection";
 
 /** Browser-only entry point; no DOM access or engine import during SSR. */
 export async function loadBrowserPlayback(video: HTMLVideoElement, url: string) {
-  const response = await fetch(url, { headers: { Range: "bytes=0-4095" }, signal: AbortSignal.timeout(20000) });
+  // Live TS/HLS origins frequently reject Range; cancel after the first chunk instead.
+  const response = await fetch(url, { signal: AbortSignal.timeout(20000) });
   if (!response.ok) { await response.body?.cancel(); throw new Error(`Playback HTTP ${response.status}`); }
   const reader = response.body?.getReader();
   const first = await reader?.read();
   await reader?.cancel();
   const protocol: MediaProtocol = detectMedia(first?.value ?? new Uint8Array(), response.headers.get("content-type") ?? "", url);
   if (protocol === "flv" || protocol === "avi" || /^rtmps?:/i.test(url)) throw new Error("Unsupported container or protocol in this browser; use a compatible external player or an approved conversion service.");
+  if (protocol === "ts") {
+    const { default: mpegts } = await import("mpegts.js");
+    if (!mpegts.isSupported()) throw new Error("Transport stream decoding is unsupported in this browser.");
+    const transport = mpegts.createPlayer({ type: "mpegts", url, isLive: true }, { enableWorker: false });
+    transport.attachMediaElement(video);
+    transport.load();
+    return { protocol, httpStatus: response.status, player: null, destroy: async () => { transport.pause(); transport.unload(); transport.detachMediaElement(); transport.destroy(); } };
+  }
   if (protocol === "hls" && !video.canPlayType("application/vnd.apple.mpegurl")) {
     const { default: Hls } = await import("hls.js");
     if (!Hls.isSupported()) throw new Error("HLS decoding is unsupported in this browser.");
