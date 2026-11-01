@@ -76,10 +76,24 @@ export async function allowedUrl(target: string, sig: string, scope: string): Pr
 
 const isTag = (t: string) => t.startsWith("#") || /^EXT-?X?-?[A-Z-]*:/i.test(t) || /^EXTM3U$/i.test(t);
 
+const HINT_EXTENSIONS = new Set(["m3u8", "ts", "aac", "ac3", "ec3", "mp4", "m4s", "m4a", "m4v", "mp3", "vtt", "webvtt", "key", "cmfv", "cmfa"]);
+
+/** Give a proxied URI the same file extension as its origin URI, so players that pick a demuxer by extension behave as with the direct link. */
+export function withExtensionHint(prefix: string, target: string): string {
+  let ext: string | undefined;
+  try { ext = /\.([a-z0-9]{2,6})$/i.exec(new URL(target).pathname)?.[1]?.toLowerCase(); } catch { return prefix; }
+  if (!ext || !HINT_EXTENSIONS.has(ext)) return prefix;
+  const q = prefix.indexOf("?");
+  const path = q < 0 ? prefix : prefix.slice(0, q);
+  if (!/\/\d+$/.test(path)) return prefix;
+  return `${path}.${ext}${q < 0 ? "" : prefix.slice(q)}`;
+}
+
 export async function rewritePlaylist(text: string, from: string, prefix: string, scope: string): Promise<string> {
   const abs = async (uri: string) => {
     const full = new URL(uri.trim(), from).toString();
-    return `${prefix}${prefix.includes("?") ? "&" : "?"}u=${b64u(full)}&s=${await signTarget(scope, full)}`;
+    const p = withExtensionHint(prefix, full);
+    return `${p}${p.includes("?") ? "&" : "?"}u=${b64u(full)}&s=${await signTarget(scope, full)}`;
   };
   const out: string[] = [];
   for (const line of text.replace(/^\uFEFF/, "").split(/\r\n|\r|\n/)) {
@@ -100,8 +114,19 @@ export async function rewritePlaylist(text: string, from: string, prefix: string
 
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Expose-Headers": "Content-Length, Content-Range" };
 
+export interface ProxyOptions {
+  /**
+   * When the origin answers with a manifest but the player asked for a URL with a
+   * different extension (e.g. `.ts` that redirects to `.m3u8` upstream), send the
+   * player to an equivalent app URL with the manifest's extension, exactly as the
+   * origin does for direct playback. Players that choose their engine from the URL
+   * extension would otherwise try to demux HLS text as MPEG-TS.
+   */
+  manifestRedirect?: Partial<Record<"hls" | "dash", string>>;
+}
+
 /** Fetch target with the channel's headers; rewrite playlists, stream everything else. */
-export async function proxyFetch(request: Request, target: URL, channel: M3UChannel, prefix: string, scope: string): Promise<Response> {
+export async function proxyFetch(request: Request, target: URL, channel: M3UChannel, prefix: string, scope: string, options: ProxyOptions = {}): Promise<Response> {
   const headers: Record<string, string> = { "User-Agent": channel.user_agent?.trim() || "Mozilla/5.0" };
   if (channel.referrer?.trim()) {
     headers["Referer"] = channel.referrer.trim();
