@@ -35,7 +35,7 @@ function VideoUploads() {
       validateMp4(file);
       setUploading(file.name); setProgress(0);
       const abort = new AbortController(); controller.current = abort;
-      await uploadPublicVideo(file, setProgress, abort.signal);
+      await uploadPublicVideo(file, setProgress, abort.signal, videos.map((video) => video.name));
       toast.success('MP4 uploaded');
       await queryClient.invalidateQueries({ queryKey: ['public-videos'] });
     } catch (uploadError) {
