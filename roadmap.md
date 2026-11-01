@@ -1,7 +1,7 @@
 # Connection billing
 ## Admin public MP4 uploads
-- [ ] Show selected filename, editable movie name and measured upload progress; verify upload and persisted rename using a temporary admin video.
-- [ ] Correct copied short-link origin; public short-link availability requires publication approval (published route currently returns 404).
+- [x] Selected filename, editable movie name and TUS progress verified with real admin upload; rename persisted after reload, clipboard uses published host, anonymous redirect returned 206 video/mp4 (1024 bytes); temporary video deleted, no page errors, ten targeted tests passed.
+- [ ] Public short-link availability requires publication approval; copied origin corrected, published route currently returns 404.
 - [x] Replace the YouTube management screen and navigation with admin-only MP4 uploads and an honest unavailable state; existing customer content retained.
 - [x] Enable public storage, admin upload, progress and copy-public-link controls.
 - [x] Verify real admin small/TUS upload, reload, clipboard and delete; anonymous MP4 range returned 206/1024 bytes without credentials. Five database-backed policy tests enforce admin writes and reseller/anonymous denial; all 170 tests passed, build OK. Not published; VLC decoding not tested.
