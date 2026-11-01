@@ -80,4 +80,29 @@ describe('customer content API', () => {
     expect(next.revision).not.toBe(first.revision);
     expect(next.episodes.map((e: { episode_code: string }) => e.episode_code)).toEqual(['S01E21', 'S01E22']);
   });
+  it('shares exactly S01E17 across GitHub customer owners, preserving all 16 M3U episodes', async () => {
+    mocks.rows['content_series'] = [{ id: sid, owner_id: 'owner-b', title: 'Setayesh', tmdb_id: 94146, provider_key: 'github', poster_url: null }];
+    mocks.rows['content_seasons'] = [];
+    mocks.rows['content_episodes'] = [
+      { ...fixture, owner_id: 'owner-b', episode_number: 17, provider_shared: true },
+      { ...fixture, id: 'private', owner_id: 'owner-b', episode_number: 18, provider_shared: false },
+      { ...fixture, id: 'draft', owner_id: 'owner-b', episode_number: 19, provider_shared: true, published: false },
+    ];
+    const originals = Array.from({length: 16}, (_, i) => ({ id: i+1, season: 1, episode: i+1, name: `Setayesh - S01E${String(i+1).padStart(2,'0')}`, group_title: 'Kurdish', logo: null, url: `https://source.example/${i+1}.m3u8`, referrer: null }));
+    mocks.catalog.mockResolvedValue({ok: true, catalog: {version: 'all16', series: [{id: 1,title: 'Setayesh {tmdb-94146}',category: 'Kurdish',cover: null,episodes: originals}]}});
+    const data = await (await handleContentApi(request('?provider_key=github'))).json();
+    expect(data.series).toHaveLength(1);
+    expect(data.episodes.map((e: {episode_number:number})=>e.episode_number)).toEqual(Array.from({length:17},(_,i)=>i+1));
+    expect(data.episodes.slice(0,16).map((e: {original_url:string})=>e.original_url)).toEqual(originals.map(e=>e.url));
+    expect(data.episodes[16].playback.source_type).toBe('youtube');
+    expect(data.episodes.map((e:{id:string})=>e.id)).not.toContain('private');
+    expect(data.episodes.map((e:{id:string})=>e.id)).not.toContain('draft');
+    const differentProvider = await handleContentApi(request(`?provider_key=other&action=episode&episode_id=${eid}`));
+    expect(differentProvider.status).toBe(404);
+    mocks.rows['content_episodes'][0] = {...fixture,owner_id:'owner-b',episode_number:17,provider_shared:false};
+    const next = await (await handleContentApi(request('?provider_key=github'))).json();
+    expect(next.episodes).toHaveLength(16);
+    expect(next.revision).not.toBe(data.revision);
+    expect(next.refresh_after_seconds).toBe(5);
+  });
 });
