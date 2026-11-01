@@ -15,6 +15,12 @@ async function probeOnce(channel: M3UChannel) {
     const started = Date.now();
     try {
       const res = await proxyFetch(new Request(prefix), target, channel, prefix, scope);
+      if (res.status === 302 && res.headers.get("x-media-protocol") === "direct") {
+        // Number-address origins are handed to the player as-is; the panel cannot fetch them.
+        steps.push({ step: "Handed directly to the player (number-address server, not testable from the panel)", url: target.toString(), status: 302, ok: true, error: null, ms: Date.now() - started });
+        mediaReceived = true;
+        break;
+      }
       const success = res.status === 200 || res.status === 206;
       if (!success) {
         const error = (await res.text()).slice(0, 300);
