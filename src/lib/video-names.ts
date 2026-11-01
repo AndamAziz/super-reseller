@@ -6,9 +6,10 @@ export function storageVideoName(name: string) {
 }
 export function displayVideoName(name: string) {
   const match = /^utf8-((?:[a-f0-9]{2})+)\.mp4$/i.exec(name);
-  if (!match) return name;
+  const encoded = match?.[1];
+  if (!encoded) return name;
   try {
-    const bytes = Uint8Array.from(match[1].match(/.{2}/g) ?? [], (pair) => parseInt(pair, 16));
+    const bytes = Uint8Array.from(encoded.match(/.{2}/g) ?? [], (pair) => parseInt(pair, 16));
     return `${new TextDecoder('utf-8', { fatal: true }).decode(bytes)}.mp4`;
   } catch { return name; }
 }
