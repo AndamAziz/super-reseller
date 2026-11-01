@@ -1,6 +1,6 @@
 # Connection billing
 ## Uploaded playlist format
-- [ ] Harden raw attribute and directive preservation, type-only counts and edit-only export; verify a 14-movie/92-episode admin upload/download diff.
+- [x] Harden raw attribute and directive preservation, type-only counts and edit-only export; authenticated 14-movie/92-episode/3-live upload persisted correct counts after reload and exported byte-identically, edits changed only requested fields, test uploads removed; all 47 tests passed and build OK.
 - [x] Preserve media classification and original M3U metadata through import, edits and download; show separate Live TV, Movies and Series views. Legacy imports require reimport to recover discarded metadata.
 - [x] Verified mixed-media upload, exact untouched download, persisted name/stream/logo edits, separate views and deletion/export using authenticated admin data; temporary fixture removed, all 44 tests passed and build OK.
 ## Uploaded channel ordering
