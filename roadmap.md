@@ -1,4 +1,6 @@
 # Connection billing
+## Playback engine audit
+- [x] Audit parser, proxy, playback routes and reseller module against the compatibility checklist; add 22 playback-compatibility tests (master/media playlist rewriting, TS/MKV/AAC/WebM streaming, audio-only HLS, origin 403/404/500 mapping, redirect-to-private blocking, public redirect following, content-type mapping). All 69 tests pass, typecheck clean; no code fixes were required.
 ## Uploaded playlist format
 - [x] Harden raw attribute and directive preservation, type-only counts and edit-only export; authenticated 14-movie/92-episode/3-live upload persisted correct counts after reload and exported byte-identically, edits changed only requested fields, test uploads removed; all 47 tests passed and build OK.
 - [x] Preserve media classification and original M3U metadata through import, edits and download; show separate Live TV, Movies and Series views. Legacy imports require reimport to recover discarded metadata.
