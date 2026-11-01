@@ -28,4 +28,5 @@
 - Playback protocol detection uses bounded signature inspection with byte replay; DASH resources use scoped exact-URL or constrained signed-template authorization, never a browser-accessible arbitrary signing endpoint.
 - The isolated admin playback-check route dynamically loads browser engines and separates HTTP, frame, audio-signal and continuity evidence; ordinary panel layout and records remain unchanged.
 - Browser TS playback uses mpegts.js transmuxing, while TS URLs detected as HLS use the HLS engine; live detection probes avoid Range requests rejected by origins.
+- Shared signature inspection collects fragmented network chunks and replays all bytes; verified TS signatures override misleading upstream MIME types on provider responses.
 - Shared catalogs carry a full-content revision hash; polling replaces source arrays and never appends updates or mutates reseller assignments.

@@ -163,7 +163,9 @@ export async function proxyFetch(request: Request, target: URL, channel: M3UChan
   }
   const genericType = !ct || /^(application\/octet-stream|binary\/octet-stream)(;|$)/i.test(ct);
   const inferred = protocol !== "unknown" ? protocolMime[protocol] : mediaContentType(current.toString());
-  const out = new Headers({ ...CORS, "Content-Type": genericType ? inferred : ct, "Cache-Control": "no-store", "X-Media-Protocol": protocol });
+  // Some IPTV origins label actual TS packets as text/html, video/mp4 or MPEGURL.
+  // The verified transport signature takes priority for external provider players too.
+  const out = new Headers({ ...CORS, "Content-Type": genericType || protocol === "ts" ? inferred : ct, "Cache-Control": "no-store", "X-Media-Protocol": protocol });
   for (const h of ["content-length", "content-range", "accept-ranges"]) { const v = res.headers.get(h); if (v) out.set(h, v); }
   return new Response(peeked.body, { status: res.status, headers: out });
 }
