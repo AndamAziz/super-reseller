@@ -11,7 +11,7 @@ export async function displayPoster(client: SupabaseClient<Database>, value: str
   if (!data) return null;
   // The server's sandbox-local hostname is not browser-reachable.
   const url = new URL(data.signedUrl);
-  const browser = new URL(import.meta.env.VITE_SUPABASE_URL);
+  const browser = new URL(import.meta.env['VITE_SUPABASE_URL']);
   url.protocol = browser.protocol; url.host = browser.host;
   return url.toString();
 }
