@@ -1,5 +1,6 @@
 # Connection billing
 ## Phase 2 real playback
+- [ ] Fix GitHub .TS playback, including real transport-stream browser transmuxing and .TS URLs that return HLS; verify both without changing customer records.
 - [ ] Add bounded protocol detection and verify decoded playback separately from HTTP connectivity.
 - [ ] Implement and verify secure DASH playback with a browser-compatible engine without changing existing panel UI.
 - [ ] Check codecs, seeking, tracks, continuity and synchronization; report unsupported or unverified cases honestly.
