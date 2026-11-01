@@ -1,4 +1,7 @@
 # Connection billing
+## Provider-wide Setayesh episode
+- [ ] Share only published YouTube S01E17 with all already-authorised GitHub customer lines; preserve private content and raw playlists.
+- [ ] Verify 16 unchanged M3U + S01E17, isolation and revisions; published-host verification awaits approval to publish the new code.
 ## Connection-function access
 - [x] Restrict both connection RPCs to signed-in line owners; 11 database-backed access tests and all 157 regressions passed. Real non-owner/anonymous calls denied; trusted customer playback returned 200 with 330623 bytes; policy hash unchanged. Not published.
 ## Combined provider series catalogue
