@@ -9,6 +9,7 @@ vi.mock('@/integrations/supabase/client.server', () => ({ supabaseAdmin: { from:
     select: () => chain,
     eq: (key: string, value: unknown) => { filters.push([key, value]); mocks.filters.push([table, key, value]); return chain; },
     order: () => chain,
+    range: () => chain,
     single: async () => ({ data: { reseller_id: 'owner-a' }, error: null }),
     then: (resolve: (value: unknown) => unknown) => resolve({ data: (mocks.rows[table] ?? []).filter(row => filters.every(([key, value]) => (row as Record<string, unknown>)[key] === value)), error: null }),
   };

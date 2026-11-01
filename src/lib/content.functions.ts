@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { episodeSchema, seasonSchema, seriesSchema, youtubeId } from './youtube';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/integrations/supabase/types';
+import { collectContentPages } from './content-pagination';
 
 async function member(client: SupabaseClient<Database>, userId: string) {
   const { data, error } = await client.from('user_roles').select('role').eq('user_id', userId);
@@ -18,14 +19,13 @@ function failure(error: { code?: string; message: string } | null) {
 export const getManagedContent = createServerFn({ method: 'GET' }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   await member(context.supabase, context.userId);
   const [s, n, e] = await Promise.all([
-    context.supabase.from('content_series').select('*').order('title'),
-    context.supabase.from('content_seasons').select('*').order('season_number'),
-    context.supabase.from('content_episodes').select('*').order('season_number').order('episode_number'),
+    collectContentPages((from, to) => context.supabase.from('content_series').select('*').order('title').order('id').range(from, to)),
+    collectContentPages((from, to) => context.supabase.from('content_seasons').select('*').order('season_number').order('id').range(from, to)),
+    collectContentPages((from, to) => context.supabase.from('content_episodes').select('*').order('season_number').order('episode_number').order('id').range(from, to)),
   ]);
-  if (s.error || n.error || e.error) throw new Error('Could not load episodes');
   const { displayPoster } = await import('./content-posters.server');
-  return { series: await Promise.all(s.data.map(async x => ({ ...x, display_poster: await displayPoster(context.supabase, x.poster_url, x.owner_id) }))), seasons: n.data,
-    episodes: await Promise.all(e.data.map(async x => ({ ...x, display_poster: await displayPoster(context.supabase, x.poster_url, x.owner_id) }))) };
+  return { series: await Promise.all(s.map(async x => ({ ...x, display_poster: await displayPoster(context.supabase, x.poster_url, x.owner_id) }))), seasons: n,
+    episodes: await Promise.all(e.map(async x => ({ ...x, display_poster: await displayPoster(context.supabase, x.poster_url, x.owner_id) }))) };
 });
 
 export const saveSeries = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).inputValidator(v => seriesSchema.parse(v)).handler(async ({ data, context }) => {

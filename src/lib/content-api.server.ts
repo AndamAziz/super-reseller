@@ -3,6 +3,7 @@ import { authLine, json } from './playlist-auth.server';
 import { displayPoster } from './content-posters.server';
 import { episodeCode } from './youtube';
 import { playlistVersion } from './playlist-version';
+import { collectContentPages } from './content-pagination';
 
 const requestSchema = z.object({ action: z.enum(['catalog', 'series', 'series_details', 'seasons', 'episodes', 'episode', 'playback']).default('catalog'), series_id: z.string().uuid().optional(), season_number: z.coerce.number().int().positive().optional(), episode_id: z.string().uuid().optional() });
 
@@ -23,18 +24,19 @@ export async function handleContentApi(request: Request): Promise<Response> {
   // Resolve ownership from the authenticated line, never from caller-supplied IDs.
   const { data: line, error: lineError } = await supabaseAdmin.from('lines').select('reseller_id').eq('id', auth.lineId).single();
   if (lineError || !line) return json({ error: 'Content unavailable' }, 503);
-  const [s, n, e] = await Promise.all([
-    supabaseAdmin.from('content_series').select('id,title,category,poster_url,description,source_identity,updated_at').eq('owner_id', line.reseller_id).order('title'),
-    supabaseAdmin.from('content_seasons').select('id,series_id,season_number,created_at').eq('owner_id', line.reseller_id).order('season_number'),
-    supabaseAdmin.from('content_episodes').select('id,series_id,season_id,season_number,episode_number,title,youtube_video_id,original_url,poster_url,description,release_date,source_type,updated_at').eq('owner_id', line.reseller_id).eq('published', true).order('season_number').order('episode_number'),
-  ]);
-  if (s.error || n.error || e.error) return json({ error: 'Content temporarily unavailable' }, 503);
-  const visibleSeries = s.data.filter(x => e.data.some(y => y.series_id === x.id));
-  const visibleSeasons = n.data.filter(x => e.data.some(y => y.season_id === x.id));
+  const records = await Promise.all([
+    collectContentPages((from, to) => supabaseAdmin.from('content_series').select('id,title,category,poster_url,description,source_identity,updated_at').eq('owner_id', line.reseller_id).order('title').order('id').range(from, to)),
+    collectContentPages((from, to) => supabaseAdmin.from('content_seasons').select('id,series_id,season_number,created_at').eq('owner_id', line.reseller_id).order('season_number').order('id').range(from, to)),
+    collectContentPages((from, to) => supabaseAdmin.from('content_episodes').select('id,series_id,season_id,season_number,episode_number,title,youtube_video_id,original_url,poster_url,description,release_date,source_type,updated_at').eq('owner_id', line.reseller_id).eq('published', true).order('season_number').order('episode_number').order('id').range(from, to)),
+  ]).catch(() => null);
+  if (!records) return json({ error: 'Content temporarily unavailable' }, 503);
+  const [s, n, e] = records;
+  const visibleSeries = s.filter(x => e.some(y => y.series_id === x.id));
+  const visibleSeasons = n.filter(x => e.some(y => y.season_id === x.id));
   // Hash raw records before signing posters so a new signed URL does not fake a content update.
-  const revision = await playlistVersion(JSON.stringify([visibleSeries, visibleSeasons, e.data]));
+  const revision = await playlistVersion(JSON.stringify([visibleSeries, visibleSeasons, e]));
   const series = await Promise.all(visibleSeries.map(async x => ({ ...x, poster_url: await displayPoster(supabaseAdmin, x.poster_url, line.reseller_id) })));
-  const episodes = await Promise.all(e.data.map(async x => {
+  const episodes = await Promise.all(e.map(async x => {
     const parent = series.find(y => y.id === x.series_id);
     return { ...x, episode_code: episodeCode(x.season_number, x.episode_number), poster_url: await displayPoster(supabaseAdmin, x.poster_url, line.reseller_id) ?? parent?.poster_url ?? null,
       playback: { source_type: 'youtube' as const, youtube_video_id: x.youtube_video_id, embed_url: `https://www.youtube.com/embed/${x.youtube_video_id}`, original_url: x.original_url } };
