@@ -90,5 +90,5 @@ export const getExistingSeries = createServerFn({ method: 'GET' }).middleware([r
   await member(context.supabase, context.userId);
   const { loadCatalog } = await import('./playlist-auth.server');
   const loaded = await loadCatalog();
-  return loaded.ok ? loaded.catalog.series.map(s => ({ title: s.title, category: s.category, poster_url: s.cover, source_identity: JSON.stringify([s.title, s.category]) })) : [];
+  return loaded.ok ? loaded.catalog.series.map(s => ({ ...s, poster_url: s.cover, source_identity: JSON.stringify([s.title, s.category]) })) : [];
 });

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mocks = vi.hoisted(() => ({ auth: vi.fn(), rows: {} as Record<string, unknown[]>, filters: [] as [string, string, unknown][] }));
-vi.mock('@/lib/playlist-auth.server', () => ({ authLine: mocks.auth, json: (value: unknown, status = 200) => new Response(JSON.stringify(value), { status }) }));
+const mocks = vi.hoisted(() => ({ auth: vi.fn(), catalog: vi.fn(), rows: {} as Record<string, unknown[]>, filters: [] as [string, string, unknown][] }));
+vi.mock('@/lib/playlist-auth.server', () => ({ authLine: mocks.auth, loadCatalog: mocks.catalog, json: (value: unknown, status = 200) => new Response(JSON.stringify(value), { status }) }));
 vi.mock('@/lib/content-posters.server', () => ({ displayPoster: async (_client: unknown, url: string | null) => url }));
 vi.mock('@/integrations/supabase/client.server', () => ({ supabaseAdmin: { from: (table: string) => {
   const filters: [string, unknown][] = [];
@@ -23,6 +23,7 @@ const fixture = { id: eid, owner_id: 'owner-a', series_id: sid, season_id: 'seas
 const request = (query = '') => new Request(`https://panel.example/api/public/content${query}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'customer', password: 'test-only' }) });
 beforeEach(() => {
   mocks.filters = [];
+  mocks.catalog.mockResolvedValue({ ok: true, catalog: { series: [], version: 'test' } });
   mocks.auth.mockResolvedValue({ ok: true, lineId: 'line' });
   mocks.rows = { content_series: [{ id: sid, owner_id: 'owner-a', title: 'Jumong', poster_url: 'https://images.example/series.jpg' }], content_seasons: [{ id: 'season', owner_id: 'owner-a', series_id: sid, season_number: 1 }], content_episodes: [fixture, { ...fixture, id: 'draft', episode_number: 22, published: false }, { ...fixture, id: 'other', owner_id: 'owner-b' }] };
 });
