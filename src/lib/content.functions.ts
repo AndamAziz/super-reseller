@@ -24,8 +24,8 @@ export const getManagedContent = createServerFn({ method: 'GET' }).middleware([r
   ]);
   if (s.error || n.error || e.error) throw new Error('Could not load episodes');
   const { displayPoster } = await import('./content-posters.server');
-  return { series: await Promise.all(s.data.map(async x => ({ ...x, display_poster: await displayPoster(context.supabase, x.poster_url) }))), seasons: n.data,
-    episodes: await Promise.all(e.data.map(async x => ({ ...x, display_poster: await displayPoster(context.supabase, x.poster_url) }))) };
+  return { series: await Promise.all(s.data.map(async x => ({ ...x, display_poster: await displayPoster(context.supabase, x.poster_url, x.owner_id) }))), seasons: n.data,
+    episodes: await Promise.all(e.data.map(async x => ({ ...x, display_poster: await displayPoster(context.supabase, x.poster_url, x.owner_id) }))) };
 });
 
 export const saveSeries = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).inputValidator(v => seriesSchema.parse(v)).handler(async ({ data, context }) => {

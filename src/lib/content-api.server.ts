@@ -33,10 +33,10 @@ export async function handleContentApi(request: Request): Promise<Response> {
   const visibleSeasons = n.data.filter(x => e.data.some(y => y.season_id === x.id));
   // Hash raw records before signing posters so a new signed URL does not fake a content update.
   const revision = await playlistVersion(JSON.stringify([visibleSeries, visibleSeasons, e.data]));
-  const series = await Promise.all(visibleSeries.map(async x => ({ ...x, poster_url: await displayPoster(supabaseAdmin, x.poster_url) })));
+  const series = await Promise.all(visibleSeries.map(async x => ({ ...x, poster_url: await displayPoster(supabaseAdmin, x.poster_url, line.reseller_id) })));
   const episodes = await Promise.all(e.data.map(async x => {
     const parent = series.find(y => y.id === x.series_id);
-    return { ...x, episode_code: episodeCode(x.season_number, x.episode_number), poster_url: await displayPoster(supabaseAdmin, x.poster_url) ?? parent?.poster_url ?? null,
+    return { ...x, episode_code: episodeCode(x.season_number, x.episode_number), poster_url: await displayPoster(supabaseAdmin, x.poster_url, line.reseller_id) ?? parent?.poster_url ?? null,
       playback: { source_type: 'youtube' as const, youtube_video_id: x.youtube_video_id, embed_url: `https://www.youtube.com/embed/${x.youtube_video_id}`, original_url: x.original_url } };
   }));
   const envelope = { schema_version: 1, revision, refresh_after_seconds: 5, poster_url_expires_in_seconds: 3600 };
