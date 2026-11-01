@@ -1,7 +1,8 @@
 # Connection billing
 ## Direct provider YouTube episodes
-- [ ] Add structured provider form, TMDB-based series association, automatic names and language/poster display without altering M3U delivery.
-- [ ] Verify Setayesh S01E17 persistence, customer content delivery, permissions and stream regressions; deliver dashboard versus Android report.
+- [x] Add structured provider form, atomic owner/provider/TMDB association, database-generated names and language/poster display without altering M3U delivery.
+- [x] Verify exact Setayesh S01E17 save/reload, supplied poster, real customer API HTTP 200 and official embedded decoded playback at 16.06 seconds; 141 tests passed; dashboard versus Android report delivered.
+- [ ] Execute new transactional database-role permission test; blocked because sandbox connection cannot assume authenticated role (existing API auth/ownership regressions passed).
 - [ ] Integrate actual Android display/playback; blocked by absent native Android source and device access.
 ## YouTube episode integration
 - [x] Audit existing series APIs, ownership and Android integration boundary; no native Android source found.
