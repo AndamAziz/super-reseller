@@ -27,6 +27,7 @@ import { Route as ApiPublicGetDotphpRouteImport } from './routes/api/public/get[
 import { Route as ApiPublicPlayer_apiDotphpRouteImport } from './routes/api/public/player_api[.]php'
 import { Route as ApiPublicPlaylistRouteImport } from './routes/api/public/playlist'
 import { Route as ApiPublicPlaylistSplatRouteImport } from './routes/api/public/playlist.$'
+import { Route as ApiPublicVNameRouteImport } from './routes/api/public/v/$name'
 import { Route as LiveUsernamePasswordStreamRouteImport } from './routes/live.$username.$password.$stream'
 import { Route as MovieUsernamePasswordStreamRouteImport } from './routes/movie.$username.$password.$stream'
 import { Route as ProxyUsernamePasswordIdRouteImport } from './routes/proxy.$username.$password.$id'
@@ -128,6 +129,11 @@ const ApiPublicPlaylistSplatRoute = ApiPublicPlaylistSplatRouteImport.update({
   path: '/$',
   getParentRoute: () => ApiPublicPlaylistRoute,
 } as any)
+const ApiPublicVNameRoute = ApiPublicVNameRouteImport.update({
+  id: '/api/public/v/$name',
+  path: '/api/public/v/$name',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LiveUsernamePasswordStreamRoute =
   LiveUsernamePasswordStreamRouteImport.update({
     id: '/live/$username/$password/$stream',
@@ -194,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/api/public/player_api.php': typeof ApiPublicPlayer_apiDotphpRoute
   '/api/public/playlist': typeof ApiPublicPlaylistRouteWithChildren
   '/api/public/playlist/$': typeof ApiPublicPlaylistSplatRoute
+  '/api/public/v/$name': typeof ApiPublicVNameRoute
   '/live/$username/$password/$stream': typeof LiveUsernamePasswordStreamRoute
   '/movie/$username/$password/$stream': typeof MovieUsernamePasswordStreamRoute
   '/proxy/$username/$password/$id': typeof ProxyUsernamePasswordIdRoute
@@ -221,6 +228,7 @@ export interface FileRoutesByTo {
   '/api/public/player_api.php': typeof ApiPublicPlayer_apiDotphpRoute
   '/api/public/playlist': typeof ApiPublicPlaylistRouteWithChildren
   '/api/public/playlist/$': typeof ApiPublicPlaylistSplatRoute
+  '/api/public/v/$name': typeof ApiPublicVNameRoute
   '/live/$username/$password/$stream': typeof LiveUsernamePasswordStreamRoute
   '/movie/$username/$password/$stream': typeof MovieUsernamePasswordStreamRoute
   '/proxy/$username/$password/$id': typeof ProxyUsernamePasswordIdRoute
@@ -250,6 +258,7 @@ export interface FileRoutesById {
   '/api/public/player_api.php': typeof ApiPublicPlayer_apiDotphpRoute
   '/api/public/playlist': typeof ApiPublicPlaylistRouteWithChildren
   '/api/public/playlist/$': typeof ApiPublicPlaylistSplatRoute
+  '/api/public/v/$name': typeof ApiPublicVNameRoute
   '/live/$username/$password/$stream': typeof LiveUsernamePasswordStreamRoute
   '/movie/$username/$password/$stream': typeof MovieUsernamePasswordStreamRoute
   '/proxy/$username/$password/$id': typeof ProxyUsernamePasswordIdRoute
@@ -279,6 +288,7 @@ export interface FileRouteTypes {
     | '/api/public/player_api.php'
     | '/api/public/playlist'
     | '/api/public/playlist/$'
+    | '/api/public/v/$name'
     | '/live/$username/$password/$stream'
     | '/movie/$username/$password/$stream'
     | '/proxy/$username/$password/$id'
@@ -306,6 +316,7 @@ export interface FileRouteTypes {
     | '/api/public/player_api.php'
     | '/api/public/playlist'
     | '/api/public/playlist/$'
+    | '/api/public/v/$name'
     | '/live/$username/$password/$stream'
     | '/movie/$username/$password/$stream'
     | '/proxy/$username/$password/$id'
@@ -334,6 +345,7 @@ export interface FileRouteTypes {
     | '/api/public/player_api.php'
     | '/api/public/playlist'
     | '/api/public/playlist/$'
+    | '/api/public/v/$name'
     | '/live/$username/$password/$stream'
     | '/movie/$username/$password/$stream'
     | '/proxy/$username/$password/$id'
@@ -354,6 +366,7 @@ export interface RootRouteChildren {
   ApiPublicGetDotphpRoute: typeof ApiPublicGetDotphpRoute
   ApiPublicPlayer_apiDotphpRoute: typeof ApiPublicPlayer_apiDotphpRoute
   ApiPublicPlaylistRoute: typeof ApiPublicPlaylistRouteWithChildren
+  ApiPublicVNameRoute: typeof ApiPublicVNameRoute
   LiveUsernamePasswordStreamRoute: typeof LiveUsernamePasswordStreamRoute
   MovieUsernamePasswordStreamRoute: typeof MovieUsernamePasswordStreamRoute
   ProxyUsernamePasswordIdRoute: typeof ProxyUsernamePasswordIdRoute
@@ -492,6 +505,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPlaylistSplatRouteImport
       parentRoute: typeof ApiPublicPlaylistRoute
     }
+    '/api/public/v/$name': {
+      id: '/api/public/v/$name'
+      path: '/api/public/v/$name'
+      fullPath: '/api/public/v/$name'
+      preLoaderRoute: typeof ApiPublicVNameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/live/$username/$password/$stream': {
       id: '/live/$username/$password/$stream'
       path: '/live/$username/$password/$stream'
@@ -597,6 +617,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicGetDotphpRoute: ApiPublicGetDotphpRoute,
   ApiPublicPlayer_apiDotphpRoute: ApiPublicPlayer_apiDotphpRoute,
   ApiPublicPlaylistRoute: ApiPublicPlaylistRouteWithChildren,
+  ApiPublicVNameRoute: ApiPublicVNameRoute,
   LiveUsernamePasswordStreamRoute: LiveUsernamePasswordStreamRoute,
   MovieUsernamePasswordStreamRoute: MovieUsernamePasswordStreamRoute,
   ProxyUsernamePasswordIdRoute: ProxyUsernamePasswordIdRoute,

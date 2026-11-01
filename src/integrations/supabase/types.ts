@@ -546,6 +546,7 @@ export type Database = {
         Returns: boolean
       }
       normalize_customer: { Args: { _c: string }; Returns: string }
+      public_video_path: { Args: { p_short: string }; Returns: string }
       renew_line: {
         Args: { _line_id: string; _months: number }
         Returns: {
