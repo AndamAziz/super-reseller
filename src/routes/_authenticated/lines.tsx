@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, Panel, StatusBadge, FullBadge, td, th, inputCls, softBtn, dangerBtn, primaryBtn } from "@/components/panel";
 import { cn } from "@/lib/utils";
 import { connectionUpgradeCost, renewalCost } from "@/lib/connection-pricing";
+import { customerLinks } from "@/lib/customer-links";
 import { Button } from "@/components/ui/button";
 import { useMe, isActive, fmtDate, errMsg } from "@/hooks/use-me";
 import { useLines } from "@/lib/queries";
@@ -96,16 +97,10 @@ function LinesPage() {
       .then(({ data }) => setSource(data?.value ?? ""));
   }, [isAdmin]);
 
-  const linkFor = (l: { username: string; password: string; custom_host: string | null }) => {
-    let base = (l.custom_host || (typeof window !== "undefined" ? window.location.origin : "")).trim().replace(/\/+$/, "");
-    if (base && !/^https?:\/\//i.test(base)) base = `https://${base}`;
-    return `${base}/api/public/playlist?username=${encodeURIComponent(l.username)}&password=${encodeURIComponent(l.password)}`;
-  };
-
-  async function copyLink(link: string) {
+  async function copyLink(link: string, kind: string) {
     try {
       await navigator.clipboard.writeText(link);
-      toast.success("M3U link copied");
+      toast.success(`${kind} copied`);
     } catch {
       toast.error("Couldn't copy — select the link manually");
     }
@@ -417,14 +412,11 @@ function LinesPage() {
                   </td>
                   <td className={td}><StatusBadge active={isActive(l.expires_at)} /></td>
                   <td className={td}>
-                    <button
-                      type="button"
-                      className={`${softBtn} inline-flex items-center gap-1`}
-                      title={linkFor(l)}
-                      onClick={() => copyLink(linkFor(l))}
-                    >
-                      <Copy className="size-3.5" /> M3U
-                    </button>
+                    <div className="flex flex-wrap gap-1.5">
+                      <Button type="button" variant="outline" className={softBtn} title="Copy M3U link" onClick={() => copyLink(customerLinks(l).m3u, "M3U link")}><Copy className="size-3.5" /> M3U</Button>
+                      <Button type="button" variant="outline" className={softBtn} title="Copy provider host" onClick={() => copyLink(customerLinks(l).provider, "Provider host")}><Copy className="size-3.5" /> Host</Button>
+                      <Button type="button" variant="outline" className={softBtn} title="Copy combined M3U + YouTube catalogue link" onClick={() => copyLink(customerLinks(l).content, "Combined catalogue link")}><Copy className="size-3.5" /> M3U + YouTube</Button>
+                    </div>
                   </td>
                   <td className={`${td} text-right`}>
                     <div className="inline-flex items-center gap-1.5">
