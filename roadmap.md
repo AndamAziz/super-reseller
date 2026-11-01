@@ -1,4 +1,10 @@
 # Connection billing
+## Phase 2 real playback
+- [ ] Add bounded protocol detection and verify decoded playback separately from HTTP connectivity.
+- [ ] Implement and verify secure DASH playback with a browser-compatible engine without changing existing panel UI.
+- [ ] Check codecs, seeking, tracks, continuity and synchronization; report unsupported or unverified cases honestly.
+- [ ] Verify five-second GitHub synchronization and existing playback/reseller regressions without altering records or assignments.
+- [ ] Report measured sample success rates and RTMP conversion feasibility; no paid transcoding without approval.
 ## Stream test accuracy
 - [x] Use selected channel headers independently of GitHub, require actual media bytes and recheck transient failures once; supplied AVA Media link verified in authenticated Playlists with playlist/first segment 200, all 75 tests pass and build OK. Playback and billing unchanged.
 ## Playback engine audit
