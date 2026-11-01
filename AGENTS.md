@@ -38,4 +38,4 @@
 - YouTube uses official embeds; Android branches by source_type. Customer APIs add only admin-shared published GitHub episodes; owner-scoped CRUD stays unchanged.
 - Connection RPCs enforce ownership and saved limits; service-role playback follows line auth; policies unchanged.
 - Customer links share a live-host builder; M3U, host and combined catalogue stay distinct.
-- Legacy YouTube URL manages admin-only MP4 storage uploads; large files use TUS, playback uses token-free public URLs.
+- YouTube URL manages admin-only MP4 uploads (TUS for large); copy links are /api/public/v/<name>.mp4 redirects; never SQL-rename storage.objects.
