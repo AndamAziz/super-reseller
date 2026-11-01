@@ -1,10 +1,13 @@
 # Connection billing
 ## Phase 2 real playback
-- [ ] Add bounded protocol detection and verify decoded playback separately from HTTP connectivity.
-- [ ] Implement and verify secure DASH playback with a browser-compatible engine without changing existing panel UI.
-- [ ] Check codecs, seeking, tracks, continuity and synchronization; report unsupported or unverified cases honestly.
-- [ ] Verify five-second GitHub synchronization and existing playback/reseller regressions without altering records or assignments.
-- [ ] Report measured sample success rates and RTMP conversion feasibility; no paid transcoding without approval.
+- [x] Add TS transmuxing and detect HLS behind .TS; remove Range prerequisite rejected by some origins. Regression tests pass; real H.264/AAC decoding is blocked by the sandbox browser's absent codecs.
+- [x] Add bounded protocol detection and verify decoded playback separately from HTTP connectivity.
+- [x] Implement scoped signed DASH delivery; controlled VP9/Opus DASH decodes through actual proxy with seeking and 258 frames in ten seconds. Current panel navigation/layout unchanged.
+- [x] Check browser codecs, seeking and bounded continuity; report absent H.264/AAC support, unmeasured sync and track-switch limitations honestly.
+- [x] Retain five-second polling, replacement-based source queries and identity-safe removal/rotation regressions; add full-content version hashes. All 88 tests pass; customer records and assignments untouched.
+- [x] Report measured sample outcomes and RTMP conversion infeasibility on current hosting; no paid service added.
+- [ ] Verify user's H.264/AAC TS/HLS/MP4 on their target player; blocked by codecs absent from test Chromium and intermittent source timeouts.
+- [ ] Complete independent A/V sync, subtitle rendering and audio/automatic bitrate switching evidence on target devices; requires suitable device/player and controlled track fixtures. Do not claim these are verified.
 ## Stream test accuracy
 - [x] Use selected channel headers independently of GitHub, require actual media bytes and recheck transient failures once; supplied AVA Media link verified in authenticated Playlists with playlist/first segment 200, all 75 tests pass and build OK. Playback and billing unchanged.
 ## Playback engine audit

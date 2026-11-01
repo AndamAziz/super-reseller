@@ -20,11 +20,18 @@ export async function handleMediaPlayback(request: Request, username: string, pa
   let target: URL;
   if (segment) {
     const params = new URL(request.url).searchParams;
+    if (params.has("t")) {
+      const { resolveDashTarget } = await import("./dash-manifest.server");
+      const allowed = await resolveDashTarget(params, scope);
+      if (!allowed) return plain("Forbidden DASH target", 403);
+      target = allowed;
+    } else {
     let raw: string;
     try { raw = unb64u(params.get("u") ?? ""); } catch { return plain("Bad url", 400); }
     const allowed = await allowedUrl(raw, params.get("s") ?? "", scope);
     if (!allowed) return plain("Forbidden target", 403);
     target = allowed;
+    }
   } else {
     try { target = new URL(channel.url); } catch { return plain("Invalid source URL", 502); }
   }

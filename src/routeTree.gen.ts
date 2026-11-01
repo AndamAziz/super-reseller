@@ -18,6 +18,7 @@ import { Route as AuthenticatedContactRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedCreditsRouteImport } from './routes/_authenticated/credits'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedLinesRouteImport } from './routes/_authenticated/lines'
+import { Route as AuthenticatedPlaybackCheckRouteImport } from './routes/_authenticated/playback-check'
 import { Route as AuthenticatedPlaylistsRouteImport } from './routes/_authenticated/playlists'
 import { Route as AuthenticatedResellersRouteImport } from './routes/_authenticated/resellers'
 import { Route as ApiPublicGetDotphpRouteImport } from './routes/api/public/get[.]php'
@@ -77,6 +78,12 @@ const AuthenticatedLinesRoute = AuthenticatedLinesRouteImport.update({
   path: '/lines',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPlaybackCheckRoute =
+  AuthenticatedPlaybackCheckRouteImport.update({
+    id: '/playback-check',
+    path: '/playback-check',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlaylistsRoute = AuthenticatedPlaylistsRouteImport.update({
   id: '/playlists',
   path: '/playlists',
@@ -165,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/credits': typeof AuthenticatedCreditsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/lines': typeof AuthenticatedLinesRoute
+  '/playback-check': typeof AuthenticatedPlaybackCheckRoute
   '/playlists': typeof AuthenticatedPlaylistsRoute
   '/resellers': typeof AuthenticatedResellersRoute
   '/api/public/get.php': typeof ApiPublicGetDotphpRoute
@@ -189,6 +197,7 @@ export interface FileRoutesByTo {
   '/credits': typeof AuthenticatedCreditsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/lines': typeof AuthenticatedLinesRoute
+  '/playback-check': typeof AuthenticatedPlaybackCheckRoute
   '/playlists': typeof AuthenticatedPlaylistsRoute
   '/resellers': typeof AuthenticatedResellersRoute
   '/api/public/get.php': typeof ApiPublicGetDotphpRoute
@@ -215,6 +224,7 @@ export interface FileRoutesById {
   '/_authenticated/credits': typeof AuthenticatedCreditsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/lines': typeof AuthenticatedLinesRoute
+  '/_authenticated/playback-check': typeof AuthenticatedPlaybackCheckRoute
   '/_authenticated/playlists': typeof AuthenticatedPlaylistsRoute
   '/_authenticated/resellers': typeof AuthenticatedResellersRoute
   '/api/public/get.php': typeof ApiPublicGetDotphpRoute
@@ -241,6 +251,7 @@ export interface FileRouteTypes {
     | '/credits'
     | '/dashboard'
     | '/lines'
+    | '/playback-check'
     | '/playlists'
     | '/resellers'
     | '/api/public/get.php'
@@ -265,6 +276,7 @@ export interface FileRouteTypes {
     | '/credits'
     | '/dashboard'
     | '/lines'
+    | '/playback-check'
     | '/playlists'
     | '/resellers'
     | '/api/public/get.php'
@@ -290,6 +302,7 @@ export interface FileRouteTypes {
     | '/_authenticated/credits'
     | '/_authenticated/dashboard'
     | '/_authenticated/lines'
+    | '/_authenticated/playback-check'
     | '/_authenticated/playlists'
     | '/_authenticated/resellers'
     | '/api/public/get.php'
@@ -388,6 +401,13 @@ declare module '@tanstack/react-router' {
       path: '/lines'
       fullPath: '/lines'
       preLoaderRoute: typeof AuthenticatedLinesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/playback-check': {
+      id: '/_authenticated/playback-check'
+      path: '/playback-check'
+      fullPath: '/playback-check'
+      preLoaderRoute: typeof AuthenticatedPlaybackCheckRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/playlists': {
@@ -496,6 +516,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCreditsRoute: typeof AuthenticatedCreditsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedLinesRoute: typeof AuthenticatedLinesRoute
+  AuthenticatedPlaybackCheckRoute: typeof AuthenticatedPlaybackCheckRoute
   AuthenticatedPlaylistsRoute: typeof AuthenticatedPlaylistsRoute
   AuthenticatedResellersRoute: typeof AuthenticatedResellersRoute
 }
@@ -505,6 +526,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCreditsRoute: AuthenticatedCreditsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedLinesRoute: AuthenticatedLinesRoute,
+  AuthenticatedPlaybackCheckRoute: AuthenticatedPlaybackCheckRoute,
   AuthenticatedPlaylistsRoute: AuthenticatedPlaylistsRoute,
   AuthenticatedResellersRoute: AuthenticatedResellersRoute,
 }
