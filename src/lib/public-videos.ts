@@ -27,7 +27,7 @@ export async function listPublicVideos(): Promise<PublicVideo[]> {
     for (const file of await entries(folder.name)) {
       if (!file.id || !/\.mp4$/i.test(file.name)) continue;
       const path = `${folder.name}/${file.name}`;
-      videos.push({ path, name: file.name.replace(/^[a-f0-9-]{36}_/, ''), bytes: Number(file.metadata?.size ?? 0), createdAt: file.created_at, url: videoPublicUrl(path) });
+      videos.push({ path, name: file.name.replace(/^[a-f0-9-]{36}_/, ''), bytes: Number(file.metadata?.size ?? 0), createdAt: file.created_at ?? '', url: videoPublicUrl(path) });
     }
   }
   return videos.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -49,7 +49,7 @@ export async function uploadPublicVideo(file: File, onProgress: (percent: number
   } else {
     const { Upload } = await import('tus-js-client');
     await new Promise<void>((resolve, reject) => {
-      const endpoint = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/upload/resumable`;
+      const endpoint = `${import.meta.env['VITE_SUPABASE_URL']}/storage/v1/upload/resumable`;
       const upload = new Upload(file, {
         endpoint, chunkSize: 6 * 1024 ** 2, retryDelays: [0, 1000, 3000, 5000],
         uploadDataDuringCreation: true, removeFingerprintOnSuccess: true,
@@ -58,7 +58,7 @@ export async function uploadPublicVideo(file: File, onProgress: (percent: number
           const { data } = await supabase.auth.getSession();
           if (!data.session) throw new Error('Sign in again to upload.');
           request.setHeader('Authorization', `Bearer ${data.session.access_token}`);
-          request.setHeader('apikey', import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);
+          request.setHeader('apikey', import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY']);
         },
         onProgress: (sent, total) => onProgress(Math.round(sent / total * 100)),
         onError: (uploadError) => { signal.removeEventListener('abort', cancel); reject(uploadError); },
