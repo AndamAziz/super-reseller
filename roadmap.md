@@ -1,10 +1,11 @@
 # Connection billing
 ## YouTube episode integration
-- [ ] Audit existing series APIs, ownership and Android integration boundary.
-- [ ] Add database-backed, owner-scoped series/seasons/YouTube episodes and management page, without changing existing IPTV playback or billing.
-- [ ] Add validated YouTube URLs, permitted metadata, posters and official embedded playback.
-- [ ] Expose authenticated series/season/episode/source APIs and automatic refresh; provide Android integration requirements if native source is unavailable.
-- [ ] Verify saved episode workflow, authorization and existing media regressions; report Android/device limitations separately.
+- [x] Audit existing series APIs, ownership and Android integration boundary; no native Android source found.
+- [x] Add database-backed, owner-scoped series/seasons/YouTube episodes and management page, without changing existing IPTV playback or billing.
+- [x] Add validated YouTube URLs, permitted metadata, private poster uploads and official embedded playback; decoded Google Developers sample reached 12.98 seconds at 854×480 in browser.
+- [x] Expose customer-line-scoped series/season/episode/source APIs with publication filtering, revisions and five-second refresh contract; provide exact Android integration requirements.
+- [x] Verify real admin/reseller save/edit/reload, private poster, customer API, draft filtering, duplicate/ownership checks and existing media regressions; remove temporary fixtures and report limitations.
+- [ ] Integrate and build native Android client, then verify automatic series display and YouTube playback on-device; blocked by absent Android source/device access.
 ## Phase 3B provider-specific diagnosis
 - [x] Trace existing Provider API and M3U paths: both use the same source/catalog/playback handlers; AVA Media, RUDAW TV and Kurdsat TV emit identical URLs and reach signed TS media bytes. No separate configured upstream provider found in application code.
 - [ ] Reproduce the reported provider-only failure and fix only verified defects; blocked by missing customer player name/configuration and failing channel identification (clarification skipped). No playback changes made for Phase 3B.
