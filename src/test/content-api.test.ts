@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mocks = vi.hoisted(() => ({ auth: vi.fn(), rows: {} as Record<string, unknown[]>, filters: [] as [string, string, unknown][] }));
-vi.mock('@/lib/playlist-auth.server', () => ({ authLine: mocks.auth, json: (value: unknown, status = 200) => new Response(JSON.stringify(value), { status }) }));
+const mocks = vi.hoisted(() => ({ auth: vi.fn(), catalog: vi.fn(), rows: {} as Record<string, unknown[]>, filters: [] as [string, string, unknown][] }));
+vi.mock('@/lib/playlist-auth.server', () => ({ authLine: mocks.auth, loadCatalog: mocks.catalog, json: (value: unknown, status = 200) => new Response(JSON.stringify(value), { status }) }));
 vi.mock('@/lib/content-posters.server', () => ({ displayPoster: async (_client: unknown, url: string | null) => url }));
 vi.mock('@/integrations/supabase/client.server', () => ({ supabaseAdmin: { from: (table: string) => {
   const filters: [string, unknown][] = [];
@@ -23,10 +23,24 @@ const fixture = { id: eid, owner_id: 'owner-a', series_id: sid, season_id: 'seas
 const request = (query = '') => new Request(`https://panel.example/api/public/content${query}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'customer', password: 'test-only' }) });
 beforeEach(() => {
   mocks.filters = [];
+  mocks.catalog.mockResolvedValue({ ok: true, catalog: { series: [], version: 'test' } });
   mocks.auth.mockResolvedValue({ ok: true, lineId: 'line' });
   mocks.rows = { content_series: [{ id: sid, owner_id: 'owner-a', title: 'Jumong', poster_url: 'https://images.example/series.jpg' }], content_seasons: [{ id: 'season', owner_id: 'owner-a', series_id: sid, season_number: 1 }], content_episodes: [fixture, { ...fixture, id: 'draft', episode_number: 22, published: false }, { ...fixture, id: 'other', owner_id: 'owner-b' }] };
 });
 describe('customer content API', () => {
+  it('returns both M3U and YouTube inside one owner-scoped Setayesh series and season', async () => {
+    mocks.rows['content_series'] = [{ id: sid, owner_id: 'owner-a', title: 'Setayesh', tmdb_id: 94146, provider_key: 'github', poster_url: null }];
+    mocks.rows['content_episodes'] = [{ ...fixture, episode_number: 17, language_label: 'KURDISH-دۆبلاژ' }, { ...fixture, id: 'foreign', owner_id: 'owner-b' }];
+    mocks.catalog.mockResolvedValue({ ok: true, catalog: { version: 'combined', series: [{ id: 8, title: 'Setayesh _ ستایش {tmdb-94146}', category: 'KURDISH-دۆبلاژ', cover: null, episodes: [{ id: 7, season: 1, episode: 1, name: 'Setayesh - S01E01', group_title: 'KURDISH-دۆبلاژ', logo: null, url: 'https://source.example/1.m3u8', referrer: null }] }] } });
+    const data = await (await handleContentApi(request())).json();
+    expect(data.series.filter((s: {tmdb_id: number}) => s.tmdb_id===94146)).toHaveLength(1);
+    expect(data.episodes.map((e: {episode_number:number}) => e.episode_number)).toEqual([1,17]);
+    expect(data.episodes.map((e: {playback:{source_type:string}}) => e.playback.source_type)).toEqual(['m3u','youtube']);
+    expect(data.episodes.every((e: {series_id:string}) => e.series_id === sid)).toBe(true);
+    expect(data.episodes.map((e: {id:string})=>e.id)).not.toContain('foreign');
+    const detail = await (await handleContentApi(request(`?action=episodes&series_id=${sid}`))).json();
+    expect(detail.episodes).toHaveLength(2);
+  });
   it('delivers provider TMDB metadata and language with unchanged poster and official source', async () => {
     mocks.rows['content_series'] = [{ id: sid, owner_id: 'owner-a', title: 'Setayesh', tmdb_id: 94146, provider_key: 'github' }];
     mocks.rows['content_episodes'] = [{ ...fixture, episode_number: 17, language_label: 'KURDISH-دۆبلاژ', original_url: 'https://www.youtube.com/watch?v=3leqKX7BsFw', youtube_video_id: '3leqKX7BsFw', poster_url: 'https://media.themoviedb.org/t/p/w600_and_h900_face/6e7Wkc5jckzksjKta4TELHCufs.jpg' }];
