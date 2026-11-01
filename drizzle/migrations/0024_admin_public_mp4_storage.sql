@@ -1,0 +1,3 @@
+CREATE POLICY "Admins list public videos" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'public-videos' AND public.has_role(auth.uid(), 'admin'::public.app_role));
+CREATE POLICY "Admins upload public MP4 videos" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'public-videos' AND public.has_role(auth.uid(), 'admin'::public.app_role) AND (storage.foldername(name))[1] = auth.uid()::text AND lower(storage.extension(name)) = 'mp4');
+CREATE POLICY "Admins delete public videos" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'public-videos' AND public.has_role(auth.uid(), 'admin'::public.app_role));
