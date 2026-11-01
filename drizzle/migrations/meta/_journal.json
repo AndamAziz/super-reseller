@@ -183,6 +183,13 @@
       "when": 1793524306181,
       "tag": "0025_short_public_video_links",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1793525467178,
+      "tag": "0026_compact_public_video_aliases",
+      "breakpoints": true
     }
   ]
 }
