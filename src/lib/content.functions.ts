@@ -1,7 +1,7 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
-import { episodeSchema, seasonSchema, seriesSchema, youtubeId } from './youtube';
+import { episodeSchema, seasonSchema, seriesSchema, youtubeId, providerEpisodeSchema } from './youtube';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/integrations/supabase/types';
 import { collectContentPages } from './content-pagination';
@@ -26,6 +26,20 @@ export const getManagedContent = createServerFn({ method: 'GET' }).middleware([r
   const { displayPoster } = await import('./content-posters.server');
   return { series: await Promise.all(s.map(async x => ({ ...x, display_poster: await displayPoster(context.supabase, x.poster_url, x.owner_id) }))), seasons: n,
     episodes: await Promise.all(e.map(async x => ({ ...x, display_poster: await displayPoster(context.supabase, x.poster_url, x.owner_id) }))) };
+});
+
+export const addProviderEpisode = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).inputValidator(v => providerEpisodeSchema.parse(v)).handler(async ({ data, context }) => {
+  await member(context.supabase, context.userId);
+  const videoId = youtubeId(data.original_url);
+  if (!videoId) throw new Error('Invalid YouTube URL');
+  const result = await context.supabase.rpc('add_provider_youtube_episode', {
+    _owner_id: data.owner_id, _provider_key: data.provider_key, _english_name: data.english_name, _original_name: data.original_name,
+    _tmdb_id: data.tmdb_id, _season_number: data.season_number, _episode_number: data.episode_number,
+    _language_label: data.language_label, _original_url: data.original_url, _video_id: videoId, _poster_url: data.poster_url,
+  });
+  if (result.error?.message.includes('existing names')) throw new Error('Use the existing English and original names for this TMDB series.');
+  failure(result.error);
+  return { id: result.data };
 });
 
 export const saveSeries = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).inputValidator(v => seriesSchema.parse(v)).handler(async ({ data, context }) => {

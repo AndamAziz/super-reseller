@@ -18,6 +18,7 @@ import { ChannelLinksDialog } from "@/components/channel-links-dialog";
 import { useDeleteChannel } from "@/lib/channel-delete";
 import { channelNeighbor } from "@/lib/channel-order";
 import { ChannelOrderButtons } from "@/components/channel-order-buttons";
+import { ProviderYoutubeEpisodes } from '@/components/provider-youtube-episodes';
 
 type TestResult = { loading: true } | { loading: false; ok: boolean; steps: StreamTestStep[]; error?: string };
 
@@ -199,6 +200,8 @@ function PlaylistsPage() {
       </div>
       {isSource && source.isError && <p role="alert" className="text-destructive">{errMsg(source.error)}</p>}
       {!isSource && !isLoading && channels.some((c) => !c.m3u_metadata) && <p role="alert" className="text-warn">This older import is missing original M3U attributes. Import the original file again to restore media sections and download its original format.</p>}
+
+      <ProviderYoutubeEpisodes providerKey={current} providerName={isSource ? 'GitHub playlist' : playlists.find(p => p.id === current)?.name ?? 'Playlist'} />
 
       <div role="tablist" aria-label="Media sections" className="flex flex-wrap gap-2">
         {([ ["all", "All"], ["live", "Live TV"], ["movie", "Movies"], ["series", "Series"] ] as const).map(([value, label]) => (
