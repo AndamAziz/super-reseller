@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { compactVideoName, displayVideoName, storageVideoName } from '@/lib/video-names';
+import { faststartMp4 } from '@/lib/mp4-faststart';
 
 export const VIDEO_BUCKET = 'public-videos';
 export const MAX_VIDEO_BYTES = 5 * 1024 ** 3;
@@ -51,17 +52,21 @@ export async function listPublicVideos(): Promise<PublicVideo[]> {
   }
   return videos.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
-export async function uploadPublicVideo(file: File, onProgress: (percent: number) => void, signal: AbortSignal, existingNames: string[] = [], movieName = file.name) {
+export async function uploadPublicVideo(file: File, onProgress: (percent: number) => void, signal: AbortSignal, existingNames: string[] = [], movieName = file.name, onPhase?: (phase: 'preparing' | 'uploading') => void) {
   validateMp4(file);
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) throw new Error('Sign in again to upload.');
   const path = `${user.id}/${storageVideoName(pickUniqueVideoName(sanitizeVideoName(movieName), existingNames))}`;
   signal.throwIfAborted();
+  onPhase?.('preparing');
+  const prepared = await faststartMp4(file, signal);
+  signal.throwIfAborted();
+  onPhase?.('uploading');
   {
     const { Upload } = await import('tus-js-client');
     await new Promise<void>((resolve, reject) => {
       const endpoint = `${import.meta.env['VITE_SUPABASE_URL']}/storage/v1/upload/resumable`;
-      const upload = new Upload(file, {
+      const upload = new Upload(prepared, {
         endpoint, chunkSize: 6 * 1024 ** 2, retryDelays: [0, 1000, 3000, 5000],
         uploadDataDuringCreation: true, removeFingerprintOnSuccess: true,
         metadata: { bucketName: VIDEO_BUCKET, objectName: path, contentType: 'video/mp4', cacheControl: '3600' },
