@@ -1,4 +1,6 @@
 # Connection billing
+## Reported Collision Course MP4 link
+- [ ] Repair startup for v-0bfb9f91d8d3.mp4: published redirect and anonymous MP4 ranges work, but the 2.36 MB playback index is at the end of the 1.11 GB file. Move the index to the front without transcoding, replace bytes through the owner-authenticated storage API, and verify published decoding and unchanged audio/video hashes.
 ## Intermittent provider availability
 - [x] Concurrent reseller requests immediately get the last-good catalog during refresh; the owning request completes the refresh without detached background work. Forced/cold reads wait; synchronous cold failures no longer poison later reads. Four availability tests and all 205 tests pass; 15 authenticated preview calls returned 200, anonymous catalog denied; build OK. Not published.
 - [x] Account/settings/source reads retry transient failures once with bounded deadlines. Provider outages return 503 + Retry-After rather than false Disabled/auth:0; connection failures never fabricate zero devices. Expiry, connection enforcement and billing unchanged.
