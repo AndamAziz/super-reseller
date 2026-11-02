@@ -8,7 +8,11 @@ vi.mock("@/integrations/supabase/client.server", () => {
     if (table === "app_settings") return { value: "https://raw.githubusercontent.com/owner/repo/main/playlist.m3u" };
     return null;
   };
-  const query = (table: string) => ({ select: () => ({ eq: () => ({ abortSignal: () => ({ maybeSingle: async () => ({ data: row(table), error: null, status: 200 }) }) }) }) });
+  const query = (table: string) => {
+    const chain = { select: () => chain, eq: () => chain, abortSignal: () => chain,
+      maybeSingle: async () => ({ data: row(table), error: null, status: 200 }) };
+    return chain;
+  };
   return { supabaseAdmin: { from: query, rpc: async () => ({ data: true, error: null }) } };
 });
 
