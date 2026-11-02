@@ -7,8 +7,10 @@ export function createPlaylistCache<T>(load: () => Promise<T>, now = Date.now) {
   let pending: Promise<T> | undefined;
   return async (force = false): Promise<T> => {
     if (!force && value !== undefined && now() < nextCheck) return value;
-    if (pending) return pending;
-    pending = (async () => {
+    // One request owns the refresh; other customers must not wait behind a slow source.
+    // Forced reads still join the current refresh and cold starts have no fabricated fallback.
+    if (pending) return !force && value !== undefined ? value : pending;
+    pending = Promise.resolve().then(async () => {
       try {
         value = await load();
         nextCheck = now() + PLAYLIST_REFRESH_MS;
@@ -20,7 +22,7 @@ export function createPlaylistCache<T>(load: () => Promise<T>, now = Date.now) {
       } finally {
         pending = undefined;
       }
-    })();
+    });
     return pending;
   };
 }
