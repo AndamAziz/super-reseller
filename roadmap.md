@@ -1,7 +1,8 @@
 # Connection billing
 ## Intermittent provider availability
-- [ ] Handle transient account/settings/source read failures with bounded retries, never mislabel database outages as disabled accounts; preserve expiry, connection enforcement and billing.
-- [ ] Test outages/recovery and supplied customer's authenticated catalog responses; publication and target-player continuity remain separate.
+- [x] Account/settings/source reads retry transient failures once with bounded deadlines. Provider outages return 503 + Retry-After rather than false Disabled/auth:0; connection failures never fabricate zero devices. Expiry, connection enforcement and billing unchanged.
+- [x] Nine outage/security regressions and all 201 tests pass. Supplied customer's published and preview auth Active plus live/movie/series reads returned 200; 15 concurrent preview requests passed (maximum 0.98s). Not published.
+- [ ] Confirm intermittent loss/continuity in the customer's actual IPTV player after publication; blocked by target-player access and publication approval. No permanent availability guarantee.
 ## Provider movie and series metadata
 - [x] Added source-derived TMDB and declared metadata to movie/series lists/details and missing get_vod_info; original names/posters, authenticated playback, accounts and billing unchanged. No enrichment requests added; five-second coalesced refresh retained.
 - [x] Public GitHub sample: 10,503 entries, 19 movies/188 episodes, all 207 TMDB IDs/posters parsed; zero declared audio/subtitle languages. All 192 tests pass, including credential denial, five-second updates/outage fallback, HLS audio/subtitle authorization and DASH descriptor preservation; build OK. Not published.
