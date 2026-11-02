@@ -40,4 +40,10 @@ describe('short public video link', () => {
     expect(publishedMoviePath('unknown.mp4')).toBeUndefined();
     expect(publishedMoviePath('__proto__')).toBeUndefined();
   });
+  it('plays Collision Course from both the current link and the link saved in the GitHub playlist', () => {
+    const path = '2bce34f8-9310-4b4a-a6b4-b7a481fe0d05/Movies--Collision-Course-2026.mp4';
+    expect(compactVideoName(path)).toBe('v-0bfb9f91d8d3.mp4');
+    expect(publishedMoviePath('v-0bfb9f91d8d3.mp4')).toBe(path);
+    expect(publishedMoviePath('v-127d11c9b774.mp4')).toBe(path);
+  });
 });
