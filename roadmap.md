@@ -1,5 +1,6 @@
 # Connection billing
 ## Intermittent provider availability
+- [ ] Keep last-good catalog immediately available to concurrent reseller requests during refresh; test stalled refresh, recovery and failed cold start without bypassing authentication.
 - [x] Account/settings/source reads retry transient failures once with bounded deadlines. Provider outages return 503 + Retry-After rather than false Disabled/auth:0; connection failures never fabricate zero devices. Expiry, connection enforcement and billing unchanged.
 - [x] Nine outage/security regressions and all 201 tests pass. Supplied customer's published and preview auth Active plus live/movie/series reads returned 200; 15 concurrent preview requests passed (maximum 0.98s). Not published.
 - [ ] Confirm intermittent loss/continuity in the customer's actual IPTV player after publication; blocked by target-player access and publication approval. No permanent availability guarantee.
