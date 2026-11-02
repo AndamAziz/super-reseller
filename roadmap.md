@@ -1,4 +1,8 @@
 # Connection billing
+## Provider movie and series metadata
+- [x] Added source-derived TMDB and declared metadata to movie/series lists/details and missing get_vod_info; original names/posters, authenticated playback, accounts and billing unchanged. No enrichment requests added; five-second coalesced refresh retained.
+- [x] Public GitHub sample: 10,503 entries, 19 movies/188 episodes, all 207 TMDB IDs/posters parsed; zero declared audio/subtitle languages. All 192 tests pass, including credential denial, five-second updates/outage fallback, HLS audio/subtitle authorization and DASH descriptor preservation; build OK. Not published.
+- [ ] Verify real customer provider UI, decoded audio/subtitles and target-player startup; blocked by unavailable signed-in session (automatic account mint found no requesting-user account) and target-player access. Ask user to sign in for end-to-end verification; no universal playback claim.
 ## Admin public MP4 uploads
 - [x] Existing short/legacy movie links now use a release-pinned public path, bypassing all cache/database I/O on cold instances. Fourteen tests pass; preview GET/HEAD 302, anonymous range 206 with identical 1 MB bytes and moov at byte 32, unknown 404; build OK. Not published; target-player startup remains unmeasured.
 - [x] Moved the existing movie's 5 MB index from the end to byte 32 without transcoding; audio/video hashes unchanged. Compact aliases copied through the real admin page, 182 tests passed; published short and legacy links returned anonymous 206, HEAD succeeded, five seconds of audio/video decoded. VLC device speed remains unmeasured.

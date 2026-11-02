@@ -12,7 +12,7 @@
 - Credit deduction and line expiry run only in database functions; update_line locks the line, bill_connection_increase triggers atomic balance deductions for all reseller connection increases (including legacy service-role updates without a user identity), and renew_line charges every configured connection. Authenticated admin changes remain exempt; update_line must not also deduct the trigger's charge.
 - Connection upgrade previews mirror database UTC calendar-month arithmetic, rounding remaining partial months up; the database returns the actual charge and remains authoritative.
 - Reseller accounts are created/deleted by admin-only server functions; public sign-up is disabled.
-- Low-credit alerts derive from the authenticated balance in the shared AppShell and a single tested threshold helper, so every reseller page shows the same warning without storing duplicate notification state.
+- Low-credit alerts use the authenticated AppShell balance and one tested threshold helper on every reseller page; no duplicate notification state.
 - The admin dashboard reads reseller balances from the shared reseller query, refreshed every 30 seconds, and reuses the low-credit helper per reseller to keep warning thresholds consistent.
 - Stream proxy targets are authorized by an HMAC signature (scope user:stream) added when our rewriter emits each URI, so any host in a channel's playlist chain is allowed without a host allowlist; private hosts stay blocked on every redirect hop.
 - Generated media URLs use authenticated /api/public playback handlers and preserve source extensions, so audio/video files avoid HLS misidentification and the site access wall; catalog classification still follows tvg-type only.
@@ -25,17 +25,18 @@
 - Uploaded channel ordering uses an admin-checked atomic database RPC to swap saved positions with the previous/next visible channel; reads sort by position and ID so exports and reloads preserve the same order without granting direct position writes.
 - Generated direct-source links carry a channel identity derived from name and group, propagated through signed HLS links, so catalog reordering and source URL rotation keep the selected channel; legacy numeric-only links retain their behavior.
 - Upstream timeouts apply only until response headers arrive, with one retry for network errors or 502/503/504, so long MP3/MP4 bodies are not aborted by the header deadline.
-- Routing tests use the real tree, signed-out auth, no shell.
-- Core screens use mobile records and role-aware touch navigation; billing unchanged.
+- Routing tests: real tree, signed-out auth, no shell.
+- Mobile records and role-aware navigation preserve billing.
 - Admin stream tests probe the selected URL with its own Referer and User-Agent independently of GitHub; success requires media bytes after signed playlist traversal, with one recheck for transient failures, and diagnostic origin codes do not change playback response semantics.
 - Playback protocol detection uses bounded signature inspection with byte replay; DASH resources use scoped exact-URL or constrained signed-template authorization, never a browser-accessible arbitrary signing endpoint.
 - Admin playback-check dynamically loads engines and separates HTTP, frame, audio and continuity evidence; records unchanged.
 - Browser TS playback uses mpegts.js transmuxing, while TS URLs detected as HLS use the HLS engine; live detection probes avoid Range requests rejected by origins.
 - Shared signature inspection collects fragmented network chunks and replays all bytes; verified TS signatures override misleading upstream MIME types on provider responses.
-- Shared catalogs carry a full-content revision hash; polling replaces source arrays and never appends updates or mutates reseller assignments.
+- Catalog revision hashes cover all bytes; polls replace arrays, never append or change reseller assignments.
 - YouTube creation is atomic and owner/provider/TMDB-keyed; the line-scoped API and provider view merge GitHub series by TMDB (explicit source identity fallback), preserve episode alternatives and legacy playback URLs, and keep M3U delivery unchanged.
 - Uploaded episode posters live in a private owner-scoped bucket; store canonical locators and resolve short-lived signed display URLs so public-bucket restrictions do not expose drafts.
 - YouTube uses official embeds; Android branches by source_type. Customer APIs add only admin-shared published GitHub episodes; owner-scoped CRUD stays unchanged.
 - Connection RPCs enforce ownership and saved limits; service-role playback follows line auth; policies unchanged.
-- Customer links share a live-host builder; M3U, host and combined catalogue stay distinct.
+- Customer links share a host builder; M3U and combined feeds stay distinct.
 - MP4: TUS, ASCII names, storage API only; collision-safe aliases keep old links. Faststart preserves quality. Public paths pin cold redirects without I/O; other aliases use lookup.
+- Provider metadata reads source attributes/title TMDB locally; VOD details retain authenticated URLs. Never fetch enrichment per row or invent tracks.
