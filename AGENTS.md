@@ -38,6 +38,6 @@
 - YouTube uses official embeds; Android branches by source_type. APIs add only admin-shared published GitHub episodes; CRUD stays owner-scoped.
 - Connection RPCs enforce ownership and saved limits; service-role playback follows line auth; policies unchanged.
 - Customer links share a host builder; M3U and combined feeds stay distinct.
-- MP4: TUS, ASCII names, storage API only; collision-safe aliases keep old links. Faststart preserves quality. Public paths pin cold redirects without I/O; other aliases use lookup.
+- MP4: lossless bounded-index Blob faststart before TUS; reject unsafe layouts. ASCII names, storage API only; preserve aliases. Pinned paths bypass cold I/O; others use lookup.
 - Metadata is source-derived; no per-row enrichment or invented tracks. VOD stays authenticated.
 - Provider reads retry transient failures with deadlines; outages return retryable errors, not credential denials or fake device counts; catalog keeps last-good data.
