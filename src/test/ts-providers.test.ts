@@ -8,7 +8,7 @@ vi.mock("@/integrations/supabase/client.server", () => {
     if (table === "app_settings") return { value: "https://raw.githubusercontent.com/owner/repo/main/playlist.m3u" };
     return null;
   };
-  const query = (table: string) => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: row(table), error: null }) }) }) });
+  const query = (table: string) => ({ select: () => ({ eq: () => ({ abortSignal: () => ({ maybeSingle: async () => ({ data: row(table), error: null, status: 200 }) }) }) }) });
   return { supabaseAdmin: { from: query, rpc: async () => ({ data: true, error: null }) } };
 });
 
