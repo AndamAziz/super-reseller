@@ -14,7 +14,8 @@ import { testStream, type StreamTestStep } from "@/lib/stream-test.functions";
 import { getSourcePlaylist } from "@/lib/source-playlist.functions";
 import { sourcePlaylistQueryOptions } from "@/lib/source-playlist-query";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Plus } from "lucide-react";
+import { ChannelCreateDialog } from "@/components/channel-create-dialog";
 import { ChannelLinksDialog } from "@/components/channel-links-dialog";
 import { useDeleteChannel } from "@/lib/channel-delete";
 import { channelNeighbor } from "@/lib/channel-order";
@@ -71,6 +72,7 @@ function PlaylistsPage() {
   const [tests, setTests] = useState<Record<string, TestResult>>({});
   const [editing, setEditing] = useState<(M3UChannel & { id: string }) | null>(null);
   const [moving, setMoving] = useState(false);
+  const [adding, setAdding] = useState(false);
 
   async function test(c: M3UChannel & { id: string }) {
     setTests((t) => ({ ...t, [c.id]: { loading: true } }));
@@ -174,11 +176,12 @@ function PlaylistsPage() {
         eyebrow="iptv"
         title="Playlists"
         actions={
-          isAdmin && (
+          isAdmin && (<div className="flex flex-wrap gap-2">
+            {!isSource && <Button disabled={isLoading || moving || !!progress} className="h-11" onClick={() => setAdding(true)}><Plus />Add channel</Button>}
             <label className="cursor-pointer rounded-xl bg-primary px-4 py-2 font-display text-[13px] font-semibold text-primary-foreground hover:bg-primary/90">
               {progress ?? "Import M3U"}
               <input type="file" accept=".m3u,.m3u8,audio/x-mpegurl,text/plain" className="hidden" disabled={!!progress} onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
-            </label>
+            </label></div>
           )
         }
       />
@@ -322,6 +325,7 @@ function PlaylistsPage() {
         </Panel>
       )}
       {editing && isAdmin && !isSource && <ChannelLinksDialog key={editing.id} channel={editing} playlistId={current} onClose={() => setEditing(null)} />}
+      {adding && isAdmin && !isSource && <ChannelCreateDialog playlistId={current} playlistName={playlists.find((p) => p.id === current)?.name ?? "Playlist"} initialType={section === "all" ? "live" : section} onClose={() => setAdding(false)} onAdded={() => { setSection("all"); setGroup("all"); setQ(""); }} />}
     </>
   );
 }
