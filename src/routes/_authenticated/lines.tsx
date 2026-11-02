@@ -377,6 +377,7 @@ function LinesPage() {
                 <Button variant="outline" className={softBtn} onClick={() => copyLink(customerLinks(l).provider, "Provider host")}><Copy />Host</Button>
                 <Button variant="outline" className={softBtn} onClick={() => copyLink(customerLinks(l).content, "Combined catalogue link")}><Copy />M3U + YouTube</Button>
               </div>}
+              {!isAdmin && <Button variant="outline" className={softBtn} onClick={() => copyLink(`Host: ${customerLinks(l).provider}\nUsername: ${l.username}\nPassword: ${l.password}`, "Login details")}><Copy />Copy host & login</Button>}
               <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-2">
                 <select aria-label={`Renew months for ${l.username}`} className={inputCls} value={renewMonths[l.id] ?? 1} onChange={(e) => setRenewMonths({ ...renewMonths, [l.id]: Number(e.target.value) })}>{MONTHS.map((m) => <option key={m} value={m}>{m}m</option>)}</select>
                 <Button variant="outline" className={cn(softBtn, "whitespace-normal px-2")} onClick={() => renew(l.id)}>{isAdmin ? "Renew" : `Renew · ${renewalCost(renewMonths[l.id] ?? 1, max)} credits`}</Button>
@@ -450,7 +451,7 @@ function LinesPage() {
                       <Button type="button" variant="outline" className={softBtn} title="Copy M3U link" onClick={() => copyLink(customerLinks(l).m3u, "M3U link")}><Copy className="size-3.5" /> M3U</Button>
                       <Button type="button" variant="outline" className={softBtn} title="Copy provider host" onClick={() => copyLink(customerLinks(l).provider, "Provider host")}><Copy className="size-3.5" /> Host</Button>
                       <Button type="button" variant="outline" className={softBtn} title="Copy combined M3U + YouTube catalogue link" onClick={() => copyLink(customerLinks(l).content, "Combined catalogue link")}><Copy className="size-3.5" /> M3U + YouTube</Button>
-                    </div> : <span className="text-muted-foreground">—</span>}
+                    </div> : <Button type="button" variant="outline" className={softBtn} title="Copy host, username and password" onClick={() => copyLink(`Host: ${customerLinks(l).provider}\nUsername: ${l.username}\nPassword: ${l.password}`, "Login details")}><Copy className="size-3.5" /> Copy</Button>}
                   </td>
                   <td className={`${td} text-right`}>
                     <div className="inline-flex items-center gap-1.5">
