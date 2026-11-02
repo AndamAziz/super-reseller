@@ -1,8 +1,8 @@
 # Connection billing
 ## Automatic MP4 startup and existing links
-- [x] Twelve public MP4 links returned anonymous 206 and decoded two seconds of H.264/AAC. Supplied movie has a late index at byte 2217045670; repair in place underway.
+- [x] All twelve stored MP4 aliases returned anonymous 206 and decoded two seconds of H.264/AAC. Repaired supplied v-fe4433d8ca83.mp4 in place: index moved from byte 2217045670 to byte 32; every stream hash unchanged. Exact published link returned matching new bytes; 72 frames/three seconds decoded in 0.91 seconds. No link changes or deployment needed for this file repair; other late-index files work but are not claimed equally fast.
 - [x] Future uploads prepare lossless bounded-memory faststart before TUS, with cancellation and safe rejection of unsupported layouts. Real admin upload saved/reloaded and copied short token-free link; anonymous playback and video/audio hashes passed. Existing paths/links untouched.
-- [ ] Run upload/playback regressions and real admin upload verification; report publication and target-player limitations.
+- [x] All 213 tests pass and build OK. Real admin upload/reload/copy, unchanged media hashes, anonymous decoded playback and cleanup verified. Future-upload change awaits publication; user's VLC/device startup and continuous availability cannot be guaranteed.
 ## Reported Collision Course MP4 link
 - [x] Repaired v-0bfb9f91d8d3.mp4 in place through owner-authenticated TUS storage replacement: moved its playback index from byte 1107291989 to byte 32 without transcoding. Audio/video SHA256 hashes identical; published anonymous range 206 matched new bytes; five seconds of H.264/AAC decoded through the exact short link in a 1.06-second check. Fourteen targeted tests pass; no app deployment needed. User's own player remains untested.
 ## Intermittent provider availability
