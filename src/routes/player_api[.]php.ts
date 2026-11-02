@@ -16,6 +16,16 @@ export const Route = createFileRoute("/player_api.php")({
 });
 
 export async function handleXtreamRequest(request: Request) {
+  try {
+    return await respondXtreamRequest(request);
+  } catch {
+    const response = json({ error: "Provider temporarily unavailable; retry shortly" }, 503);
+    response.headers.set("Retry-After", "2");
+    return response;
+  }
+}
+
+async function respondXtreamRequest(request: Request) {
   const url = new URL(request.url);
   const params = new URLSearchParams(url.search);
   if (request.method === "POST") {
@@ -30,6 +40,11 @@ export async function handleXtreamRequest(request: Request) {
 
   const auth = await authLine(username, password);
   if (!auth.ok) {
+    if (auth.status >= 500) {
+      const response = json({ error: auth.message }, 503);
+      response.headers.set("Retry-After", "2");
+      return response;
+    }
     // Xtream clients expect 200 + auth:0 rather than a bare HTTP error.
     return json({ user_info: { auth: 0, status: auth.status === 403 ? "Expired" : "Disabled", message: auth.message } });
   }

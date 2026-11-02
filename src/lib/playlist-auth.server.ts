@@ -3,6 +3,7 @@ import { buildM3U, parseM3U, type M3UChannel } from "./m3u";
 import { createPlaylistCache } from "./playlist-cache";
 import { playbackUrl } from "./media";
 import { playlistVersion } from "./playlist-version";
+import { providerTransientStatus, retryProviderRead } from "./provider-read";
 
 export type AuthResult =
   | { ok: true; lineId: string; username: string; password: string; expiresAt: string; createdAt: string | null; maxConnections: number }
@@ -12,40 +13,60 @@ export async function authLine(username: string, password: string): Promise<Auth
   if (!username || !password || username.length > 50 || password.length > 100) {
     return { ok: false, status: 401, message: "Invalid credentials" };
   }
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: line } = await supabaseAdmin
-    .from("lines")
-    .select("id, username, password, expires_at, created_at, max_connections")
-    .eq("username", username.trim())
-    .maybeSingle();
-  if (!line || line.password !== password) return { ok: false, status: 401, message: "Invalid credentials" };
-  if (new Date(line.expires_at).getTime() <= Date.now()) return { ok: false, status: 403, message: "Subscription expired" };
-  return { ok: true, lineId: line.id, username: line.username, password: line.password, expiresAt: line.expires_at, createdAt: line.created_at ?? null, maxConnections: line.max_connections ?? 1 };
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const result = await retryProviderRead(async () => await supabaseAdmin
+      .from("lines")
+      .select("id, username, password, expires_at, created_at, max_connections")
+      .eq("username", username.trim())
+      .abortSignal(AbortSignal.timeout(4_000))
+      .maybeSingle(), r => Boolean(r.error) && providerTransientStatus(r.status));
+    if (result.error) return { ok: false, status: 503, message: "Account service temporarily unavailable; retry shortly" };
+    const line = result.data;
+    if (!line || line.password !== password) return { ok: false, status: 401, message: "Invalid credentials" };
+    if (new Date(line.expires_at).getTime() <= Date.now()) return { ok: false, status: 403, message: "Subscription expired" };
+    return { ok: true, lineId: line.id, username: line.username, password: line.password, expiresAt: line.expires_at, createdAt: line.created_at ?? null, maxConnections: line.max_connections ?? 1 };
+  } catch {
+    return { ok: false, status: 503, message: "Account service temporarily unavailable; retry shortly" };
+  }
 }
 
 /** Devices seen streaming on this line in the last 90 seconds (same window as check_stream_limit). */
 export async function countActiveConnections(lineId: string): Promise<number> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const since = new Date(Date.now() - 90_000).toISOString();
-  const { count } = await supabaseAdmin
+  const result = await retryProviderRead(async () => await supabaseAdmin
     .from("active_connections")
     .select("client_key", { count: "exact", head: true })
     .eq("line_id", lineId)
-    .gte("last_seen", since);
-  return count ?? 0;
+    .gte("last_seen", since)
+    .abortSignal(AbortSignal.timeout(4_000)), r => Boolean(r.error) && providerTransientStatus(r.status));
+  if (result.error) throw new Error("Connection status temporarily unavailable");
+  return result.count ?? 0;
 }
 
 export async function loadSourceText(): Promise<{ ok: true; text: string } | { ok: false; status: number; message: string }> {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data } = await supabaseAdmin.from("app_settings").select("value").eq("key", "m3u_source_url").maybeSingle();
-  if (!data?.value) return { ok: false, status: 503, message: "Playlist not configured" };
   try {
-    const source = new URL(data.value);
-    // Every source read gets a fresh GitHub cache key, including forced refreshes.
-    if (source.hostname === "raw.githubusercontent.com") source.searchParams.set("_refresh", String(Date.now()));
-    const res = await fetch(source, { cache: "no-store", headers: { "Cache-Control": "no-cache" }, signal: AbortSignal.timeout(20000) });
-    if (!res.ok) return { ok: false, status: 502, message: `Playlist source unavailable (HTTP ${res.status})` };
-    return { ok: true, text: await res.text() };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const settings = await retryProviderRead(async () => await supabaseAdmin.from("app_settings").select("value")
+      .eq("key", "m3u_source_url").abortSignal(AbortSignal.timeout(4_000)).maybeSingle(),
+      r => Boolean(r.error) && providerTransientStatus(r.status));
+    if (settings.error) return { ok: false, status: 503, message: "Playlist configuration temporarily unavailable" };
+    if (!settings.data?.value) return { ok: false, status: 503, message: "Playlist not configured" };
+    const sourceUrl = settings.data.value;
+    const result = await retryProviderRead(async () => {
+      const source = new URL(sourceUrl);
+      // Fresh GitHub cache key on each attempt; bounded deadline covers the complete catalog body.
+      if (source.hostname === "raw.githubusercontent.com") source.searchParams.set("_refresh", String(Date.now()));
+      const res = await fetch(source, { cache: "no-store", headers: { "Cache-Control": "no-cache" }, signal: AbortSignal.timeout(5_000) });
+      if (!res.ok) {
+        await res.body?.cancel();
+        return { status: res.status, text: null };
+      }
+      return { status: res.status, text: await res.text() };
+    }, r => providerTransientStatus(r.status));
+    if (result.text === null) return { ok: false, status: 502, message: `Playlist source unavailable (HTTP ${result.status})` };
+    return { ok: true, text: result.text };
   } catch {
     return { ok: false, status: 502, message: "Playlist source unreachable" };
   }
