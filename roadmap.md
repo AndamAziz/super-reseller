@@ -1,4 +1,8 @@
 # Connection billing
+## Automatic MP4 startup and existing links
+- [ ] Verify v-fe4433d8ca83.mp4 and all public MP4 playlist links anonymously, separating availability from decoded startup.
+- [ ] Optimize future MP4 uploads losslessly before uploading; keep existing paths, links and admin-only management unchanged.
+- [ ] Run upload/playback regressions and real admin upload verification; report publication and target-player limitations.
 ## Reported Collision Course MP4 link
 - [x] Repaired v-0bfb9f91d8d3.mp4 in place through owner-authenticated TUS storage replacement: moved its playback index from byte 1107291989 to byte 32 without transcoding. Audio/video SHA256 hashes identical; published anonymous range 206 matched new bytes; five seconds of H.264/AAC decoded through the exact short link in a 1.06-second check. Fourteen targeted tests pass; no app deployment needed. User's own player remains untested.
 ## Intermittent provider availability
