@@ -1,5 +1,6 @@
 # Connection billing
 ## Admin public MP4 uploads
+- [ ] Remove cold-request lookup delay for the existing short movie link; verify anonymous MP4 bytes and unchanged quality without publishing unless requested.
 - [x] Moved the existing movie's 5 MB index from the end to byte 32 without transcoding; audio/video hashes unchanged. Compact aliases copied through the real admin page, 182 tests passed; published short and legacy links returned anonymous 206, HEAD succeeded, five seconds of audio/video decoded. VLC device speed remains unmeasured.
 - [x] Fixed Kurdish movie-name saving with reversible ASCII storage keys; real admin rename to جومونگ 21 persisted after reload, anonymous playback returned 206 video/mp4, fixture removed, eleven tests passed. Existing user video untouched.
 - [x] Selected filename, editable movie name and TUS progress verified with real admin upload; rename persisted after reload, clipboard uses published host, anonymous redirect returned 206 video/mp4 (1024 bytes); temporary video deleted, no page errors, ten targeted tests passed.
