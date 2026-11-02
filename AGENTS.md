@@ -25,7 +25,7 @@
 - Uploaded channel ordering uses an admin-checked atomic database RPC to swap saved positions with the previous/next visible channel; reads sort by position and ID so exports and reloads preserve the same order without granting direct position writes.
 - Generated direct-source links carry a channel identity derived from name and group, propagated through signed HLS links, so catalog reordering and source URL rotation keep the selected channel; legacy numeric-only links retain their behavior.
 - Upstream timeouts apply only until response headers arrive, with one retry for network errors or 502/503/504, so long MP3/MP4 bodies are not aborted by the header deadline.
-- Routing tests use the real tree with deterministic signed-out auth and no document shell.
+- Routing tests use the real tree, signed-out auth, no shell.
 - Core screens use mobile records and role-aware touch navigation; billing unchanged.
 - Admin stream tests probe the selected URL with its own Referer and User-Agent independently of GitHub; success requires media bytes after signed playlist traversal, with one recheck for transient failures, and diagnostic origin codes do not change playback response semantics.
 - Playback protocol detection uses bounded signature inspection with byte replay; DASH resources use scoped exact-URL or constrained signed-template authorization, never a browser-accessible arbitrary signing endpoint.
@@ -38,4 +38,4 @@
 - YouTube uses official embeds; Android branches by source_type. Customer APIs add only admin-shared published GitHub episodes; owner-scoped CRUD stays unchanged.
 - Connection RPCs enforce ownership and saved limits; service-role playback follows line auth; policies unchanged.
 - Customer links share a live-host builder; M3U, host and combined catalogue stay distinct.
-- MP4: TUS; path-hash public aliases reject collisions, keep old links; ASCII Unicode names; storage API only. Fast-start moves the index without transcoding.
+- MP4: TUS, ASCII names, storage API only; collision-safe aliases keep old links. Faststart preserves quality. Public paths pin cold redirects without I/O; other aliases use lookup.

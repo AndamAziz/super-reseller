@@ -1,3 +1,5 @@
+import { publishedMoviePath } from './public-video-startup';
+
 const SHORT_NAME = /^[\p{L}\p{N}._-]{1,700}\.mp4$/u;
 const PATH_TTL_MS = 5 * 60_000;
 const EDGE_TTL_S = 86_400;
@@ -5,7 +7,8 @@ const EDGE_TTL_S = 86_400;
 // Short token-free public links: /api/public/v/<name>.mp4 redirects to the
 // object in the public-videos bucket. The bucket itself is public, so the
 // redirect target plays directly in VLC and other players.
-// Speed: the redirect is kept in the shared edge cache (all instances in a
+// Speed: released movie paths redirect immediately even on cold instances.
+// Other redirects are kept in the shared edge cache (all instances in a
 // data center), then a per-instance memory cache, and only then looked up
 // with one lightweight database call (no client library import).
 const pathCache = new Map<string, { path: string; at: number }>();
@@ -47,6 +50,9 @@ export async function handlePublicVideoLink(rawName: string): Promise<Response> 
   if (!SHORT_NAME.test(short)) return new Response('Not found', { status: 404 });
   const base = storageBase();
   if (!base) return new Response('Storage unavailable', { status: 503 });
+
+  const publishedPath = publishedMoviePath(short);
+  if (publishedPath) return redirectFor(base, publishedPath);
 
   const cacheKey = new Request(`https://video-link.cache/${encodeURIComponent(short)}`);
   const edge = edgeCache();
