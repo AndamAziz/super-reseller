@@ -1,4 +1,7 @@
 # Connection billing
+## Intermittent provider availability
+- [ ] Handle transient account/settings/source read failures with bounded retries, never mislabel database outages as disabled accounts; preserve expiry, connection enforcement and billing.
+- [ ] Test outages/recovery and supplied customer's authenticated catalog responses; publication and target-player continuity remain separate.
 ## Provider movie and series metadata
 - [x] Added source-derived TMDB and declared metadata to movie/series lists/details and missing get_vod_info; original names/posters, authenticated playback, accounts and billing unchanged. No enrichment requests added; five-second coalesced refresh retained.
 - [x] Public GitHub sample: 10,503 entries, 19 movies/188 episodes, all 207 TMDB IDs/posters parsed; zero declared audio/subtitle languages. All 192 tests pass, including credential denial, five-second updates/outage fallback, HLS audio/subtitle authorization and DASH descriptor preservation; build OK. Not published.
