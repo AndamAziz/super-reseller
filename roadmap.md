@@ -1,4 +1,7 @@
 # Connection billing
+## Provider movie and series metadata
+- [ ] Preserve supplied TMDB IDs, posters and metadata in provider movie/series responses; add missing movie details without changing playback, accounts or billing.
+- [ ] Verify fresh source data, authentication, metadata and audio/subtitle transport regressions; report target-player limitations and do not publish without approval.
 ## Admin public MP4 uploads
 - [x] Existing short/legacy movie links now use a release-pinned public path, bypassing all cache/database I/O on cold instances. Fourteen tests pass; preview GET/HEAD 302, anonymous range 206 with identical 1 MB bytes and moov at byte 32, unknown 404; build OK. Not published; target-player startup remains unmeasured.
 - [x] Moved the existing movie's 5 MB index from the end to byte 32 without transcoding; audio/video hashes unchanged. Compact aliases copied through the real admin page, 182 tests passed; published short and legacy links returned anonymous 206, HEAD succeeded, five seconds of audio/video decoded. VLC device speed remains unmeasured.
