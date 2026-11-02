@@ -24,4 +24,19 @@ describe("HLS rewriter", () => {
     for (const u of ["http://localhost/x", "http://10.0.0.1/x", "http://192.168.1.1/x", "http://172.20.0.1/x", "http://169.254.169.254/x"])
       expect(await allowedUrl(u, await signTarget("u:186", u), "u:186")).toBeNull();
   });
+  it('preserves selectable audio and subtitles and authorizes their playlist URLs', async () => {
+    const source = '#EXTM3U\n#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="Kurdish",LANGUAGE="ku",DEFAULT=YES,URI="audio/ku.m3u8"\n#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="English",LANGUAGE="en",DEFAULT=NO,URI="sub/en.m3u8"\n#EXT-X-STREAM-INF:BANDWIDTH=2000000,AUDIO="audio",SUBTITLES="subs"\nvideo.m3u8';
+    const out = await rewritePlaylist(source, 'https://origin.test/master.m3u8', P, 'u:186');
+    expect(out).toContain('TYPE=AUDIO,GROUP-ID="audio",NAME="Kurdish",LANGUAGE="ku",DEFAULT=YES');
+    expect(out).toContain('TYPE=SUBTITLES,GROUP-ID="subs",NAME="English",LANGUAGE="en",DEFAULT=NO');
+    expect(out).toContain('BANDWIDTH=2000000,AUDIO="audio",SUBTITLES="subs"');
+    const links = [...out.matchAll(/URI="([^"]+)"/g)].map(m => new URL(m[1] ?? ''));
+    expect(links).toHaveLength(2);
+    for (const [i, link] of links.entries()) {
+      const target = unb64u(link.searchParams.get('u') ?? '');
+      expect(target).toBe(i === 0 ? 'https://origin.test/audio/ku.m3u8' : 'https://origin.test/sub/en.m3u8');
+      expect((await allowedUrl(target, link.searchParams.get('s') ?? '', 'u:186'))?.href).toBe(target);
+      expect(await allowedUrl(target, link.searchParams.get('s') ?? '', 'other:186')).toBeNull();
+    }
+  });
 });

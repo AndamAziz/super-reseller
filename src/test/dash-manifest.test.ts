@@ -32,4 +32,13 @@ describe("Signed DASH delivery", () => {
     params.set("s", "forged"); expect(await resolveDashTarget(params, "u:1")).toBeNull();
   });
   it("rejects document entities rather than processing external XML", async () => expect(rewriteDash('<!DOCTYPE MPD [<!ENTITY x SYSTEM "file:///secret">]><MPD/>', "https://origin.test/a.mpd", prefix, "u:1")).rejects.toThrow("declarations"));
+  it('retains DASH audio and subtitle language, codec and role descriptors', async () => {
+    const src = '<MPD><Period><AdaptationSet contentType="audio" lang="ku"><Role schemeIdUri="urn:mpeg:dash:role:2011" value="main"/><Representation id="a" codecs="mp4a.40.2"><BaseURL>audio.mp4</BaseURL></Representation></AdaptationSet><AdaptationSet contentType="text" lang="en"><Representation id="s" codecs="wvtt"><BaseURL>subs.mp4</BaseURL></Representation></AdaptationSet></Period></MPD>';
+    const doc = new DOMParser().parseFromString(await rewriteDash(src, 'https://origin.test/a.mpd', prefix, 'u:1'), 'application/xml');
+    expect(doc.getElementsByTagName('AdaptationSet')[0]?.getAttribute('lang')).toBe('ku');
+    expect(doc.getElementsByTagName('AdaptationSet')[1]?.getAttribute('lang')).toBe('en');
+    expect(doc.getElementsByTagName('Representation')[0]?.getAttribute('codecs')).toBe('mp4a.40.2');
+    expect(doc.getElementsByTagName('Representation')[1]?.getAttribute('codecs')).toBe('wvtt');
+    expect(doc.getElementsByTagName('Role')[0]?.getAttribute('value')).toBe('main');
+  });
 });
