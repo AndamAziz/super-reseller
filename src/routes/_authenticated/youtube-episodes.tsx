@@ -30,6 +30,7 @@ function VideoUploads() {
   const controller = useRef<AbortController | null>(null);
   const [uploading, setUploading] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
+  const [phase, setPhase] = useState<'preparing' | 'uploading'>('preparing');
   const [copied, setCopied] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -40,9 +41,9 @@ function VideoUploads() {
   async function upload(file: File) {
     try {
       validateMp4(file);
-      setUploading(file.name); setProgress(0);
+      setUploading(file.name); setProgress(0); setPhase('preparing');
       const abort = new AbortController(); controller.current = abort;
-      await uploadPublicVideo(file, setProgress, abort.signal, videos.map((video) => video.name), movieName);
+      await uploadPublicVideo(file, setProgress, abort.signal, videos.map((video) => video.name), movieName, setPhase);
       setSelectedFile(null);
       toast.success('MP4 uploaded');
       await queryClient.invalidateQueries({ queryKey: ['public-videos'] });
@@ -80,13 +81,13 @@ function VideoUploads() {
         {selectedFile && <div className="min-w-0"><p className="break-all text-sm font-medium">{selectedFile.name}</p><p className="text-sm text-muted-foreground">{(selectedFile.size / 1024 ** 2).toFixed(1)} MB</p></div>}
         <div className="space-y-2"><Label htmlFor="movie-name">Movie name</Label><Input id="movie-name" value={movieName} disabled={!!uploading || saving} onChange={(event) => setMovieName(event.target.value)} className="min-h-11" /></div>
         {editing && <p className="text-sm text-muted-foreground">Renaming changes the public link. Previously copied links will stop working.</p>}
-        {uploading && <div aria-live="polite" className="space-y-2"><p className="break-all text-sm">{uploading}</p><p className="font-mono">{progress}%</p><progress aria-label="File upload progress" value={progress} max={100} className="h-2 w-full accent-primary" /></div>}
+        {uploading && <div aria-live="polite" className="space-y-2"><p className="break-all text-sm">{uploading}</p><p className="font-mono">{phase === 'preparing' ? 'Preparing MP4…' : `${progress}%`}</p><progress aria-label="File upload progress" value={phase === 'preparing' ? undefined : progress} max={100} className="h-2 w-full accent-primary" /></div>}
         <DialogFooter><Button variant="outline" disabled={saving} onClick={() => { if (uploading) controller.current?.abort(); else { setSelectedFile(null); setEditing(null); } }}>{uploading ? 'Cancel upload' : 'Cancel'}</Button><Button disabled={!movieName.trim() || !!uploading || saving} onClick={() => { if (editing) void saveName(); else if (selectedFile) void upload(selectedFile); }}>{uploading || saving ? <Loader2 className="size-4 animate-spin" /> : editing ? <Check className="size-4" /> : <Upload className="size-4" />}{editing ? 'Save name' : 'Upload'}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
     {uploading && <section aria-live="polite" className="space-y-3 border-y border-border bg-glass p-4">
-      <div className="flex items-center gap-3"><Loader2 className="size-5 shrink-0 animate-spin text-primary" /><span className="min-w-0 flex-1 break-all">{uploading}</span><span className="font-mono">{progress}%</span><Button variant="ghost" size="icon" aria-label="Cancel upload" title="Cancel upload" onClick={() => controller.current?.abort()}><X className="size-4" /></Button></div>
-      <progress aria-label="Upload progress" value={progress} max={100} className="h-2 w-full accent-primary" />
+      <div className="flex items-center gap-3"><Loader2 className="size-5 shrink-0 animate-spin text-primary" /><span className="min-w-0 flex-1 break-all">{uploading}</span><span className="font-mono">{phase === 'preparing' ? 'Preparing MP4…' : `${progress}%`}</span><Button variant="ghost" size="icon" aria-label="Cancel upload" title="Cancel upload" onClick={() => controller.current?.abort()}><X className="size-4" /></Button></div>
+      <progress aria-label="Upload progress" value={phase === 'preparing' ? undefined : progress} max={100} className="h-2 w-full accent-primary" />
     </section>}
     <section className="border-y border-border bg-glass">
       <div className="flex items-center justify-between border-b border-border px-4 py-4 sm:px-6">
