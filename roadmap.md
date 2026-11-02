@@ -1,4 +1,7 @@
 # Connection billing
+## Manual uploaded-playlist entries
+- [ ] Add admin-only manual Live TV, Movie and Series creation with fields or original M3U entry text; preserve existing uploaded attributes, order and export format.
+- [ ] Verify saved additions, reload, sections and unchanged export using a temporary admin playlist; keep GitHub source and reseller billing unchanged.
 ## Automatic MP4 startup and existing links
 - [x] All twelve stored MP4 aliases returned anonymous 206 and decoded two seconds of H.264/AAC. Repaired supplied v-fe4433d8ca83.mp4 in place: index moved from byte 2217045670 to byte 32; every stream hash unchanged. Exact published link returned matching new bytes; 72 frames/three seconds decoded in 0.91 seconds. No link changes or deployment needed for this file repair; other late-index files work but are not claimed equally fast.
 - [x] Future uploads prepare lossless bounded-memory faststart before TUS, with cancellation and safe rejection of unsupported layouts. Real admin upload saved/reloaded and copied short token-free link; anonymous playback and video/audio hashes passed. Existing paths/links untouched.
