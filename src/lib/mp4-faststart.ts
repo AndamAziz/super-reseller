@@ -47,6 +47,8 @@ export async function faststartMp4(file: File, signal?: AbortSignal): Promise<Fi
   const index = await file.slice(moov.start, moov.start + moov.size).arrayBuffer();
   signal?.throwIfAborted();
   const view = new DataView(index);
+  const originalIndexStart = BigInt(moov.start);
+  const indexSize = BigInt(moov.size);
   let tables = 0;
   function patch(start: number, end: number, depth: number) {
     if (depth > 16) throw new Error('Invalid MP4 index nesting.');
@@ -63,7 +65,7 @@ export async function faststartMp4(file: File, signal?: AbortSignal): Promise<Fi
           const position = body + 8 + i * width;
           const original = width === 8 ? view.getBigUint64(position) : BigInt(view.getUint32(position));
           if (!media.some((item) => original >= BigInt(item.start + item.header) && original < BigInt(item.start + item.size))) throw new Error('MP4 references external or invalid media.');
-          const updated = original + (original < BigInt(moov.start) ? BigInt(moov.size) : 0n);
+          const updated = original + (original < originalIndexStart ? indexSize : 0n);
           if (width === 4) {
             if (updated > 0xffffffffn) throw new Error('MP4 needs 64-bit offsets. Export it with faststart enabled.');
             view.setUint32(position, Number(updated));
