@@ -48,3 +48,8 @@ export async function deleteImageLink(id: string, path: string) {
   const { error } = await supabase.from('image_links').delete().eq('id', id);
   if (error) throw error;
 }
+// Short public link served by our redirect route on the published domain.
+export const IMAGE_SHORT_HOST = 'https://re.andam.uk';
+export function imageShortUrl(path: string) {
+  return `${IMAGE_SHORT_HOST}/api/public/i/${path}`;
+}

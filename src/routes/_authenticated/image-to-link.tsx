@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { convertImage, copyImageLink, validateImage, DEFAULT_IMAGE_FORMAT, DEFAULT_MAX_WIDTH, type ConvertedImage, type ImageFormat, type JpgBackground } from '@/lib/image-conversion';
-import { deleteImageLink, IMAGE_PAGE_SIZE, listImageLinks, requireImageAdmin, uploadImageLink } from '@/lib/image-links';
+import { deleteImageLink, IMAGE_PAGE_SIZE, imageShortUrl, listImageLinks, requireImageAdmin, uploadImageLink } from '@/lib/image-links';
 
 const historyOptions = (search: string, page: number) => queryOptions({ queryKey: ['image-links', search, page], queryFn: () => listImageLinks(search, page) });
 export const Route = createFileRoute('/_authenticated/image-to-link')({
@@ -95,7 +95,7 @@ function ImageToLink() {
       setDrafts(current => current.map(d => d.id === draft.id ? { ...d, busy: true, failed: false, error: undefined } : d));
       try {
         const saved = await uploadImageLink(draft.file, draft.converted, progress => setDrafts(current => current.map(d => d.id === draft.id ? { ...d, progress } : d)));
-        setDrafts(current => current.map(d => d.id === draft.id ? { ...d, busy: false, url: saved.url, savedId: saved.id, savedPath: saved.path } : d));
+        setDrafts(current => current.map(d => d.id === draft.id ? { ...d, busy: false, url: imageShortUrl(saved.path), savedId: saved.id, savedPath: saved.path } : d));
       } catch (error) {
         console.error('Image upload failed', draft.file.name, error);
         const message = error instanceof Error ? error.message : typeof error === 'object' && error && 'message' in error ? String((error as { message: unknown }).message) : 'Upload failed.';
@@ -123,7 +123,7 @@ function ImageToLink() {
         <input ref={input} type="file" accept="image/*" multiple className="hidden" aria-label="Choose images" onChange={event => { addFiles(Array.from(event.target.files ?? [])); event.target.value = ''; }} />
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <Select value={format} onValueChange={value => setFormat(value as ImageFormat)} disabled={busy}><SelectTrigger aria-label="Output format" className={`${ctl} w-full sm:w-[310px]`}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="jpg">JPG (best compatibility, recommended)</SelectItem><SelectItem value="png">PNG (transparent logos)</SelectItem><SelectItem value="webp">WebP (smaller, newer devices only)</SelectItem></SelectContent></Select>
+        <Select value={format} onValueChange={value => setFormat(value as ImageFormat)} disabled={busy}><SelectTrigger aria-label="Output format" className={`${ctl} w-full sm:w-[310px]`}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="jpg">JPG (best compatibility, recommended)</SelectItem><SelectItem value="png">PNG (transparent logos)</SelectItem></SelectContent></Select>
         {format === 'jpg' && <Select value={background} onValueChange={value => setBackground(value as JpgBackground)} disabled={busy}><SelectTrigger aria-label="Background" className={`${ctl} w-[calc(50%-4px)] sm:w-[160px]`}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="white">Background: White</SelectItem><SelectItem value="black">Background: Black</SelectItem></SelectContent></Select>}
         <Select value={resize} onValueChange={setResize} disabled={busy}><SelectTrigger aria-label="Resize" className={`${ctl} w-[calc(50%-4px)] sm:w-[130px]`}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="original">Original</SelectItem><SelectItem value="1000">1000px</SelectItem><SelectItem value="600">600px</SelectItem><SelectItem value="400">400px</SelectItem></SelectContent></Select>
         <Button className={`${ctl} w-full sm:ml-auto sm:w-auto`} disabled={busy || !drafts.some(d => d.converted && !d.url)} onClick={() => void upload(true)}><Upload className="size-4" />{working ? 'Uploading…' : preparing ? 'Preparing…' : drafts.some(d => d.failed) ? 'Retry upload' : 'Upload'}</Button>
@@ -152,15 +152,15 @@ function ImageToLink() {
           <thead className="text-left text-xs text-muted-foreground"><tr className="border-b border-border"><th className="w-14 p-2 pl-3" /><th className="p-2">Link</th><th className="w-16 p-2">Format</th><th className="w-20 p-2">Size</th><th className="w-24 p-2">Date</th><th className="w-[168px] p-2 pr-3 text-right">Actions</th></tr></thead>
           <tbody>{history.rows.map(image => <tr key={image.id} className="border-b border-border last:border-0">
             <td className="p-2 pl-3"><img src={image.url} alt={image.original_name} loading="lazy" className="size-10 rounded border border-border object-cover" /></td>
-            <td className="min-w-0 p-2"><p className="truncate font-medium">{image.original_name}</p><p className="truncate font-mono text-xs text-muted-foreground" title={image.url}>{shortLink(image.url)}</p></td>
+            <td className="min-w-0 p-2"><p className="truncate font-medium">{image.original_name}</p><p className="truncate font-mono text-xs text-muted-foreground" title={imageShortUrl(image.path)}>{shortLink(image.url)}</p></td>
             <td className="p-2 text-xs">{image.format.toUpperCase()}</td><td className="p-2 text-xs">{bytes(image.size_bytes)}</td><td className="p-2 text-xs">{new Date(image.created_at).toLocaleDateString()}</td>
-            <td className="p-2 pr-3"><RowActions url={image.url} copy={copy} onDelete={() => setDeleting(image)} /></td>
+            <td className="p-2 pr-3"><RowActions url={imageShortUrl(image.path)} copy={copy} onDelete={() => setDeleting(image)} /></td>
           </tr>)}</tbody>
         </table>
         <ul className="md:hidden">{history.rows.map(image => <li key={image.id} className="flex min-w-0 items-center gap-3 border-b border-border p-3 last:border-0">
           <img src={image.url} alt={image.original_name} loading="lazy" className="size-10 shrink-0 rounded border border-border object-cover" />
           <div className="min-w-0 flex-1"><p className="truncate font-medium">{image.original_name}</p><p className="truncate text-xs text-muted-foreground">{image.format.toUpperCase()} · {bytes(image.size_bytes)} · {new Date(image.created_at).toLocaleDateString()}</p></div>
-          <RowActions url={image.url} copy={copy} onDelete={() => setDeleting(image)} compact />
+          <RowActions url={imageShortUrl(image.path)} copy={copy} onDelete={() => setDeleting(image)} compact />
         </li>)}</ul>
       </>}
       <div className="flex items-center justify-between gap-3 border-t border-border p-2"><Button variant="outline" size="icon" className="size-10" aria-label="Previous page" title="Previous page" disabled={page === 0} onClick={() => setPage(p => p - 1)}><ChevronLeft className="size-4" /></Button><span className="text-xs text-muted-foreground">Page {page + 1} of {pageCount} · {history.count} images</span><Button variant="outline" size="icon" className="size-10" aria-label="Next page" title="Next page" disabled={page + 1 >= pageCount} onClick={() => setPage(p => p + 1)}><ChevronRight className="size-4" /></Button></div>
