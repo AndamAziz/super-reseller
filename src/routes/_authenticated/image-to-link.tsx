@@ -61,7 +61,7 @@ function ImageToLink() {
   useEffect(() => {
     let cancelled = false;
     const pending = drafts.filter(d => !d.url);
-    if (!pending.length) return;
+    if (!pending.length || working) { setPreparing(false); return; }
     setPreparing(true);
     void (async () => {
       for (const draft of pending) {
@@ -75,7 +75,7 @@ function ImageToLink() {
       if (!cancelled) setPreparing(false);
     })();
     return () => { cancelled = true; };
-  }, [pendingKey, format, maxWidth]);
+  }, [pendingKey, format, maxWidth, working]);
   useEffect(() => () => { for (const url of urls.current) URL.revokeObjectURL(url); }, []);
   useEffect(() => {
     const paste = (event: ClipboardEvent) => { const files = Array.from(event.clipboardData?.files ?? []).filter(f => f.type.startsWith('image/')); if (files.length) { event.preventDefault(); addFiles(files); } };
@@ -103,7 +103,7 @@ function ImageToLink() {
     finally { setRemoving(false); }
   }
   const pageCount = Math.max(1, Math.ceil(history.count / IMAGE_PAGE_SIZE));
-  return <>
+  return <div className="image-link-page min-w-0 space-y-5">
     <PageHeader eyebrow="Media · Admin" title="Image to Link" />
     <section className="space-y-5 border-y border-border bg-glass p-4 sm:p-6">
       <div onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); addFiles(Array.from(event.dataTransfer.files)); }} className="flex min-h-36 items-center justify-center rounded-lg border border-dashed border-border bg-background/50 p-6">
@@ -136,7 +136,7 @@ function ImageToLink() {
       <div className="flex items-center justify-between gap-3 border-t border-border p-4"><Button variant="outline" className="size-11" aria-label="Previous page" title="Previous page" disabled={page === 0} onClick={() => setPage(p => p - 1)}><ChevronLeft className="size-4" /></Button><span className="text-xs text-muted-foreground">Page {page + 1} of {pageCount} · {history.count} images</span><Button variant="outline" className="size-11" aria-label="Next page" title="Next page" disabled={page + 1 >= pageCount} onClick={() => setPage(p => p + 1)}><ChevronRight className="size-4" /></Button></div>
     </Panel>
     <Dialog open={!!deleting} onOpenChange={open => { if (!open && !removing) setDeleting(null); }}><DialogContent><DialogHeader><DialogTitle>Delete image?</DialogTitle></DialogHeader><p className="break-all">{deleting?.original_name}</p><p className="text-muted-foreground">Its public link will stop working.</p><DialogFooter><Button variant="outline" className="min-h-11" disabled={removing} onClick={() => setDeleting(null)}>Cancel</Button><Button variant="destructive" className="min-h-11" disabled={removing} onClick={() => void remove()}><Trash2 className="size-4" />{removing ? 'Deleting…' : 'Delete image'}</Button></DialogFooter></DialogContent></Dialog>
-  </>;
+  </div>;
 }
 function LinkControls({ url, copy }: { url: string; copy: (value: string) => Promise<void> }) {
   return <div className="min-w-0 space-y-2"><Input aria-label="Public image link" readOnly value={url} className="min-h-11 min-w-0 text-xs" onFocus={event => event.target.select()} /><div className="grid grid-cols-1 gap-2 sm:grid-cols-2"><Button variant="outline" className="min-h-11" onClick={() => void copy(url)}><Copy className="size-4" />Copy link</Button><Button variant="outline" className="min-h-11" onClick={() => void copy(`tvg-logo="${url}"`)}><Copy className="size-4" />Copy as tvg-logo</Button></div></div>;
