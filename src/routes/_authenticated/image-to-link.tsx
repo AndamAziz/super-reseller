@@ -26,7 +26,7 @@ export const Route = createFileRoute('/_authenticated/image-to-link')({
   component: ImageToLink,
 });
 
-type Draft = { id: number; file: File; original: string; preview?: string | undefined; converted?: ConvertedImage | undefined; error?: string | undefined; progress: number; url?: string; busy: boolean };
+type Draft = { id: number; file: File; original: string; preview?: string | undefined; converted?: ConvertedImage | undefined; error?: string | undefined; progress: number; url?: string; savedId?: string; savedPath?: string; failed?: boolean; busy: boolean };
 const bytes = (value: number) => value >= 1024 ** 2 ? `${(value / 1024 ** 2).toFixed(2)} MB` : `${(value / 1024).toFixed(1)} KB`;
 
 function ImageToLink() {
@@ -83,18 +83,22 @@ function ImageToLink() {
     return () => document.removeEventListener('paste', paste);
   }, [busy]);
   async function copy(text: string) { try { await copyImageLink(text); toast.success('Link copied'); } catch (error) { toast.error(error instanceof Error ? error.message : 'Copy failed.'); } }
-  async function upload() {
+  // Converted images are saved automatically so the link and copy buttons appear without an extra click.
+  useEffect(() => {
+    if (!preparing && !working && drafts.some(d => d.converted && !d.url && !d.failed && !d.busy)) void upload(false);
+  }, [preparing, working, drafts]);
+  async function upload(retry = true) {
     setWorking(true);
-    for (const draft of drafts.filter(d => d.converted && !d.url)) {
+    for (const draft of drafts.filter(d => d.converted && !d.url && (retry || !d.failed))) {
       if (!draft.converted) continue;
-      setDrafts(current => current.map(d => d.id === draft.id ? { ...d, busy: true, error: undefined } : d));
+      setDrafts(current => current.map(d => d.id === draft.id ? { ...d, busy: true, failed: false, error: undefined } : d));
       try {
         const saved = await uploadImageLink(draft.file, draft.converted, progress => setDrafts(current => current.map(d => d.id === draft.id ? { ...d, progress } : d)));
-        setDrafts(current => current.map(d => d.id === draft.id ? { ...d, busy: false, url: saved.url } : d));
+        setDrafts(current => current.map(d => d.id === draft.id ? { ...d, busy: false, url: saved.url, savedId: saved.id, savedPath: saved.path } : d));
       } catch (error) {
         console.error('Image upload failed', draft.file.name, error);
         const message = error instanceof Error ? error.message : typeof error === 'object' && error && 'message' in error ? String((error as { message: unknown }).message) : 'Upload failed.';
-        setDrafts(current => current.map(d => d.id === draft.id ? { ...d, busy: false, error: message } : d));
+        setDrafts(current => current.map(d => d.id === draft.id ? { ...d, busy: false, failed: true, error: message } : d));
         toast.error(`${draft.file.name}: ${message}`);
       }
     }
@@ -103,7 +107,7 @@ function ImageToLink() {
   async function remove() {
     if (!deleting) return;
     setRemoving(true);
-    try { await deleteImageLink(deleting.id, deleting.path); setDrafts(current => current.filter(d => d.url !== history.rows.find(row => row.id === deleting.id)?.url)); await qc.invalidateQueries({ queryKey: ['image-links'] }); setDeleting(null); toast.success('Image deleted'); }
+    try { await deleteImageLink(deleting.id, deleting.path); setDrafts(current => current.filter(d => d.savedId !== deleting.id)); await qc.invalidateQueries({ queryKey: ['image-links'] }); setDeleting(null); toast.success('Image deleted'); }
     catch (error) { toast.error(error instanceof Error ? error.message : 'Could not delete image.'); }
     finally { setRemoving(false); }
   }
@@ -120,7 +124,7 @@ function ImageToLink() {
         <div className="space-y-2"><Label htmlFor="image-resize">Resize</Label><Select value={resize} onValueChange={setResize} disabled={busy}><SelectTrigger id="image-resize" className="min-h-11 w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="original">Original</SelectItem><SelectItem value="1000">Max 1000px</SelectItem><SelectItem value="600">Max 600px</SelectItem><SelectItem value="custom">Custom max width</SelectItem></SelectContent></Select></div>
         {resize === 'custom' && <div className="space-y-2"><Label htmlFor="image-width">Maximum width (px)</Label><Input id="image-width" type="number" min="1" max="16384" value={custom} disabled={busy} onChange={event => setCustom(event.target.value)} className="min-h-11" /></div>}
       </div>
-      {drafts.length > 0 && <Button className="min-h-11 w-full sm:w-auto" disabled={busy || !drafts.some(d => d.converted && !d.url)} onClick={() => void upload()}><Upload className="size-4" />{working ? 'Uploading…' : preparing ? 'Preparing images…' : 'Upload images'}</Button>}
+      {drafts.length > 0 && <Button className="min-h-11 w-full sm:w-auto" disabled={busy || !drafts.some(d => d.converted && !d.url)} onClick={() => void upload(true)}><Upload className="size-4" />{working ? 'Saving…' : preparing ? 'Preparing images…' : drafts.some(d => d.failed) ? 'Retry upload' : 'Upload images'}</Button>}
     </section>
     {drafts.length > 0 && <div className="grid min-w-0 gap-4 xl:grid-cols-2">{drafts.map(draft => <article key={draft.id} className="min-w-0 space-y-3 rounded-lg border border-border bg-glass p-4">
       <div className="flex min-w-0 items-start gap-2"><h2 className="min-w-0 flex-1 break-all font-medium">{draft.file.name}</h2><Button variant="ghost" className="size-11 shrink-0" disabled={busy} aria-label={`Remove preview ${draft.file.name}`} title="Remove preview" onClick={() => setDrafts(current => current.filter(d => d.id !== draft.id))}><X className="size-4" /></Button></div>
@@ -130,6 +134,7 @@ function ImageToLink() {
       {draft.error && <p role="alert" className="break-words rounded-md border border-destructive bg-destructive/10 p-2 text-destructive">{draft.error}</p>}
       {draft.busy && <div aria-live="polite"><progress aria-label={`Upload progress ${draft.file.name}`} value={draft.progress} max={100} className="h-2 w-full accent-primary" /><p className="text-xs text-muted-foreground">{draft.progress}%</p></div>}
       {draft.url && <LinkControls url={draft.url} copy={copy} open />}
+      {draft.url && draft.savedId && draft.savedPath && <Button variant="outline" className="min-h-11 w-full text-destructive" onClick={() => setDeleting({ id: draft.savedId!, path: draft.savedPath!, original_name: draft.file.name })}><Trash2 className="size-4" />Delete</Button>}
     </article>)}</div>}
     <Panel title="My uploads" actions={<Input aria-label="Search uploads" placeholder="Search uploads" className="min-h-11 w-full sm:w-60" value={search} onChange={event => { setSearch(event.target.value); setPage(0); }} />}>
       {history.rows.length === 0 && <p className="p-6 text-muted-foreground">{search ? 'No matching images.' : 'No uploaded images.'}</p>}
