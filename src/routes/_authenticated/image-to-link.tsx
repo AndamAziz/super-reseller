@@ -91,7 +91,12 @@ function ImageToLink() {
       try {
         const saved = await uploadImageLink(draft.file, draft.converted, progress => setDrafts(current => current.map(d => d.id === draft.id ? { ...d, progress } : d)));
         setDrafts(current => current.map(d => d.id === draft.id ? { ...d, busy: false, url: saved.url } : d));
-      } catch (error) { setDrafts(current => current.map(d => d.id === draft.id ? { ...d, busy: false, error: error instanceof Error ? error.message : 'Upload failed.' } : d)); }
+      } catch (error) {
+        console.error('Image upload failed', draft.file.name, error);
+        const message = error instanceof Error ? error.message : typeof error === 'object' && error && 'message' in error ? String((error as { message: unknown }).message) : 'Upload failed.';
+        setDrafts(current => current.map(d => d.id === draft.id ? { ...d, busy: false, error: message } : d));
+        toast.error(`${draft.file.name}: ${message}`);
+      }
     }
     await qc.invalidateQueries({ queryKey: ['image-links'] }); setWorking(false);
   }
@@ -121,9 +126,10 @@ function ImageToLink() {
       <div className="flex min-w-0 items-start gap-2"><h2 className="min-w-0 flex-1 break-all font-medium">{draft.file.name}</h2><Button variant="ghost" className="size-11 shrink-0" disabled={busy} aria-label={`Remove preview ${draft.file.name}`} title="Remove preview" onClick={() => setDrafts(current => current.filter(d => d.id !== draft.id))}><X className="size-4" /></Button></div>
       <div className="grid grid-cols-2 gap-3"><div><p className="mb-2 text-xs text-muted-foreground">Before · {bytes(draft.file.size)}</p><img src={draft.original} alt={`Original ${draft.file.name}`} className="h-36 w-full rounded border border-border object-contain" onError={event => { event.currentTarget.style.visibility = 'hidden'; }} /></div><div><p className="mb-2 text-xs text-muted-foreground">After · {draft.converted ? bytes(draft.converted.blob.size) : '…'}</p>{draft.preview && <img src={draft.preview} alt={`Converted ${draft.file.name}`} className="h-36 w-full rounded border border-border object-contain" />}</div></div>
       {draft.converted && <p className="text-xs text-muted-foreground">{draft.converted.width} × {draft.converted.height} · {draft.converted.format.toUpperCase()} · {draft.file.size >= draft.converted.blob.size ? `${bytes(draft.file.size - draft.converted.blob.size)} saved` : `${bytes(draft.converted.blob.size - draft.file.size)} larger`}</p>}
-      {draft.error && <p role="alert" className="break-words text-destructive">{draft.error}</p>}
-      {(draft.busy || draft.url) && <div aria-live="polite"><progress aria-label={`Upload progress ${draft.file.name}`} value={draft.progress} max={100} className="h-2 w-full accent-primary" /><p className="text-xs text-muted-foreground">{draft.progress}%</p></div>}
-      {draft.url && <LinkControls url={draft.url} copy={copy} />}
+      {draft.url && <p className="inline-flex rounded-md bg-primary/15 px-2 py-1 text-sm font-semibold text-primary">Done</p>}
+      {draft.error && <p role="alert" className="break-words rounded-md border border-destructive bg-destructive/10 p-2 text-destructive">{draft.error}</p>}
+      {draft.busy && <div aria-live="polite"><progress aria-label={`Upload progress ${draft.file.name}`} value={draft.progress} max={100} className="h-2 w-full accent-primary" /><p className="text-xs text-muted-foreground">{draft.progress}%</p></div>}
+      {draft.url && <LinkControls url={draft.url} copy={copy} open />}
     </article>)}</div>}
     <Panel title="My uploads" actions={<Input aria-label="Search uploads" placeholder="Search uploads" className="min-h-11 w-full sm:w-60" value={search} onChange={event => { setSearch(event.target.value); setPage(0); }} />}>
       {history.rows.length === 0 && <p className="p-6 text-muted-foreground">{search ? 'No matching images.' : 'No uploaded images.'}</p>}
@@ -138,6 +144,13 @@ function ImageToLink() {
     <Dialog open={!!deleting} onOpenChange={open => { if (!open && !removing) setDeleting(null); }}><DialogContent><DialogHeader><DialogTitle>Delete image?</DialogTitle></DialogHeader><p className="break-all">{deleting?.original_name}</p><p className="text-muted-foreground">Its public link will stop working.</p><DialogFooter><Button variant="outline" className="min-h-11" disabled={removing} onClick={() => setDeleting(null)}>Cancel</Button><Button variant="destructive" className="min-h-11" disabled={removing} onClick={() => void remove()}><Trash2 className="size-4" />{removing ? 'Deleting…' : 'Delete image'}</Button></DialogFooter></DialogContent></Dialog>
   </div>;
 }
-function LinkControls({ url, copy }: { url: string; copy: (value: string) => Promise<void> }) {
-  return <div className="min-w-0 space-y-2"><Input aria-label="Public image link" readOnly value={url} className="min-h-11 min-w-0 text-xs" onFocus={event => event.target.select()} /><div className="grid grid-cols-1 gap-2 sm:grid-cols-2"><Button variant="outline" className="min-h-11" onClick={() => void copy(url)}><Copy className="size-4" />Copy link</Button><Button variant="outline" className="min-h-11" onClick={() => void copy(`tvg-logo="${url}"`)}><Copy className="size-4" />Copy as tvg-logo</Button></div></div>;
+function LinkControls({ url, copy, open = false }: { url: string; copy: (value: string) => Promise<void>; open?: boolean }) {
+  return <div className="min-w-0 space-y-2">
+    <textarea aria-label="Public image link" readOnly value={url} rows={2} className="block min-h-11 w-full min-w-0 resize-none break-all rounded-md border border-input bg-background px-3 py-2 font-mono text-xs" onFocus={event => event.target.select()} />
+    <div className={`grid grid-cols-1 gap-2 ${open ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
+      <Button className="min-h-11" onClick={() => void copy(url)}><Copy className="size-4" />Copy link</Button>
+      <Button variant="outline" className="min-h-11" onClick={() => void copy(`tvg-logo="${url}"`)}><Copy className="size-4" />Copy as tvg-logo</Button>
+      {open && <Button asChild variant="outline" className="min-h-11"><a href={url} target="_blank" rel="noopener noreferrer"><ExternalLink className="size-4" />Open</a></Button>}
+    </div>
+  </div>;
 }
