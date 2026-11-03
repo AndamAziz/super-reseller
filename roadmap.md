@@ -1,4 +1,7 @@
 # Connection billing
+## Image to Link
+- [ ] Add admin-only image conversion, public storage and protected upload history without changing existing panel permissions.
+- [ ] Verify upload/resize/copy/reload/delete, anonymous image delivery, reseller denial and 360px layout.
 ## Manual uploaded-playlist entries
 - [x] Added admin-only manual Live TV, Movie and Series creation with details or original M3U entry text; preserves existing uploaded attributes, saved order and document format. GitHub source and billing unchanged.
 - [x] Real admin import/add/reload/export verified for all three types; original CRLF/header/entry and pasted TMDB/custom attributes/directives preserved. Temporary playlists deleted, no page errors; all 219 tests pass and build OK. Not published.

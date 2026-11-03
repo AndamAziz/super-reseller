@@ -300,6 +300,45 @@ export type Database = {
           },
         ]
       }
+      image_links: {
+        Row: {
+          created_at: string
+          created_by: string
+          format: string
+          height: number
+          id: string
+          original_name: string
+          path: string
+          size_bytes: number
+          url: string
+          width: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          format: string
+          height: number
+          id?: string
+          original_name: string
+          path: string
+          size_bytes: number
+          url: string
+          width: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          format?: string
+          height?: number
+          id?: string
+          original_name?: string
+          path?: string
+          size_bytes?: number
+          url?: string
+          width?: number
+        }
+        Relationships: []
+      }
       lines: {
         Row: {
           created_at: string

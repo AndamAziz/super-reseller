@@ -197,6 +197,13 @@
       "when": 1793525540329,
       "tag": "0027_admin_replace_public_mp4_bytes",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1793728017046,
+      "tag": "0028_admin_channel_image_links",
+      "breakpoints": true
     }
   ]
 }
