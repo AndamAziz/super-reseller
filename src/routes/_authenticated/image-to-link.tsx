@@ -103,7 +103,7 @@ function ImageToLink() {
     finally { setRemoving(false); }
   }
   const pageCount = Math.max(1, Math.ceil(history.count / IMAGE_PAGE_SIZE));
-  return <div className="image-link-page min-w-0 space-y-5">
+  return <div className="image-link-page min-w-0 space-y-5 dark:bg-background dark:p-4">
     <PageHeader eyebrow="Media · Admin" title="Image to Link" />
     <section className="space-y-5 border-y border-border bg-glass p-4 sm:p-6">
       <div onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); addFiles(Array.from(event.dataTransfer.files)); }} className="flex min-h-36 items-center justify-center rounded-lg border border-dashed border-border bg-background/50 p-6">
