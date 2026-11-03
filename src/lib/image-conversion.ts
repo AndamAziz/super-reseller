@@ -1,5 +1,10 @@
 export const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
 export const IMAGE_QUALITY = 0.85;
+export const JPG_QUALITY = 0.9;
+export const DEFAULT_IMAGE_FORMAT: ImageFormat = 'jpg';
+export const DEFAULT_MAX_WIDTH = 600;
+export type JpgBackground = 'white' | 'black';
+export const imageQuality = (format: ImageFormat) => format === 'jpg' ? JPG_QUALITY : IMAGE_QUALITY;
 export type ImageFormat = 'webp' | 'png' | 'jpg';
 export type ConvertedImage = { blob: Blob; width: number; height: number; format: ImageFormat };
 export const imageMime = (format: ImageFormat) => format === 'jpg' ? 'image/jpeg' : `image/${format}`;
@@ -14,7 +19,7 @@ export function resizedDimensions(width: number, height: number, maxWidth: numbe
   const scale = maxWidth === null ? 1 : Math.min(1, maxWidth / width);
   return { width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)) };
 }
-export async function convertImage(file: File, format: ImageFormat, maxWidth: number | null): Promise<ConvertedImage> {
+export async function convertImage(file: File, format: ImageFormat, maxWidth: number | null, background: JpgBackground = 'white'): Promise<ConvertedImage> {
   validateImage(file);
   let source: Blob = file;
   if (/\.(heic|heif)$/i.test(file.name) || /image\/hei[cf]/i.test(file.type)) {
@@ -27,16 +32,18 @@ export async function convertImage(file: File, format: ImageFormat, maxWidth: nu
   const url = URL.createObjectURL(source);
   try {
     const image = new Image();
+    // Browsers apply EXIF orientation when decoding; canvas re-encoding strips all metadata.
+    image.style.imageOrientation = 'from-image';
     image.src = url;
     await image.decode().catch(() => { throw new Error('This browser could not read the image.'); });
     const dimensions = resizedDimensions(image.naturalWidth, image.naturalHeight, maxWidth);
     const canvas = document.createElement('canvas');
     canvas.width = dimensions.width; canvas.height = dimensions.height;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { colorSpace: 'srgb' } as CanvasRenderingContext2DSettings);
     if (!ctx) throw new Error('Image conversion is unavailable.');
-    if (format === 'jpg') { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+    if (format === 'jpg') { ctx.fillStyle = background === 'black' ? '#000000' : '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
     ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-    const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(value => value ? resolve(value) : reject(new Error('Image conversion failed.')), imageMime(format), IMAGE_QUALITY));
+    const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(value => value ? resolve(value) : reject(new Error('Image conversion failed.')), imageMime(format), imageQuality(format)));
     if (blob.type !== imageMime(format)) throw new Error(`This browser cannot create ${format.toUpperCase()} images. Try PNG.`);
     return { blob, ...dimensions, format };
   } finally { URL.revokeObjectURL(url); }
