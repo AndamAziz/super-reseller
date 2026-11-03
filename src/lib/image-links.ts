@@ -3,7 +3,9 @@ import type { ConvertedImage } from '@/lib/image-conversion';
 export const IMAGE_PAGE_SIZE = 20;
 export const IMAGE_CACHE_SECONDS = '31536000';
 export async function requireImageAdmin() {
-  const { data, error } = await supabase.rpc('has_role', { _user_id: (await supabase.auth.getUser()).data.user?.id ?? '', _role: 'admin' });
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return false;
+  const { data, error } = await supabase.rpc('has_role', { _user_id: auth.user.id, _role: 'admin' });
   if (error) throw error;
   return data === true;
 }
@@ -22,12 +24,12 @@ export async function uploadImageLink(original: File, converted: ConvertedImage,
   // XHR provides byte-level progress; authenticated storage APIs still enforce RLS.
   const { data: session } = await supabase.auth.getSession();
   if (!session.session) throw new Error('Please sign in again.');
-  const base = import.meta.env.VITE_SUPABASE_URL;
+  const base = import.meta.env['VITE_SUPABASE_URL'];
   await new Promise<void>((resolve, reject) => {
     const request = new XMLHttpRequest();
     request.open('POST', `${base}/storage/v1/object/channel-images/${path}`);
     request.setRequestHeader('Authorization', `Bearer ${session.session?.access_token}`);
-    request.setRequestHeader('apikey', import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);
+    request.setRequestHeader('apikey', import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY']);
     request.setRequestHeader('Content-Type', converted.blob.type);
     request.setRequestHeader('Cache-Control', `public, max-age=${IMAGE_CACHE_SECONDS}, immutable`);
     request.upload.onprogress = event => { if (event.lengthComputable) progress(Math.round(10 + event.loaded / event.total * 80)); };

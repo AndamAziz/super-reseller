@@ -20,8 +20,9 @@ export async function convertImage(file: File, format: ImageFormat, maxWidth: nu
   if (/\.(heic|heif)$/i.test(file.name) || /image\/hei[cf]/i.test(file.type)) {
     const { default: heic2any } = await import('heic2any');
     const decoded = await heic2any({ blob: file, toType: 'image/png' });
-    source = Array.isArray(decoded) ? decoded[0] : decoded;
-    if (!source) throw new Error('Could not decode this iPhone image.');
+    const first = Array.isArray(decoded) ? decoded[0] : decoded;
+    if (!first) throw new Error('Could not decode this iPhone image.');
+    source = first;
   }
   const url = URL.createObjectURL(source);
   try {

@@ -26,7 +26,7 @@ export const Route = createFileRoute('/_authenticated/image-to-link')({
   component: ImageToLink,
 });
 
-type Draft = { id: number; file: File; original: string; preview?: string; converted?: ConvertedImage; error?: string; progress: number; url?: string; busy: boolean };
+type Draft = { id: number; file: File; original: string; preview?: string | undefined; converted?: ConvertedImage | undefined; error?: string | undefined; progress: number; url?: string; busy: boolean };
 const bytes = (value: number) => value >= 1024 ** 2 ? `${(value / 1024 ** 2).toFixed(2)} MB` : `${(value / 1024).toFixed(1)} KB`;
 
 function ImageToLink() {
