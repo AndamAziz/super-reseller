@@ -17,6 +17,7 @@ import { Route as Player_apiDotphpRouteImport } from './routes/player_api[.]php'
 import { Route as AuthenticatedContactRouteImport } from './routes/_authenticated/contact'
 import { Route as AuthenticatedCreditsRouteImport } from './routes/_authenticated/credits'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedImageToLinkRouteImport } from './routes/_authenticated/image-to-link'
 import { Route as AuthenticatedLinesRouteImport } from './routes/_authenticated/lines'
 import { Route as AuthenticatedPlaybackCheckRouteImport } from './routes/_authenticated/playback-check'
 import { Route as AuthenticatedPlaylistsRouteImport } from './routes/_authenticated/playlists'
@@ -76,6 +77,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedImageToLinkRoute =
+  AuthenticatedImageToLinkRouteImport.update({
+    id: '/image-to-link',
+    path: '/image-to-link',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedLinesRoute = AuthenticatedLinesRouteImport.update({
   id: '/lines',
   path: '/lines',
@@ -190,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof AuthenticatedContactRoute
   '/credits': typeof AuthenticatedCreditsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/image-to-link': typeof AuthenticatedImageToLinkRoute
   '/lines': typeof AuthenticatedLinesRoute
   '/playback-check': typeof AuthenticatedPlaybackCheckRoute
   '/playlists': typeof AuthenticatedPlaylistsRoute
@@ -218,6 +226,7 @@ export interface FileRoutesByTo {
   '/contact': typeof AuthenticatedContactRoute
   '/credits': typeof AuthenticatedCreditsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/image-to-link': typeof AuthenticatedImageToLinkRoute
   '/lines': typeof AuthenticatedLinesRoute
   '/playback-check': typeof AuthenticatedPlaybackCheckRoute
   '/playlists': typeof AuthenticatedPlaylistsRoute
@@ -248,6 +257,7 @@ export interface FileRoutesById {
   '/_authenticated/contact': typeof AuthenticatedContactRoute
   '/_authenticated/credits': typeof AuthenticatedCreditsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/image-to-link': typeof AuthenticatedImageToLinkRoute
   '/_authenticated/lines': typeof AuthenticatedLinesRoute
   '/_authenticated/playback-check': typeof AuthenticatedPlaybackCheckRoute
   '/_authenticated/playlists': typeof AuthenticatedPlaylistsRoute
@@ -278,6 +288,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/credits'
     | '/dashboard'
+    | '/image-to-link'
     | '/lines'
     | '/playback-check'
     | '/playlists'
@@ -306,6 +317,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/credits'
     | '/dashboard'
+    | '/image-to-link'
     | '/lines'
     | '/playback-check'
     | '/playlists'
@@ -335,6 +347,7 @@ export interface FileRouteTypes {
     | '/_authenticated/contact'
     | '/_authenticated/credits'
     | '/_authenticated/dashboard'
+    | '/_authenticated/image-to-link'
     | '/_authenticated/lines'
     | '/_authenticated/playback-check'
     | '/_authenticated/playlists'
@@ -433,6 +446,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/image-to-link': {
+      id: '/_authenticated/image-to-link'
+      path: '/image-to-link'
+      fullPath: '/image-to-link'
+      preLoaderRoute: typeof AuthenticatedImageToLinkRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/lines': {
@@ -575,6 +595,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedContactRoute: typeof AuthenticatedContactRoute
   AuthenticatedCreditsRoute: typeof AuthenticatedCreditsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedImageToLinkRoute: typeof AuthenticatedImageToLinkRoute
   AuthenticatedLinesRoute: typeof AuthenticatedLinesRoute
   AuthenticatedPlaybackCheckRoute: typeof AuthenticatedPlaybackCheckRoute
   AuthenticatedPlaylistsRoute: typeof AuthenticatedPlaylistsRoute
@@ -586,6 +607,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedContactRoute: AuthenticatedContactRoute,
   AuthenticatedCreditsRoute: AuthenticatedCreditsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedImageToLinkRoute: AuthenticatedImageToLinkRoute,
   AuthenticatedLinesRoute: AuthenticatedLinesRoute,
   AuthenticatedPlaybackCheckRoute: AuthenticatedPlaybackCheckRoute,
   AuthenticatedPlaylistsRoute: AuthenticatedPlaylistsRoute,
