@@ -25,8 +25,7 @@
 - Uploaded channel ordering uses an admin-checked atomic database RPC to swap saved positions with the previous/next visible channel; reads sort by position and ID so exports and reloads preserve the same order without granting direct position writes.
 - Generated direct-source links carry a channel identity derived from name and group, propagated through signed HLS links, so catalog reordering and source URL rotation keep the selected channel; legacy numeric-only links retain their behavior.
 - Upstream timeouts apply only until response headers arrive, with one retry for network errors or 502/503/504, so long MP3/MP4 bodies are not aborted by the header deadline.
-- Routing tests: real tree, signed-out auth, no shell.
-- Mobile records and role-aware navigation preserve billing.
+- Routing tests use the real tree. Images convert browser-side with lazy HEIC decoding; image route checks roles and storage/history enforce admin writes.
 - Admin stream tests probe the selected URL with its own Referer and User-Agent independently of GitHub; success requires media bytes after signed playlist traversal, with one recheck for transient failures, and diagnostic origin codes do not change playback response semantics.
 - Playback protocol detection uses bounded signature inspection with byte replay; DASH resources use scoped exact-URL or constrained signed-template authorization, never a browser-accessible arbitrary signing endpoint.
 - Admin playback-check dynamically loads engines and separates HTTP, frame, audio and continuity evidence; records unchanged.
