@@ -104,6 +104,18 @@
   backdrop-filter: blur(24px);
 }
 
+/* This new surface follows the existing light palette; dark overrides are scoped. */
+.dark .image-link-page {
+  --background: oklch(0.2 0.015 255);
+  --foreground: oklch(0.94 0.008 255);
+  --glass: oklch(0.26 0.015 255 / 0.85);
+  --glass-strong: oklch(0.3 0.015 255);
+  --muted-foreground: oklch(0.75 0.015 255);
+  --border: oklch(0.75 0.015 255 / 0.25);
+  --input: oklch(0.75 0.015 255 / 0.3);
+  color: var(--foreground);
+}
+
 @utility sheen-bg {
   background-image: var(--gradient-sheen);
   background-size: 200% 100%;

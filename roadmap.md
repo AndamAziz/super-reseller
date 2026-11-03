@@ -1,4 +1,7 @@
 # Connection billing
+## Image to Link
+- [x] Added admin-only image conversion, public storage and protected history; existing panel roles and policies unchanged. Browser HEIC decoder added; random output names and one-year immutable caching verified.
+- [x] Real admin upload/600px resize/tvg-logo copy/reload/search/delete and anonymous WebP 200 verified; 360px layout checked. Permission and redirect tests pass; all 232 prior/new tests plus two additional access tests pass. Not published. HEIC and AVIF depend on browser/decoder support; real iPhone input not available for verification.
 ## Manual uploaded-playlist entries
 - [x] Added admin-only manual Live TV, Movie and Series creation with details or original M3U entry text; preserves existing uploaded attributes, saved order and document format. GitHub source and billing unchanged.
 - [x] Real admin import/add/reload/export verified for all three types; original CRLF/header/entry and pasted TMDB/custom attributes/directives preserved. Temporary playlists deleted, no page errors; all 219 tests pass and build OK. Not published.
