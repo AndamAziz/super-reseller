@@ -123,7 +123,7 @@ function ImageToLink() {
         <input ref={input} type="file" accept="image/*" multiple className="hidden" aria-label="Choose images" onChange={event => { addFiles(Array.from(event.target.files ?? [])); event.target.value = ''; }} />
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <Select value={format} onValueChange={value => setFormat(value as ImageFormat)} disabled={busy}><SelectTrigger aria-label="Output format" className={`${ctl} w-full sm:w-[280px]`}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="jpg">JPG (best compatibility, recommended)</SelectItem><SelectItem value="png">PNG (transparent logos)</SelectItem><SelectItem value="webp">WebP (smaller, newer devices only)</SelectItem></SelectContent></Select>
+        <Select value={format} onValueChange={value => setFormat(value as ImageFormat)} disabled={busy}><SelectTrigger aria-label="Output format" className={`${ctl} w-full sm:w-[310px]`}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="jpg">JPG (best compatibility, recommended)</SelectItem><SelectItem value="png">PNG (transparent logos)</SelectItem><SelectItem value="webp">WebP (smaller, newer devices only)</SelectItem></SelectContent></Select>
         {format === 'jpg' && <Select value={background} onValueChange={value => setBackground(value as JpgBackground)} disabled={busy}><SelectTrigger aria-label="Background" className={`${ctl} w-[calc(50%-4px)] sm:w-[160px]`}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="white">Background: White</SelectItem><SelectItem value="black">Background: Black</SelectItem></SelectContent></Select>}
         <Select value={resize} onValueChange={setResize} disabled={busy}><SelectTrigger aria-label="Resize" className={`${ctl} w-[calc(50%-4px)] sm:w-[130px]`}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="original">Original</SelectItem><SelectItem value="1000">1000px</SelectItem><SelectItem value="600">600px</SelectItem><SelectItem value="400">400px</SelectItem></SelectContent></Select>
         <Button className={`${ctl} w-full sm:ml-auto sm:w-auto`} disabled={busy || !drafts.some(d => d.converted && !d.url)} onClick={() => void upload(true)}><Upload className="size-4" />{working ? 'Uploading…' : preparing ? 'Preparing…' : drafts.some(d => d.failed) ? 'Retry upload' : 'Upload'}</Button>
@@ -178,8 +178,8 @@ function LinkRow({ url, copy, onDelete }: { url: string; copy: CopyFn; onDelete?
   const [logoCopied, doLogo] = useCopied(copy);
   return <div className="flex min-w-0 flex-wrap items-center gap-2">
     <Input aria-label="Public image link" readOnly value={url} className={`${ctl} min-w-0 flex-[1_1_220px] truncate font-mono text-xs`} onFocus={event => event.target.select()} />
-    <div className="flex shrink-0 gap-2">
-      <Button className={ctl} onClick={() => void doCopy(url)}>{copied ? <Check className="size-4" /> : <Copy className="size-4" />}Copy link</Button>
+    <div className="flex w-full gap-2 sm:w-auto">
+      <Button className={`${ctl} flex-1 sm:flex-none`} onClick={() => void doCopy(url)}>{copied ? <Check className="size-4" /> : <Copy className="size-4" />}Copy link</Button>
       <Button variant="secondary" className={ctl} onClick={() => void doLogo(`tvg-logo="${url}"`)}>{logoCopied ? <Check className="size-4" /> : <Copy className="size-4" />}<span className="hidden sm:inline">Copy</span> tvg-logo</Button>
       <Button asChild variant="outline" size="icon" className="size-10"><a href={url} target="_blank" rel="noopener noreferrer" aria-label="Open" title="Open"><ExternalLink className="size-4" /></a></Button>
       {onDelete && <Button variant="outline" size="icon" className="size-10 hover:border-destructive hover:text-destructive" aria-label="Delete" title="Delete" onClick={onDelete}><Trash2 className="size-4" /></Button>}
