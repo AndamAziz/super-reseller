@@ -180,9 +180,9 @@ function LinkRow({ url, copy, onDelete }: { url: string; copy: CopyFn; onDelete?
     <Input aria-label="Public image link" readOnly value={url} className={`${ctl} min-w-0 flex-[1_1_220px] truncate font-mono text-xs`} onFocus={event => event.target.select()} />
     <div className="flex w-full gap-2 sm:w-auto">
       <Button className={`${ctl} flex-1 sm:flex-none`} onClick={() => void doCopy(url)}>{copied ? <Check className="size-4" /> : <Copy className="size-4" />}Copy link</Button>
-      <Button variant="secondary" className={ctl} onClick={() => void doLogo(`tvg-logo="${url}"`)}>{logoCopied ? <Check className="size-4" /> : <Copy className="size-4" />}<span className="hidden sm:inline">Copy</span> tvg-logo</Button>
-      <Button asChild variant="outline" size="icon" className="size-10"><a href={url} target="_blank" rel="noopener noreferrer" aria-label="Open" title="Open"><ExternalLink className="size-4" /></a></Button>
-      {onDelete && <Button variant="outline" size="icon" className="size-10 hover:border-destructive hover:text-destructive" aria-label="Delete" title="Delete" onClick={onDelete}><Trash2 className="size-4" /></Button>}
+      <Button variant="secondary" className={`${ctl} min-w-0 px-3`} onClick={() => void doLogo(`tvg-logo="${url}"`)}>{logoCopied ? <Check className="size-4" /> : <Copy className="size-4" />}<span className="hidden sm:inline">Copy</span> tvg-logo</Button>
+      <Button asChild variant="outline" size="icon" className="size-10 shrink-0"><a href={url} target="_blank" rel="noopener noreferrer" aria-label="Open" title="Open"><ExternalLink className="size-4" /></a></Button>
+      {onDelete && <Button variant="outline" size="icon" className="size-10 shrink-0 hover:border-destructive hover:text-destructive" aria-label="Delete" title="Delete" onClick={onDelete}><Trash2 className="size-4" /></Button>}
     </div>
   </div>;
 }
