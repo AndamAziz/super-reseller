@@ -6,11 +6,11 @@ it('redirects a non-admin away from image management before history loads', asyn
   vi.mocked(requireImageAdmin).mockResolvedValue(false);
   const guard = Route.options.beforeLoad;
   if (!guard) throw new Error('Missing access guard');
-  await expect(guard({} as Parameters<typeof guard>[0])).rejects.toMatchObject({ options: { to: '/dashboard' } });
+  await expect(guard({} as NonNullable<Parameters<typeof guard>[0]>)).rejects.toMatchObject({ options: { to: '/dashboard' } });
 });
 it('allows an existing admin to open image management', async () => {
   vi.mocked(requireImageAdmin).mockResolvedValue(true);
   const guard = Route.options.beforeLoad;
   if (!guard) throw new Error('Missing access guard');
-  await expect(guard({} as Parameters<typeof guard>[0])).resolves.toBeUndefined();
+  await expect(guard({} as NonNullable<Parameters<typeof guard>[0]>)).resolves.toBeUndefined();
 });
