@@ -419,14 +419,16 @@ function LinesPage() {
                   data-full={atLimit ? "true" : undefined}
                   className={cn("transition-colors hover:bg-glass-strong", atLimit && "bg-destructive/8")}
                 >
-                  <td className={cn(td, "font-mono text-[12px]", atLimit && "border-l-2 border-l-destructive")}>
-                    {l.username}
-                    {l.is_test && <span className="ml-2 rounded-full border border-border px-1.5 py-0.5 font-sans text-[10px] text-muted-foreground" title={l.customer_contact ?? ""}>Test used</span>}
+                  <td className={cn(td, "px-3 py-2 font-mono text-[12px] first:pl-4", atLimit && "border-l-2 border-l-destructive")}>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {l.username}
+                      {l.is_test && <span className="rounded-full border border-border px-1.5 py-0.5 font-sans text-[10px] text-muted-foreground" title={l.customer_contact ?? ""}>Test used</span>}
+                    </div>
+                    <div className="mt-0.5 text-[11px] text-muted-foreground">{l.password}</div>
                   </td>
-                  <td className={`${td} font-mono text-[12px] text-muted-foreground`}>{l.password}</td>
-                  {isAdmin && <td className={`${td} text-muted-foreground`}>{l.profiles?.display_name ?? l.profiles?.email}</td>}
-                  <td className={`${td} font-mono text-[12px]`}>{fmtDate(l.expires_at)}</td>
-                  <td className={`${td} font-mono text-[12px]`}>
+                  {isAdmin && <td className={`${td} px-3 py-2 text-[12px] text-muted-foreground`}>{l.profiles?.display_name ?? l.profiles?.email}</td>}
+                  <td className={`${td} whitespace-nowrap px-3 py-2 font-mono text-[12px]`}>{fmtDate(l.expires_at)}</td>
+                  <td className={`${td} px-3 py-2 font-mono text-[12px]`}>
                     <span
                       title={`${l.active_connections ?? 0} device${(l.active_connections ?? 0) === 1 ? "" : "s"} streaming now · max ${l.max_connections ?? 1}${(l.active_devices ?? []).length ? "\n" + (l.active_devices ?? []).map((d) => d.label).join("\n") : ""}`}
                       className={cn("font-mono", atLimit && "font-semibold text-destructive")}
