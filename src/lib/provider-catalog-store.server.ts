@@ -11,7 +11,7 @@ function decodeCatalog(value: Json): Catalog {
   const encoded = value as { encoding?: string; data?: string };
   if (encoded.encoding !== 'deflate-base64' || !encoded.data) return value as unknown as Catalog;
   const parsed = JSON.parse(inflateSync(Buffer.from(encoded.data, 'base64')).toString()) as Pick<Catalog, 'channels' | 'version'>;
-  return { ...buildCatalog(parsed.channels), version: parsed.version };
+  return { ...buildCatalog(parsed.channels), ...(parsed.version ? { version: parsed.version } : {}) };
 }
 
 export const CATALOG_REFRESH_MS = 300_000;
