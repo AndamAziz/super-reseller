@@ -5,7 +5,7 @@ export async function recordProviderRequest(request: Request, requestType: strin
   const save = async () => {
     try {
       const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-      const { error } = await supabaseAdmin.from('provider_request_logs').insert(row).abortSignal(AbortSignal.timeout(1500));
+      const { error } = await supabaseAdmin.from('provider_request_logs').insert(row).abortSignal(AbortSignal.timeout(500));
       if (error) console.warn('provider_log_write_failed');
     } catch { console.warn('provider_log_write_failed'); }
   };
