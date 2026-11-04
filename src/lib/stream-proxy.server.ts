@@ -21,13 +21,25 @@ async function clientInfo(request: Request, username: string): Promise<{ key: st
  * (line + IP + user-agent) seen in the last 90 seconds. Returns null when the
  * stream may proceed, or a 429 response when the line is already at its limit.
  */
-export async function checkStreamLimit(request: Request, line: { username: string; maxConnections: number }): Promise<Response | null> {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: row } = await supabaseAdmin.from("lines").select("id").eq("username", line.username).maybeSingle();
-  if (!row) return null; // line vanished — authLine already validated it, fail open
+// Devices recently admitted (per worker instance). Re-checking every video piece added a
+// database round trip per segment; a 20s refresh still keeps the 90s activity window alive.
+const admitted = new Map<string, number>();
+const ADMIT_TTL_MS = 20_000;
+
+export async function checkStreamLimit(request: Request, line: { username: string; maxConnections: number; lineId?: string }): Promise<Response | null> {
   const { key, ua, ip } = await clientInfo(request, line.username);
+  const cacheKey = `${line.username}|${line.maxConnections}|${key}`;
+  const seen = admitted.get(cacheKey);
+  if (seen && Date.now() - seen < ADMIT_TTL_MS) return null;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  let lineId = line.lineId;
+  if (!lineId) {
+    const { data: row } = await supabaseAdmin.from("lines").select("id").eq("username", line.username).maybeSingle();
+    if (!row) return null; // line vanished — authLine already validated it, fail open
+    lineId = row.id;
+  }
   const { data, error } = await supabaseAdmin.rpc("check_stream_limit", {
-    _line_id: row.id,
+    _line_id: lineId,
     _client_key: key,
     _max: line.maxConnections,
     _user_agent: ua,
@@ -35,6 +47,8 @@ export async function checkStreamLimit(request: Request, line: { username: strin
   });
   if (error) return null; // never break playback on a bookkeeping error
   if (data === false) return plain("Max connections reached for this line", 429);
+  if (admitted.size > 5000) admitted.clear();
+  admitted.set(cacheKey, Date.now());
   return null;
 }
 
