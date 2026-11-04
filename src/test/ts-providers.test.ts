@@ -20,6 +20,11 @@ import { parseM3U, parseM3UDocument, buildM3U } from "@/lib/m3u";
 import { handlePlaylistRequest } from "@/lib/playlist-auth.server";
 import { handleMediaPlayback } from "@/lib/media-playback.server";
 import { channelIdentity } from "@/lib/media";
+import { buildCatalog } from '@/lib/playlist-auth.server';
+vi.mock('@/lib/provider-catalog-store.server', () => ({
+  readStoredCatalog: async () => buildCatalog(parseM3U(playlist)),
+  refreshStoredCatalog: async () => buildCatalog(parseM3U(playlist)),
+}));
 
 const TS = (() => { const b = new Uint8Array(752); b[0] = b[188] = b[376] = b[564] = 0x47; return b; })();
 const hls = (seg: string) => `#EXTM3U\n#EXT-X-TARGETDURATION:10\n#EXTINF:10,\n${seg}\n`;

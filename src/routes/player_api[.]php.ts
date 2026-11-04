@@ -5,6 +5,8 @@ import { authLine, countActiveConnections, json, loadCatalog } from "@/lib/playl
 import { needsProxy } from "@/lib/stream-proxy.server";
 import { mediaExtension, playbackUrl } from "@/lib/media";
 import { providerMetadata } from '@/lib/provider-metadata';
+import { privateListValidator, providerActions, providerRequestType, PROVIDER_DEADLINE_MS } from '@/lib/provider-http';
+import { recordProviderRequest } from '@/lib/provider-observability.server';
 
 export const Route = createFileRoute("/player_api.php")({
   server: {
@@ -16,13 +18,36 @@ export const Route = createFileRoute("/player_api.php")({
 });
 
 export async function handleXtreamRequest(request: Request) {
+  const started = Date.now();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let timedOut = false;
+  let response: Response;
+  let action = new URL(request.url).searchParams.get('action') ?? '';
   try {
-    return await respondXtreamRequest(request);
+    response = await Promise.race([
+      (async () => {
+        if (request.method === 'POST') {
+          const body = new URLSearchParams(await request.clone().text());
+          action = body.get('action') ?? action;
+        }
+        const result = await respondXtreamRequest(request);
+        return providerActions.has(action) ? privateListValidator(request, result) : result;
+      })(),
+      new Promise<Response>(resolve => { timer = setTimeout(() => {
+        timedOut = true;
+        const result = json({ error: 'Provider temporarily unavailable; retry shortly' }, 503);
+        result.headers.set('Retry-After', '2');
+        resolve(result);
+      }, PROVIDER_DEADLINE_MS); }),
+    ]);
   } catch {
-    const response = json({ error: "Provider temporarily unavailable; retry shortly" }, 503);
+    response = json({ error: "Provider temporarily unavailable; retry shortly" }, 503);
     response.headers.set("Retry-After", "2");
-    return response;
+  } finally {
+    if (timer) clearTimeout(timer);
   }
+  await recordProviderRequest(request, providerRequestType(action), started, response.status, timedOut);
+  return response;
 }
 
 async function respondXtreamRequest(request: Request) {
@@ -77,6 +102,8 @@ async function respondXtreamRequest(request: Request) {
     });
   }
 
+  // EPG/unsupported actions retain their empty-array contract without loading 10,500 entries.
+  if (!providerActions.has(action)) return json([]);
   const loaded = await loadCatalog(params.get("refresh") === "1");
   if (!loaded.ok) return json({ error: loaded.message }, loaded.status);
   const { live, movies, series } = loaded.catalog;

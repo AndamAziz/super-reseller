@@ -443,6 +443,57 @@ export type Database = {
         }
         Relationships: []
       }
+      provider_catalog_cache: {
+        Row: {
+          catalog: Json
+          checked_at: string
+          etag: string | null
+          key: string
+          source_url: string
+        }
+        Insert: {
+          catalog: Json
+          checked_at?: string
+          etag?: string | null
+          key: string
+          source_url: string
+        }
+        Update: {
+          catalog?: Json
+          checked_at?: string
+          etag?: string | null
+          key?: string
+          source_url?: string
+        }
+        Relationships: []
+      }
+      provider_request_logs: {
+        Row: {
+          created_at: string
+          duration_ms: number
+          id: number
+          request_type: string
+          status: number
+          timed_out: boolean
+        }
+        Insert: {
+          created_at?: string
+          duration_ms: number
+          id?: never
+          request_type: string
+          status: number
+          timed_out?: boolean
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number
+          id?: never
+          request_type?: string
+          status?: number
+          timed_out?: boolean
+        }
+        Relationships: []
+      }
       test_claims: {
         Row: {
           created_at: string
@@ -585,6 +636,7 @@ export type Database = {
         Returns: boolean
       }
       normalize_customer: { Args: { _c: string }; Returns: string }
+      prune_provider_request_logs: { Args: never; Returns: undefined }
       public_video_path: { Args: { p_short: string }; Returns: string }
       renew_line: {
         Args: { _line_id: string; _months: number }

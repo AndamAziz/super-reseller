@@ -1,6 +1,6 @@
 // Shared auth + source loading for the public playlist endpoints (M3U and Xtream-compatible).
 import { buildM3U, parseM3U, type M3UChannel } from "./m3u";
-import { createPlaylistCache } from "./playlist-cache";
+import { readStoredCatalog, refreshStoredCatalog } from "./provider-catalog-store.server";
 import { playbackUrl } from "./media";
 import { playlistVersion } from "./playlist-version";
 import { providerTransientStatus, retryProviderRead } from "./provider-read";
@@ -99,16 +99,12 @@ export function buildCatalog(all: M3UChannel[]): Catalog {
   return { channels: all, live, movies, series: [...byTitle.values()], episodes };
 }
 
-const readCatalog = createPlaylistCache(async () => {
-  const src = await loadSourceText();
-  if (!src.ok) throw new Error(src.message);
-  const channels = parseM3U(src.text);
-  if (!channels.length) throw new Error("Playlist source contains no playable entries");
-  return { ...buildCatalog(channels), version: await playlistVersion(src.text) };
-});
+export async function refreshCatalog(force = false) {
+  return refreshStoredCatalog(async text => ({ ...buildCatalog(parseM3U(text)), version: await playlistVersion(text) }), force);
+}
 
 export async function loadCatalog(force = false): Promise<{ ok: true; catalog: Catalog } | { ok: false; status: number; message: string }> {
-  try { return { ok: true, catalog: await readCatalog(force) }; }
+  try { return { ok: true, catalog: await readStoredCatalog(force) }; }
   catch (error) { return { ok: false, status: 502, message: error instanceof Error ? error.message : "Playlist source unreachable" }; }
 }
 

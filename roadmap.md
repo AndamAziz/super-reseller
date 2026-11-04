@@ -1,4 +1,8 @@
 # Connection billing
+## Provider first-login reliability
+- [x] Measured live baseline; account and unsupported actions avoid catalog work. Preview account 214ms; lists 139–730ms, matching category ETag 304. No account, credit, source or playback changes.
+- [x] Durable compact last-good catalog saved through authenticated warm callback; five-minute conditional source refresh and role-checked admin refresh function. Existing minute schedule unchanged (1,440 checks/day); production callback changes await publishing.
+- [x] Private authenticated ETags and credential-free 24h request logs; 247 tests pass. Historical pre-instrumentation timings/timeouts and real quiet-period customer-player results unavailable; publication awaits user approval.
 ## Image to Link
 - [x] Added admin-only image conversion, public storage and protected history; existing panel roles and policies unchanged. Browser HEIC decoder added; random output names and one-year immutable caching verified.
 - [x] Real admin upload/600px resize/tvg-logo copy/reload/search/delete and anonymous WebP 200 verified; 360px layout checked. Permission and redirect tests pass; all 232 prior/new tests plus two additional access tests pass. Not published. HEIC and AVIF depend on browser/decoder support; real iPhone input not available for verification.
