@@ -7,11 +7,13 @@ import { peekStream } from "./stream-peek";
 
 export const needsProxy = (c: M3UChannel) => !!(c.referrer?.trim() || c.user_agent?.trim());
 
-/** Stable per-device key: line + client IP + user-agent (Web Crypto — workerd-safe). */
+/** Stable per-device key: line + client IP (Web Crypto — workerd-safe). */
 async function clientInfo(request: Request, username: string): Promise<{ key: string; ua: string; ip: string }> {
   const ip = request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "";
   const ua = request.headers.get("user-agent") ?? "";
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${username}|${ip}|${ua}`));
+  // Key by line + IP only: one device's app, player engine and retries send different
+  // user-agents, and counting each separately made single devices hit the limit (429).
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${username}|${ip || ua}`));
   const key = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
   return { key, ua, ip };
 }
