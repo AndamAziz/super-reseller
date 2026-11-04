@@ -428,7 +428,7 @@ function LinesPage() {
                   </td>
                   {isAdmin && <td className={`${td} max-w-28 truncate whitespace-nowrap px-2 py-2 text-[12px] text-muted-foreground`}>{l.profiles?.display_name ?? l.profiles?.email}</td>}
                   <td className={`${td} whitespace-nowrap px-2 py-2 font-mono text-[12px]`}>{fmtDate(l.expires_at)}</td>
-                  <td className={`${td} px-2 py-2 font-mono text-[12px]`}>
+                  <td className={`${td} max-w-32 px-2 py-2 font-mono text-[12px]`}>
                     <span
                       title={`${l.active_connections ?? 0} device${(l.active_connections ?? 0) === 1 ? "" : "s"} streaming now · max ${l.max_connections ?? 1}${(l.active_devices ?? []).length ? "\n" + (l.active_devices ?? []).map((d) => d.label).join("\n") : ""}`}
                       className={cn("font-mono", atLimit && "font-semibold text-destructive")}
