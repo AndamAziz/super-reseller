@@ -490,7 +490,7 @@ function LinesPage() {
                 );
               })}
               {!shown.length && (
-                <tr><td className={`${td} text-muted-foreground`} colSpan={9}>No lines found.</td></tr>
+                <tr><td className={`${td} text-muted-foreground`} colSpan={isAdmin ? 8 : 7}>No lines found.</td></tr>
               )}
             </tbody>
           </table>
