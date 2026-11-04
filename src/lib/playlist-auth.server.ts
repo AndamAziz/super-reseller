@@ -6,26 +6,30 @@ import { playlistVersion } from "./playlist-version";
 import { providerTransientStatus, retryProviderRead } from "./provider-read";
 
 export type AuthResult =
-  | { ok: true; lineId: string; username: string; password: string; expiresAt: string; createdAt: string | null; maxConnections: number }
+  | { ok: true; lineId: string; username: string; password: string; expiresAt: string; createdAt: string | null; maxConnections: number; activeConnections?: number }
   | { ok: false; status: number; message: string };
 
-export async function authLine(username: string, password: string): Promise<AuthResult> {
+export async function authLine(username: string, password: string, withConnections = false): Promise<AuthResult> {
   if (!username || !password || username.length > 50 || password.length > 100) {
     return { ok: false, status: 401, message: "Invalid credentials" };
   }
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const result = await retryProviderRead(async () => await supabaseAdmin
-      .from("lines")
-      .select("id, username, password, expires_at, created_at, max_connections")
-      .eq("username", username.trim())
+    // Optionally embed the live device count so app login needs a single database round trip.
+    const since = new Date(Date.now() - 90_000).toISOString();
+    const columns = "id, username, password, expires_at, created_at, max_connections" + (withConnections ? ", active_connections(count)" : "");
+    const result = await retryProviderRead(async () => {
+      let query = supabaseAdmin.from("lines").select(columns).eq("username", username.trim());
+      if (withConnections) query = query.gte("active_connections.last_seen", since);
+      return await query
       .abortSignal(AbortSignal.timeout(4_000))
-      .maybeSingle(), r => Boolean(r.error) && providerTransientStatus(r.status));
+      .maybeSingle();
+    }, r => Boolean(r.error) && providerTransientStatus(r.status));
     if (result.error) return { ok: false, status: 503, message: "Account service temporarily unavailable; retry shortly" };
-    const line = result.data;
+    const line = result.data as unknown as { id: string; username: string; password: string; expires_at: string; created_at: string | null; max_connections: number | null; active_connections?: { count: number }[] } | null;
     if (!line || line.password !== password) return { ok: false, status: 401, message: "Invalid credentials" };
     if (new Date(line.expires_at).getTime() <= Date.now()) return { ok: false, status: 403, message: "Subscription expired" };
-    return { ok: true, lineId: line.id, username: line.username, password: line.password, expiresAt: line.expires_at, createdAt: line.created_at ?? null, maxConnections: line.max_connections ?? 1 };
+    return { ok: true, lineId: line.id, username: line.username, password: line.password, expiresAt: line.expires_at, createdAt: line.created_at ?? null, maxConnections: line.max_connections ?? 1, activeConnections: withConnections ? (line.active_connections?.[0]?.count ?? 0) : undefined };
   } catch {
     return { ok: false, status: 503, message: "Account service temporarily unavailable; retry shortly" };
   }
