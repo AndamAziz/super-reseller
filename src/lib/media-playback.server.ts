@@ -3,12 +3,27 @@ import { checkStreamLimit, proxyFetch, allowedUrl, unb64u } from "./stream-proxy
 import type { MediaKind } from "./media";
 import { resolveChannel } from "./media";
 
-export async function handleMediaPlayback(request: Request, username: string, password: string, stream: string, kind: MediaKind, segment = false): Promise<Response> {
+const authCache = new Map<string, { at: number; auth: AuthResult }>();
+const AUTH_TTL_MS = 15_000;
+async function cachedAuth(username: string, password: string): Promise<AuthResult> {
+  const key = `${username}\n${password}`;
+  const hit = authCache.get(key);
+  if (hit && Date.now() - hit.at < AUTH_TTL_MS && hit.auth.ok && new Date(hit.auth.expiresAt).getTime() > Date.now()) return hit.auth;
   const auth = await authLine(username, password);
-  if (!auth.ok) return plain(auth.message, auth.status);
+  if (auth.ok) {
+    if (authCache.size > 5000) authCache.clear();
+    authCache.set(key, { at: Date.now(), auth });
+  } else authCache.delete(key);
+  return auth;
+}
+
+export async function handleMediaPlayback(request: Request, username: string, password: string, stream: string, kind: MediaKind, segment = false): Promise<Response> {
   if (!/^\d+(?:\.[a-z0-9]+)?$/i.test(stream)) return plain("Invalid stream", 400);
+  // Account check and catalog load are independent: run them together, and reuse a
+  // recent successful account check for video pieces so each segment avoids a database trip.
+  const [auth, loaded] = await Promise.all([segment ? cachedAuth(username, password) : authLine(username, password), loadCatalog()]);
+  if (!auth.ok) return plain(auth.message, auth.status);
   const id = Number.parseInt(stream, 10);
-  const loaded = await loadCatalog();
   if (!loaded.ok) return plain(loaded.message, loaded.status);
   const items = kind === "live" ? loaded.catalog.live : kind === "movie" ? loaded.catalog.movies : loaded.catalog.episodes;
   const identity = new URL(request.url).searchParams.get("channel");
