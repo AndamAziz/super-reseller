@@ -396,17 +396,16 @@ function LinesPage() {
           {!shown.length && <p className="px-4 py-6 text-muted-foreground">No lines found.</p>}
         </div>
         <div className="hidden overflow-x-auto xl:block">
-          <table className="w-full min-w-[820px] text-[13px]">
+          <table className="w-full text-[13px]">
             <thead>
               <tr>
-                <th className={th}>Username</th>
-                <th className={th}>Password</th>
-                {isAdmin && <th className={th}>Reseller</th>}
-                <th className={th}>Expiry</th>
-                <th className={th}>Conn.</th>
-                <th className={th}>Status</th>
-                <th className={th}>Link</th>
-                <th className={`${th} text-right`}>Action</th>
+                <th className={cn(th, "px-3 py-2 first:pl-4")}>Username</th>
+                {isAdmin && <th className={cn(th, "px-3 py-2")}>Reseller</th>}
+                <th className={cn(th, "px-3 py-2")}>Expiry</th>
+                <th className={cn(th, "px-3 py-2")}>Conn.</th>
+                <th className={cn(th, "px-3 py-2")}>Status</th>
+                <th className={cn(th, "px-3 py-2")}>Copy</th>
+                <th className={cn(th, "px-3 py-2 text-right last:pr-4")}>Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
