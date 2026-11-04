@@ -396,17 +396,16 @@ function LinesPage() {
           {!shown.length && <p className="px-4 py-6 text-muted-foreground">No lines found.</p>}
         </div>
         <div className="hidden overflow-x-auto xl:block">
-          <table className="w-full min-w-[820px] text-[13px]">
+          <table className="w-full text-[13px]">
             <thead>
               <tr>
-                <th className={th}>Username</th>
-                <th className={th}>Password</th>
-                {isAdmin && <th className={th}>Reseller</th>}
-                <th className={th}>Expiry</th>
-                <th className={th}>Conn.</th>
-                <th className={th}>Status</th>
-                <th className={th}>Link</th>
-                <th className={`${th} text-right`}>Action</th>
+                <th className={cn(th, "px-2 py-2 first:pl-4")}>Username</th>
+                {isAdmin && <th className={cn(th, "px-2 py-2")}>Reseller</th>}
+                <th className={cn(th, "px-2 py-2")}>Expiry</th>
+                <th className={cn(th, "px-2 py-2")}>Conn.</th>
+                <th className={cn(th, "px-2 py-2")}>Status</th>
+                <th className={cn(th, "px-2 py-2")}>Copy</th>
+                <th className={cn(th, "px-2 py-2 text-right last:pr-4")}>Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -420,14 +419,16 @@ function LinesPage() {
                   data-full={atLimit ? "true" : undefined}
                   className={cn("transition-colors hover:bg-glass-strong", atLimit && "bg-destructive/8")}
                 >
-                  <td className={cn(td, "font-mono text-[12px]", atLimit && "border-l-2 border-l-destructive")}>
-                    {l.username}
-                    {l.is_test && <span className="ml-2 rounded-full border border-border px-1.5 py-0.5 font-sans text-[10px] text-muted-foreground" title={l.customer_contact ?? ""}>Test used</span>}
+                  <td className={cn(td, "px-2 py-2 font-mono text-[12px] first:pl-4", atLimit && "border-l-2 border-l-destructive")}>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {l.username}
+                      {l.is_test && <span className="rounded-full border border-border px-1.5 py-0.5 font-sans text-[10px] text-muted-foreground" title={l.customer_contact ?? ""}>Test used</span>}
+                    </div>
+                    <div className="mt-0.5 text-[11px] text-muted-foreground">{l.password}</div>
                   </td>
-                  <td className={`${td} font-mono text-[12px] text-muted-foreground`}>{l.password}</td>
-                  {isAdmin && <td className={`${td} text-muted-foreground`}>{l.profiles?.display_name ?? l.profiles?.email}</td>}
-                  <td className={`${td} font-mono text-[12px]`}>{fmtDate(l.expires_at)}</td>
-                  <td className={`${td} font-mono text-[12px]`}>
+                  {isAdmin && <td className={`${td} max-w-28 truncate whitespace-nowrap px-2 py-2 text-[12px] text-muted-foreground`}>{l.profiles?.display_name ?? l.profiles?.email}</td>}
+                  <td className={`${td} whitespace-nowrap px-2 py-2 font-mono text-[12px]`}>{fmtDate(l.expires_at)}</td>
+                  <td className={`${td} max-w-32 px-2 py-2 font-mono text-[12px]`}>
                     <span
                       title={`${l.active_connections ?? 0} device${(l.active_connections ?? 0) === 1 ? "" : "s"} streaming now · max ${l.max_connections ?? 1}${(l.active_devices ?? []).length ? "\n" + (l.active_devices ?? []).map((d) => d.label).join("\n") : ""}`}
                       className={cn("font-mono", atLimit && "font-semibold text-destructive")}
@@ -452,27 +453,27 @@ function LinesPage() {
                       </div>
                     )}
                   </td>
-                  <td className={td}><StatusBadge active={isActive(l.expires_at)} /></td>
-                  <td className={td}>
+                  <td className={`${td} px-2 py-2`}><StatusBadge active={isActive(l.expires_at)} /></td>
+                  <td className={`${td} px-2 py-2`}>
                     {isAdmin ? <div className="inline-flex overflow-hidden rounded-lg border border-border bg-muted/30">
-                      {copyItems(l).map((c, i) => <button key={c.label} type="button" title={c.title} onClick={() => copyLink(c.value, c.toast)} className={cn("inline-flex h-8 items-center gap-1 whitespace-nowrap px-2.5 text-[12px] font-medium text-foreground transition-colors hover:bg-primary/10 active:bg-primary/15", i > 0 && "border-l border-border")}><Copy className="size-3.5 text-primary" />{c.short}</button>)}
-                    </div> : <Button type="button" variant="outline" className={softBtn} title="Copy host, username and password" onClick={() => copyLink(`Host: ${customerLinks(l).provider}\nUsername: ${l.username}\nPassword: ${l.password}`, "Login details")}><Copy className="size-3.5" /> Copy</Button>}
+                      {copyItems(l).map((c, i) => <button key={c.label} type="button" title={c.title} aria-label={c.title} onClick={() => copyLink(c.value, c.toast)} className={cn("inline-flex size-8 items-center justify-center text-foreground transition-colors hover:bg-primary/10 active:bg-primary/15", i > 0 && "border-l border-border")}><Copy className="size-3.5 text-primary" /></button>)}
+                    </div> : <Button type="button" variant="outline" className={cn(softBtn, "size-8 p-0")} title="Copy host, username and password" aria-label="Copy host, username and password" onClick={() => copyLink(`Host: ${customerLinks(l).provider}\nUsername: ${l.username}\nPassword: ${l.password}`, "Login details")}><Copy className="size-3.5" /></Button>}
                   </td>
-                  <td className={`${td} text-right`}>
-                    <div className="inline-flex items-center gap-1.5">
+                  <td className={`${td} px-2 py-2 text-right last:pr-4`}>
+                    <div className="inline-flex items-center gap-1">
                       <select
                         aria-label="Renew months"
-                        className={`${inputCls} py-1`}
+                        className={`${inputCls} px-1 py-1 text-[12px]`}
                         value={renewMonths[l.id] ?? 1}
                         onChange={(e) => setRenewMonths({ ...renewMonths, [l.id]: Number(e.target.value) })}
                       >
                         {MONTHS.map((m) => <option key={m} value={m}>{m}m</option>)}
                       </select>
-                      <Button type="button" variant="outline" className={softBtn} onClick={() => renew(l.id)}>
-                        {isAdmin ? "Renew" : `Renew · ${renewalCost(renewMonths[l.id] ?? 1, l.max_connections ?? 1)} credits`}
+                      <Button type="button" variant="outline" className={cn(softBtn, "h-8 px-2 text-[12px]")} onClick={() => renew(l.id)}>
+                        {isAdmin ? "Renew" : `Renew · ${renewalCost(renewMonths[l.id] ?? 1, l.max_connections ?? 1)}`}
                       </Button>
                       <Button
-                        className={softBtn}
+                        className={cn(softBtn, "size-8 p-0")}
                         aria-label={`Edit ${l.username}`}
                         onClick={() =>
                           setEditing({ id: l.id, username: l.username, password: l.password, host: l.custom_host ?? "", expires: fmtDate(l.expires_at), maxConn: l.max_connections ?? 1 })
@@ -480,7 +481,7 @@ function LinesPage() {
                       >
                         <Pencil className="size-3.5" />
                       </Button>
-                      <Button className={dangerBtn} aria-label={`Delete ${l.username}`} onClick={() => remove(l.id, l.username)}>
+                      <Button className={cn(dangerBtn, "size-8 p-0")} aria-label={`Delete ${l.username}`} onClick={() => remove(l.id, l.username)}>
                         <Trash2 className="size-3.5" />
                       </Button>
                     </div>
@@ -489,7 +490,7 @@ function LinesPage() {
                 );
               })}
               {!shown.length && (
-                <tr><td className={`${td} text-muted-foreground`} colSpan={9}>No lines found.</td></tr>
+                <tr><td className={`${td} text-muted-foreground`} colSpan={isAdmin ? 8 : 7}>No lines found.</td></tr>
               )}
             </tbody>
           </table>
