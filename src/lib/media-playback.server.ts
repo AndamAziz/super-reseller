@@ -1,4 +1,4 @@
-import { authLine, loadCatalog, plain } from "./playlist-auth.server";
+import { authLine, loadCatalog, plain, type AuthResult } from "./playlist-auth.server";
 import { checkStreamLimit, proxyFetch, allowedUrl, unb64u } from "./stream-proxy.server";
 import type { MediaKind } from "./media";
 import { resolveChannel } from "./media";
