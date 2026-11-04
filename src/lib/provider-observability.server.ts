@@ -11,5 +11,6 @@ export async function recordProviderRequest(request: Request, requestType: strin
   };
   const background = (request as Request & { waitUntil?: (work: Promise<unknown>) => void }).waitUntil;
   if (background) background.call(request, save());
-  else await save();
+  // Best-effort: never make the app wait for diagnostics before it gets its answer.
+  else void save();
 }
