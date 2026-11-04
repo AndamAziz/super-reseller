@@ -11,6 +11,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { cn } from "@/lib/utils";
 import { connectionUpgradeCost, renewalCost } from "@/lib/connection-pricing";
 import { customerLinks } from "@/lib/customer-links";
+
+function copyItems(l: Parameters<typeof customerLinks>[0]) {
+  const links = customerLinks(l);
+  return [
+    { label: "m3u", short: "M3U", title: "Copy M3U link", toast: "M3U link", value: links.m3u },
+    { label: "host", short: "Host", title: "Copy provider host", toast: "Provider host", value: links.provider },
+    { label: "combined", short: "M3U + YT", title: "Copy combined M3U + YouTube catalogue link", toast: "Combined catalogue link", value: links.content },
+  ];
+}
 import { Button } from "@/components/ui/button";
 import { useMe, isActive, fmtDate, errMsg } from "@/hooks/use-me";
 import { useLines } from "@/lib/queries";
