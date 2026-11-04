@@ -38,7 +38,7 @@ async function respondXtreamRequest(request: Request) {
   const password = params.get("password") ?? "";
   const action = params.get("action") ?? "";
 
-  const auth = await authLine(username, password);
+  const auth = await authLine(username, password, !action);
   if (!auth.ok) {
     if (auth.status >= 500) {
       const response = json({ error: auth.message }, 503);
@@ -60,7 +60,7 @@ async function respondXtreamRequest(request: Request) {
         status: "Active",
         exp_date: String(exp),
         is_trial: "0",
-        active_cons: String(await countActiveConnections(auth.lineId)),
+        active_cons: String(auth.activeConnections ?? await countActiveConnections(auth.lineId)),
         created_at: String(Math.floor(new Date(auth.createdAt ?? Date.now()).getTime() / 1000)),
         max_connections: String(auth.maxConnections),
         allowed_output_formats: ["m3u8", "ts"],
