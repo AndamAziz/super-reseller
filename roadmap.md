@@ -1,4 +1,8 @@
 # Connection billing
+## Provider first-login reliability
+- [ ] Measure existing account/list timings; isolate login and unsupported actions from catalog work.
+- [ ] Persist last-good parsed catalog, conditionally refresh every five minutes through the existing warm schedule; preserve customer URLs, payloads and playback.
+- [ ] Add private authenticated ETags and durable credential-free request timing/timeout logs; verify real provider requests and report limits.
 ## Image to Link
 - [x] Added admin-only image conversion, public storage and protected history; existing panel roles and policies unchanged. Browser HEIC decoder added; random output names and one-year immutable caching verified.
 - [x] Real admin upload/600px resize/tvg-logo copy/reload/search/delete and anonymous WebP 200 verified; 360px layout checked. Permission and redirect tests pass; all 232 prior/new tests plus two additional access tests pass. Not published. HEIC and AVIF depend on browser/decoder support; real iPhone input not available for verification.
