@@ -28,3 +28,13 @@ export const getSourcePlaylistVersion = createServerFn({ method: "GET" })
     if (!loaded.ok) throw new Error(loaded.message);
     return { version: loaded.catalog.version, channelCount: loaded.catalog.channels.length };
   });
+
+export const refreshSourcePlaylist = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: admin } = await context.supabase.rpc('has_role', { _user_id: context.userId, _role: 'admin' });
+    if (!admin) throw new Error('Access denied');
+    const { refreshCatalog } = await import('./playlist-auth.server');
+    const catalog = await refreshCatalog(true);
+    return { version: catalog.version, channelCount: catalog.channels.length };
+  });
