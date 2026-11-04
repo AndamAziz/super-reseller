@@ -3,6 +3,7 @@ import type { Json } from '@/integrations/supabase/types';
 
 export const CATALOG_REFRESH_MS = 300_000;
 let local: Catalog | undefined;
+let localReadAt = 0;
 let loading: Promise<Catalog> | undefined;
 let refreshing: Promise<Catalog> | undefined;
 
@@ -15,13 +16,14 @@ async function stored() {
 
 /** Customer reads never call GitHub, including cold instances. */
 export async function readStoredCatalog(forceReload = false): Promise<Catalog> {
-  if (local && !forceReload) return local;
+  if (local && !forceReload && Date.now() - localReadAt < 60_000) return local;
   if (loading) return loading;
   loading = (async () => {
     try {
       const row = await stored();
       if (!row) throw new Error('Playlist cache is not ready; retry shortly');
       local = row.catalog as unknown as Catalog;
+      localReadAt = Date.now();
       return local;
     } catch (error) { if (local) return local; throw error; }
     finally { loading = undefined; }
