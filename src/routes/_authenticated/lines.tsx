@@ -426,7 +426,7 @@ function LinesPage() {
                     </div>
                     <div className="mt-0.5 text-[11px] text-muted-foreground">{l.password}</div>
                   </td>
-                  {isAdmin && <td className={`${td} px-3 py-2 text-[12px] text-muted-foreground`}>{l.profiles?.display_name ?? l.profiles?.email}</td>}
+                  {isAdmin && <td className={`${td} max-w-28 truncate whitespace-nowrap px-3 py-2 text-[12px] text-muted-foreground`}>{l.profiles?.display_name ?? l.profiles?.email}</td>}
                   <td className={`${td} whitespace-nowrap px-3 py-2 font-mono text-[12px]`}>{fmtDate(l.expires_at)}</td>
                   <td className={`${td} px-3 py-2 font-mono text-[12px]`}>
                     <span
@@ -463,13 +463,13 @@ function LinesPage() {
                     <div className="inline-flex items-center gap-1">
                       <select
                         aria-label="Renew months"
-                        className={`${inputCls} px-1.5 py-1 text-[12px]`}
+                        className={`${inputCls} px-1 py-1 text-[12px]`}
                         value={renewMonths[l.id] ?? 1}
                         onChange={(e) => setRenewMonths({ ...renewMonths, [l.id]: Number(e.target.value) })}
                       >
                         {MONTHS.map((m) => <option key={m} value={m}>{m}m</option>)}
                       </select>
-                      <Button type="button" variant="outline" className={cn(softBtn, "h-8 px-2.5 text-[12px]")} onClick={() => renew(l.id)}>
+                      <Button type="button" variant="outline" className={cn(softBtn, "h-8 px-2 text-[12px]")} onClick={() => renew(l.id)}>
                         {isAdmin ? "Renew" : `Renew · ${renewalCost(renewMonths[l.id] ?? 1, l.max_connections ?? 1)}`}
                       </Button>
                       <Button
