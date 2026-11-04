@@ -6,7 +6,7 @@ import { playlistVersion } from "./playlist-version";
 import { providerTransientStatus, retryProviderRead } from "./provider-read";
 
 export type AuthResult =
-  | { ok: true; lineId: string; username: string; password: string; expiresAt: string; createdAt: string | null; maxConnections: number; activeConnections?: number }
+  | { ok: true; lineId: string; username: string; password: string; expiresAt: string; createdAt: string | null; maxConnections: number; activeConnections?: number | undefined }
   | { ok: false; status: number; message: string };
 
 export async function authLine(username: string, password: string, withConnections = false): Promise<AuthResult> {
