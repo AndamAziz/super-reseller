@@ -29,7 +29,7 @@ export async function authLine(username: string, password: string, withConnectio
     const line = result.data as unknown as { id: string; username: string; password: string; expires_at: string; created_at: string | null; max_connections: number | null; active_connections?: { count: number }[] } | null;
     if (!line || line.password !== password) return { ok: false, status: 401, message: "Invalid credentials" };
     if (new Date(line.expires_at).getTime() <= Date.now()) return { ok: false, status: 403, message: "Subscription expired" };
-    return { ok: true, lineId: line.id, username: line.username, password: line.password, expiresAt: line.expires_at, createdAt: line.created_at ?? null, maxConnections: line.max_connections ?? 1, activeConnections: withConnections ? (line.active_connections?.[0]?.count ?? 0) : undefined };
+    return { ok: true, lineId: line.id, username: line.username, password: line.password, expiresAt: line.expires_at, createdAt: line.created_at ?? null, maxConnections: line.max_connections ?? 1, activeConnections: withConnections ? line.active_connections?.[0]?.count : undefined };
   } catch {
     return { ok: false, status: 503, message: "Account service temporarily unavailable; retry shortly" };
   }
