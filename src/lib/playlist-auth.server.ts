@@ -18,11 +18,12 @@ export async function authLine(username: string, password: string, withConnectio
     // Optionally embed the live device count so app login needs a single database round trip.
     const since = new Date(Date.now() - 90_000).toISOString();
     const columns = "id, username, password, expires_at, created_at, max_connections" + (withConnections ? ", active_connections(count)" : "");
-    const result = await retryProviderRead(async () => {
+    // Short first deadline so a stalled cold connection is retried well before IPTV apps give up.
+    const result = await retryProviderRead(async (attempt) => {
       let query = supabaseAdmin.from("lines").select(columns).eq("username", username.trim());
       if (withConnections) query = query.gte("active_connections.last_seen", since);
       return await query
-      .abortSignal(AbortSignal.timeout(4_000))
+      .abortSignal(AbortSignal.timeout(attempt === 0 ? 2_500 : 4_000))
       .maybeSingle();
     }, r => Boolean(r.error) && providerTransientStatus(r.status));
     if (result.error) return { ok: false, status: 503, message: "Account service temporarily unavailable; retry shortly" };

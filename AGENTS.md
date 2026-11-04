@@ -18,7 +18,7 @@
 - Generated media URLs use authenticated /api/public playback handlers and preserve source extensions, so audio/video files avoid HLS misidentification and the site access wall; catalog classification still follows tvg-type only.
 - Format mirroring is decided from detected origin bytes in shared playback code, never per provider: .ts entry links answered by a manifest 302 to the .m3u8/.mpd app link, manifest/extensionless links answered by raw TS 302 to the .ts link, proxied URIs keep origin extensions, and every entry path (including legacy /live) uses handleMediaPlayback.
 - Public IP-literal origins are 302'd to the exact origin URL because the hosting rejects server-side fetches to bare IPs; private hosts stay blocked and the stream limit is checked before the hand-off.
-- Catalog refresh and outage retries use a five-second request-driven coalesced last-good cache; each GitHub source fetch uses a fresh cache key, so minute-long edge cache keys do not delay additions and source outages do not discard a working playlist.
+- Catalog refresh and outage retries use a five-second request-driven coalesced last-good cache with fresh GitHub cache keys, so additions appear fast and outages keep the working playlist.
 - The default Playlists view reads the shared GitHub catalog through a role-checked server function and polls every five seconds while visible; the catalog retains original cross-type source order so automatic category updates do not depend on manually imported snapshots.
 - Uploaded channel URL/logo edits use column-scoped authenticated grants and admin-only RLS, then invalidate the imported channel query; exports use persisted edits while the GitHub playback source remains separate.
 - Uploaded M3U retains raw entries/header/newlines; exports change only edited fields; classify by pre-name tvg-type. Legacy metadata requires reimport. Manual additions use admin-only INSERT and the shared parser, append saved positions and refresh counts; GitHub stays separate.
@@ -40,3 +40,4 @@
 - MP4: lossless bounded-index Blob faststart before TUS; reject unsafe layouts. ASCII names, storage API only; preserve aliases. Pinned paths bypass cold I/O; others use lookup.
 - Metadata is source-derived; no per-row enrichment or invented tracks. VOD stays authenticated.
 - Provider reads retry transient failures with deadlines; outages return retryable errors, not credential denials or fake device counts; catalog keeps last-good data.
+- Minute cron pings /api/public/warm; short first login deadline beats app cold-start timeouts.
