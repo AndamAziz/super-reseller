@@ -453,27 +453,27 @@ function LinesPage() {
                       </div>
                     )}
                   </td>
-                  <td className={td}><StatusBadge active={isActive(l.expires_at)} /></td>
-                  <td className={td}>
+                  <td className={`${td} px-3 py-2`}><StatusBadge active={isActive(l.expires_at)} /></td>
+                  <td className={`${td} px-3 py-2`}>
                     {isAdmin ? <div className="inline-flex overflow-hidden rounded-lg border border-border bg-muted/30">
-                      {copyItems(l).map((c, i) => <button key={c.label} type="button" title={c.title} onClick={() => copyLink(c.value, c.toast)} className={cn("inline-flex h-8 items-center gap-1 whitespace-nowrap px-2.5 text-[12px] font-medium text-foreground transition-colors hover:bg-primary/10 active:bg-primary/15", i > 0 && "border-l border-border")}><Copy className="size-3.5 text-primary" />{c.short}</button>)}
-                    </div> : <Button type="button" variant="outline" className={softBtn} title="Copy host, username and password" onClick={() => copyLink(`Host: ${customerLinks(l).provider}\nUsername: ${l.username}\nPassword: ${l.password}`, "Login details")}><Copy className="size-3.5" /> Copy</Button>}
+                      {copyItems(l).map((c, i) => <button key={c.label} type="button" title={c.title} aria-label={c.title} onClick={() => copyLink(c.value, c.toast)} className={cn("inline-flex size-8 items-center justify-center text-foreground transition-colors hover:bg-primary/10 active:bg-primary/15", i > 0 && "border-l border-border")}><Copy className="size-3.5 text-primary" /></button>)}
+                    </div> : <Button type="button" variant="outline" className={cn(softBtn, "size-8 p-0")} title="Copy host, username and password" aria-label="Copy host, username and password" onClick={() => copyLink(`Host: ${customerLinks(l).provider}\nUsername: ${l.username}\nPassword: ${l.password}`, "Login details")}><Copy className="size-3.5" /></Button>}
                   </td>
-                  <td className={`${td} text-right`}>
-                    <div className="inline-flex items-center gap-1.5">
+                  <td className={`${td} px-3 py-2 text-right last:pr-4`}>
+                    <div className="inline-flex items-center gap-1">
                       <select
                         aria-label="Renew months"
-                        className={`${inputCls} py-1`}
+                        className={`${inputCls} px-1.5 py-1 text-[12px]`}
                         value={renewMonths[l.id] ?? 1}
                         onChange={(e) => setRenewMonths({ ...renewMonths, [l.id]: Number(e.target.value) })}
                       >
                         {MONTHS.map((m) => <option key={m} value={m}>{m}m</option>)}
                       </select>
-                      <Button type="button" variant="outline" className={softBtn} onClick={() => renew(l.id)}>
-                        {isAdmin ? "Renew" : `Renew · ${renewalCost(renewMonths[l.id] ?? 1, l.max_connections ?? 1)} credits`}
+                      <Button type="button" variant="outline" className={cn(softBtn, "h-8 px-2.5 text-[12px]")} onClick={() => renew(l.id)}>
+                        {isAdmin ? "Renew" : `Renew · ${renewalCost(renewMonths[l.id] ?? 1, l.max_connections ?? 1)}`}
                       </Button>
                       <Button
-                        className={softBtn}
+                        className={cn(softBtn, "size-8 p-0")}
                         aria-label={`Edit ${l.username}`}
                         onClick={() =>
                           setEditing({ id: l.id, username: l.username, password: l.password, host: l.custom_host ?? "", expires: fmtDate(l.expires_at), maxConn: l.max_connections ?? 1 })
@@ -481,7 +481,7 @@ function LinesPage() {
                       >
                         <Pencil className="size-3.5" />
                       </Button>
-                      <Button className={dangerBtn} aria-label={`Delete ${l.username}`} onClick={() => remove(l.id, l.username)}>
+                      <Button className={cn(dangerBtn, "size-8 p-0")} aria-label={`Delete ${l.username}`} onClick={() => remove(l.id, l.username)}>
                         <Trash2 className="size-3.5" />
                       </Button>
                     </div>
