@@ -23,10 +23,15 @@ export const Route = createFileRoute("/api/public/warm")({
     const failure = await authenticateCronRequest(request);
     if (failure) return failure;
     const response = await warm({ request });
-    const { refreshCatalog } = await import('@/lib/playlist-auth.server');
-    try { await refreshCatalog(); } catch { console.warn('provider_warm_catalog_unavailable'); }
-    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-    await supabaseAdmin.rpc('prune_provider_request_logs').abortSignal(AbortSignal.timeout(1500));
+    const work = async () => {
+      const { refreshCatalog } = await import('@/lib/playlist-auth.server');
+      try { await refreshCatalog(); } catch { console.warn('provider_warm_catalog_unavailable'); }
+      const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+      await supabaseAdmin.rpc('prune_provider_request_logs').abortSignal(AbortSignal.timeout(1500));
+    };
+    const background = (request as Request & { waitUntil?: (work: Promise<unknown>) => void }).waitUntil;
+    if (background) background.call(request, work());
+    else await work();
     return response;
   } } },
 });

@@ -66,7 +66,7 @@ export async function refreshStoredCatalog(parse: (text: string) => Promise<Cata
         if (!response.ok) { await response.body?.cancel(); throw new Error(`Playlist source HTTP ${response.status}`); }
         const catalog = await parse(await response.text());
         if (!catalog.channels.length) throw new Error('Playlist contains no playable entries');
-        const { error: writeError } = await supabaseAdmin.from('provider_catalog_cache').upsert({ key: 'github', source_url: settings.value, etag: response.headers.get('etag'), checked_at, catalog: catalog as unknown as Json }).abortSignal(AbortSignal.timeout(2000));
+        const { error: writeError } = await supabaseAdmin.from('provider_catalog_cache').upsert({ key: 'github', source_url: settings.value, etag: response.headers.get('etag'), checked_at, catalog: catalog as unknown as Json }).abortSignal(AbortSignal.timeout(8000));
         if (writeError) { console.warn('provider_catalog_store_error', writeError.code, writeError.message); throw new Error('Playlist cache save failed'); }
         local = catalog;
       }
