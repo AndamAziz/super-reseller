@@ -41,3 +41,4 @@
 - Metadata is source-derived; no per-row enrichment or invented tracks. VOD stays authenticated.
 - Provider reads retry transient failures with deadlines; outages return retryable errors, not credential denials or fake device counts; catalog keeps last-good data.
 - Minute cron pings /api/public/warm; short first login deadline beats app cold-start timeouts.
+- Stream limits count one device per line + client IP (not user-agent), because one device's app and player engine send different user-agents.
