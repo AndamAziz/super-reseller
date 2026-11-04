@@ -22,15 +22,17 @@ export async function handleXtreamRequest(request: Request) {
   let timer: ReturnType<typeof setTimeout> | undefined;
   let timedOut = false;
   let response: Response;
-  const params = new URLSearchParams(new URL(request.url).search);
-  if (request.method === 'POST') {
-    const body = new URLSearchParams(await request.clone().text());
-    body.forEach((value, key) => params.set(key, value));
-  }
-  const action = params.get('action') ?? '';
+  let action = new URL(request.url).searchParams.get('action') ?? '';
   try {
     response = await Promise.race([
-      respondXtreamRequest(request).then(result => providerActions.has(action) ? privateListValidator(request, result) : result),
+      (async () => {
+        if (request.method === 'POST') {
+          const body = new URLSearchParams(await request.clone().text());
+          action = body.get('action') ?? action;
+        }
+        const result = await respondXtreamRequest(request);
+        return providerActions.has(action) ? privateListValidator(request, result) : result;
+      })(),
       new Promise<Response>(resolve => { timer = setTimeout(() => {
         timedOut = true;
         const result = json({ error: 'Provider temporarily unavailable; retry shortly' }, 503);
