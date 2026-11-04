@@ -27,6 +27,7 @@ import { Route as ApiPublicContentRouteImport } from './routes/api/public/conten
 import { Route as ApiPublicGetDotphpRouteImport } from './routes/api/public/get[.]php'
 import { Route as ApiPublicPlayer_apiDotphpRouteImport } from './routes/api/public/player_api[.]php'
 import { Route as ApiPublicPlaylistRouteImport } from './routes/api/public/playlist'
+import { Route as ApiPublicWarmRouteImport } from './routes/api/public/warm'
 import { Route as ApiPublicINameRouteImport } from './routes/api/public/i/$name'
 import { Route as ApiPublicPlaylistSplatRouteImport } from './routes/api/public/playlist.$'
 import { Route as ApiPublicVNameRouteImport } from './routes/api/public/v/$name'
@@ -132,6 +133,11 @@ const ApiPublicPlaylistRoute = ApiPublicPlaylistRouteImport.update({
   path: '/api/public/playlist',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicWarmRoute = ApiPublicWarmRouteImport.update({
+  id: '/api/public/warm',
+  path: '/api/public/warm',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicINameRoute = ApiPublicINameRouteImport.update({
   id: '/api/public/i/$name',
   path: '/api/public/i/$name',
@@ -213,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/api/public/get.php': typeof ApiPublicGetDotphpRoute
   '/api/public/player_api.php': typeof ApiPublicPlayer_apiDotphpRoute
   '/api/public/playlist': typeof ApiPublicPlaylistRouteWithChildren
+  '/api/public/warm': typeof ApiPublicWarmRoute
   '/api/public/i/$name': typeof ApiPublicINameRoute
   '/api/public/playlist/$': typeof ApiPublicPlaylistSplatRoute
   '/api/public/v/$name': typeof ApiPublicVNameRoute
@@ -243,6 +250,7 @@ export interface FileRoutesByTo {
   '/api/public/get.php': typeof ApiPublicGetDotphpRoute
   '/api/public/player_api.php': typeof ApiPublicPlayer_apiDotphpRoute
   '/api/public/playlist': typeof ApiPublicPlaylistRouteWithChildren
+  '/api/public/warm': typeof ApiPublicWarmRoute
   '/api/public/i/$name': typeof ApiPublicINameRoute
   '/api/public/playlist/$': typeof ApiPublicPlaylistSplatRoute
   '/api/public/v/$name': typeof ApiPublicVNameRoute
@@ -275,6 +283,7 @@ export interface FileRoutesById {
   '/api/public/get.php': typeof ApiPublicGetDotphpRoute
   '/api/public/player_api.php': typeof ApiPublicPlayer_apiDotphpRoute
   '/api/public/playlist': typeof ApiPublicPlaylistRouteWithChildren
+  '/api/public/warm': typeof ApiPublicWarmRoute
   '/api/public/i/$name': typeof ApiPublicINameRoute
   '/api/public/playlist/$': typeof ApiPublicPlaylistSplatRoute
   '/api/public/v/$name': typeof ApiPublicVNameRoute
@@ -307,6 +316,7 @@ export interface FileRouteTypes {
     | '/api/public/get.php'
     | '/api/public/player_api.php'
     | '/api/public/playlist'
+    | '/api/public/warm'
     | '/api/public/i/$name'
     | '/api/public/playlist/$'
     | '/api/public/v/$name'
@@ -337,6 +347,7 @@ export interface FileRouteTypes {
     | '/api/public/get.php'
     | '/api/public/player_api.php'
     | '/api/public/playlist'
+    | '/api/public/warm'
     | '/api/public/i/$name'
     | '/api/public/playlist/$'
     | '/api/public/v/$name'
@@ -368,6 +379,7 @@ export interface FileRouteTypes {
     | '/api/public/get.php'
     | '/api/public/player_api.php'
     | '/api/public/playlist'
+    | '/api/public/warm'
     | '/api/public/i/$name'
     | '/api/public/playlist/$'
     | '/api/public/v/$name'
@@ -391,6 +403,7 @@ export interface RootRouteChildren {
   ApiPublicGetDotphpRoute: typeof ApiPublicGetDotphpRoute
   ApiPublicPlayer_apiDotphpRoute: typeof ApiPublicPlayer_apiDotphpRoute
   ApiPublicPlaylistRoute: typeof ApiPublicPlaylistRouteWithChildren
+  ApiPublicWarmRoute: typeof ApiPublicWarmRoute
   ApiPublicINameRoute: typeof ApiPublicINameRoute
   ApiPublicVNameRoute: typeof ApiPublicVNameRoute
   LiveUsernamePasswordStreamRoute: typeof LiveUsernamePasswordStreamRoute
@@ -531,6 +544,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPlaylistRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/warm': {
+      id: '/api/public/warm'
+      path: '/api/public/warm'
+      fullPath: '/api/public/warm'
+      preLoaderRoute: typeof ApiPublicWarmRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/i/$name': {
       id: '/api/public/i/$name'
       path: '/api/public/i/$name'
@@ -659,6 +679,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicGetDotphpRoute: ApiPublicGetDotphpRoute,
   ApiPublicPlayer_apiDotphpRoute: ApiPublicPlayer_apiDotphpRoute,
   ApiPublicPlaylistRoute: ApiPublicPlaylistRouteWithChildren,
+  ApiPublicWarmRoute: ApiPublicWarmRoute,
   ApiPublicINameRoute: ApiPublicINameRoute,
   ApiPublicVNameRoute: ApiPublicVNameRoute,
   LiveUsernamePasswordStreamRoute: LiveUsernamePasswordStreamRoute,
