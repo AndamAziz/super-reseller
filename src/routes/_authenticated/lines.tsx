@@ -11,6 +11,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { cn } from "@/lib/utils";
 import { connectionUpgradeCost, renewalCost } from "@/lib/connection-pricing";
 import { customerLinks } from "@/lib/customer-links";
+
+function copyItems(l: Parameters<typeof customerLinks>[0]) {
+  const links = customerLinks(l);
+  return [
+    { label: "m3u", short: "M3U", title: "Copy M3U link", toast: "M3U link", value: links.m3u },
+    { label: "host", short: "Host", title: "Copy provider host", toast: "Provider host", value: links.provider },
+    { label: "combined", short: "M3U + YT", title: "Copy combined M3U + YouTube catalogue link", toast: "Combined catalogue link", value: links.content },
+  ];
+}
 import { Button } from "@/components/ui/button";
 import { useMe, isActive, fmtDate, errMsg } from "@/hooks/use-me";
 import { useLines } from "@/lib/queries";
@@ -372,10 +381,8 @@ function LinesPage() {
                 <div className="col-span-2"><dt className="text-muted-foreground">Connections</dt><dd className="mt-1 flex items-center gap-2"><span className={cn("font-mono", full && "text-destructive")}>{live}/{max}</span>{full && <FullBadge max={max} />}</dd>
                 {(l.active_devices ?? []).map((d, i) => <p key={i} className="mt-1 break-words text-muted-foreground">{d.label}</p>)}</div>
               </dl>
-              {isAdmin && <div className="flex flex-wrap gap-2">
-                <Button variant="outline" className={softBtn} onClick={() => copyLink(customerLinks(l).m3u, "M3U link")}><Copy />M3U</Button>
-                <Button variant="outline" className={softBtn} onClick={() => copyLink(customerLinks(l).provider, "Provider host")}><Copy />Host</Button>
-                <Button variant="outline" className={softBtn} onClick={() => copyLink(customerLinks(l).content, "Combined catalogue link")}><Copy />M3U + YouTube</Button>
+              {isAdmin && <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-border bg-muted/30">
+                {copyItems(l).map((c, i) => <button key={c.label} type="button" title={c.title} onClick={() => copyLink(c.value, c.toast)} className={cn("flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 px-1 py-2 text-[11px] font-medium text-foreground transition-colors hover:bg-primary/10 active:bg-primary/15", i > 0 && "border-l border-border")}><Copy className="size-4 shrink-0 text-primary" /><span className="truncate">{c.short}</span></button>)}
               </div>}
               {!isAdmin && <Button variant="outline" className={softBtn} onClick={() => copyLink(`Host: ${customerLinks(l).provider}\nUsername: ${l.username}\nPassword: ${l.password}`, "Login details")}><Copy />Copy host & login</Button>}
               <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-2">
@@ -447,10 +454,8 @@ function LinesPage() {
                   </td>
                   <td className={td}><StatusBadge active={isActive(l.expires_at)} /></td>
                   <td className={td}>
-                    {isAdmin ? <div className="flex flex-wrap gap-1.5">
-                      <Button type="button" variant="outline" className={softBtn} title="Copy M3U link" onClick={() => copyLink(customerLinks(l).m3u, "M3U link")}><Copy className="size-3.5" /> M3U</Button>
-                      <Button type="button" variant="outline" className={softBtn} title="Copy provider host" onClick={() => copyLink(customerLinks(l).provider, "Provider host")}><Copy className="size-3.5" /> Host</Button>
-                      <Button type="button" variant="outline" className={softBtn} title="Copy combined M3U + YouTube catalogue link" onClick={() => copyLink(customerLinks(l).content, "Combined catalogue link")}><Copy className="size-3.5" /> M3U + YouTube</Button>
+                    {isAdmin ? <div className="inline-flex overflow-hidden rounded-lg border border-border bg-muted/30">
+                      {copyItems(l).map((c, i) => <button key={c.label} type="button" title={c.title} onClick={() => copyLink(c.value, c.toast)} className={cn("inline-flex h-8 items-center gap-1 whitespace-nowrap px-2.5 text-[12px] font-medium text-foreground transition-colors hover:bg-primary/10 active:bg-primary/15", i > 0 && "border-l border-border")}><Copy className="size-3.5 text-primary" />{c.short}</button>)}
                     </div> : <Button type="button" variant="outline" className={softBtn} title="Copy host, username and password" onClick={() => copyLink(`Host: ${customerLinks(l).provider}\nUsername: ${l.username}\nPassword: ${l.password}`, "Login details")}><Copy className="size-3.5" /> Copy</Button>}
                   </td>
                   <td className={`${td} text-right`}>
