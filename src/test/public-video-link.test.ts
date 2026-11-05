@@ -21,7 +21,7 @@ describe('short public video links', () => {
   });
   it('never copies a private preview origin or a token', () => {
     const url = new URL(videoPublicUrl('uid/film.mp4'));
-    expect(url.origin).toBe('https://super-reseller.lovable.app');
+    expect(url.origin).toBe('https://re.andam.uk');
     expect(url.pathname).toBe(`/api/public/v/${compactVideoName('uid/film.mp4')}`);
     expect(url.search).toBe('');
   });
