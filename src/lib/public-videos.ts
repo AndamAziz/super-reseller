@@ -16,7 +16,7 @@ export function shortVideoUrl(origin: string, path: string) {
   return `${origin}/api/public/v/${compactVideoName(path)}`;
 }
 export function videoPublicUrl(path: string) {
-  return shortVideoUrl('https://super-reseller.lovable.app', path);
+  return shortVideoUrl('https://re.andam.uk', path);
 }
 export function sanitizeVideoName(name: string) {
   const base = name.replace(/\.mp4$/i, '').replace(/[^\p{L}\p{N}._-]+/gu, '-').replace(/^[.-]+|[.-]+$/g, '').slice(0, 80);
