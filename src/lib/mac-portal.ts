@@ -19,5 +19,6 @@ export function requestMac(request: Request): string | null {
 }
 export const PORTAL_PAGE_SIZE = 14;
 export function portalPage<T>(items: T[], page: number) {
-  return { total_items: items.length, max_page_items: PORTAL_PAGE_SIZE, selected_item: 0, cur_page: page, data: items.slice((page - 1) * PORTAL_PAGE_SIZE, page * PORTAL_PAGE_SIZE) };
+  const current = Math.max(1, page);
+  return { total_items: items.length, max_page_items: PORTAL_PAGE_SIZE, selected_item: 0, cur_page: current, data: items.slice((current - 1) * PORTAL_PAGE_SIZE, current * PORTAL_PAGE_SIZE) };
 }
