@@ -17,7 +17,7 @@ beforeEach(() => {
 });
 describe('MAG startup protocol', () => {
   it('advertises only TV, movies and series without loading the catalog', async () => {
-    expect(await (await handleMacPortal(request('type=stb&action=get_modules'))).json()).toEqual({ js: { all_modules: ['tv', 'videoclub', 'series'], disabled_modules: [], restricted_modules: [] } });
+    expect(await (await handleMacPortal(request('type=stb&action=get_modules'))).json()).toEqual({ js: { all_modules: ['tv', 'videoclub', 'series'], switchable_modules: ['tv', 'videoclub', 'series'], disabled_modules: [], restricted_modules: [], template: 'default' } });
     expect(mocks.loadCatalog).not.toHaveBeenCalled();
   });
   it('returns a localization dictionary for authenticated startup', async () => {

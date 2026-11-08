@@ -1,8 +1,10 @@
 // Advertise only capabilities served by the existing MAC catalog handlers.
 export const portalModules = {
   all_modules: ['tv', 'videoclub', 'series'],
+  switchable_modules: ['tv', 'videoclub', 'series'],
   disabled_modules: [],
   restricted_modules: [],
+  template: 'default',
 };
 
 export const portalLocalization = {
