@@ -29,7 +29,7 @@ export function portalCatalogResponse(catalog: Catalog, params: URLSearchParams,
   }
   if (type === 'vod') return portalPage(catalog.movies.map((m, i) => {
     const metadata = providerMetadata(m);
-    return { id: String(i + 1), name: m.name, screenshot_uri: m.logo ?? '', description: metadata.plot ?? '', year: metadata.year ?? '', rating_imdb: metadata.rating ?? '', category_id: String(groups.indexOf(m.group_title ?? 'Uncategorized') + 1), cmd: `/media/${i + 1}.mp4` };
+    return { id: String(i + 1), name: m.name, screenshot_uri: m.logo ?? '', description: metadata.plot ?? '', year: metadata.releaseDate.slice(0, 4), rating_imdb: metadata.rating ?? '', category_id: String(groups.indexOf(m.group_title ?? 'Uncategorized') + 1), cmd: `/media/${i + 1}.mp4` };
   }).filter(x => !category || category === '*' || category === '0' || x.category_id === category), page);
   if (type === 'series') {
     const movieId = params.get('movie_id'), seasonId = params.get('season_id');

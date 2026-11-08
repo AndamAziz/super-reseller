@@ -32,9 +32,9 @@ export async function handleMacPortal(request: Request): Promise<Response> {
     if (!token) return respond({ error: 'Invalid or expired token' });
     const hash = await tokenHash(token);
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-    const { data, error } = await supabaseAdmin.rpc('authorize_mac_portal', { _mac: mac, _token_hash: handshake ? undefined : hash, _new_token_hash: handshake ? hash : undefined, _ip: request.headers.get('cf-connecting-ip') ?? request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() }).abortSignal(AbortSignal.timeout(6500));
+    const { data, error } = await supabaseAdmin.rpc('authorize_mac_portal', { _mac: mac, ...(handshake ? { _new_token_hash: hash } : { _token_hash: hash }), _ip: request.headers.get('cf-connecting-ip') ?? request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '' }).abortSignal(AbortSignal.timeout(6500));
     if (error) return respond({ error: 'Portal temporarily unavailable; retry shortly' });
-    if (data && typeof data === 'object' && !Array.isArray(data) && 'error' in data) return respond({ error: data.error });
+    if (data && typeof data === 'object' && !Array.isArray(data) && 'error' in data) return respond({ error: data['error'] });
     const account: PortalAccount = accountSchema.parse(data);
     if (handshake) return respond({ token, random: randomHex() });
     const key = `${parsed.data.type}:${parsed.data.action}`;

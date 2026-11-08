@@ -10,6 +10,8 @@ import { PageHeader, Panel, StatusBadge, FullBadge, td, th, inputCls, softBtn, d
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { connectionUpgradeCost, renewalCost } from "@/lib/connection-pricing";
+import { accountLabels, accountTypeSchema, macSchema, PORTAL_URL, type AccountType } from '@/lib/mac-portal';
+import { createMacSubscriber, updateMacSubscriber, generateSubscriberMac } from '@/lib/mac-subscriber.functions';
 import { customerLinks } from "@/lib/customer-links";
 
 function copyItems(l: Parameters<typeof customerLinks>[0]) {
@@ -24,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { useMe, isActive, fmtDate, errMsg } from "@/hooks/use-me";
 import { useLines } from "@/lib/queries";
 import { recommendDuration } from "@/lib/recommend.functions";
-import { checkTestUsed, createLine, createTestLine, deleteLine, renewLine, updateLine } from "@/lib/lines.functions";
+import { checkTestUsed, createLine, createTestLine, deleteLine, renewLine } from "@/lib/lines.functions";
 
 export const Route = createFileRoute("/_authenticated/lines")({
   head: () => ({ meta: [
@@ -59,10 +61,13 @@ function LinesPage() {
   const createTestLineFn = useServerFn(createTestLine);
   const renewLineFn = useServerFn(renewLine);
   const deleteLineFn = useServerFn(deleteLine);
-  const updateLineFn = useServerFn(updateLine);
   const recommendFn = useServerFn(recommendDuration);
   const checkTestFn = useServerFn(checkTestUsed);
-  const [form, setForm] = useState({ username: "", password: "", months: 1, host: "", customer: "" });
+  const createMacFn = useServerFn(createMacSubscriber);
+  const updateMacFn = useServerFn(updateMacSubscriber);
+  const generateMacFn = useServerFn(generateSubscriberMac);
+  const [macBusy, setMacBusy] = useState(false);
+  const [form, setForm] = useState({ username: "", password: "", months: 1, host: "", customer: "", accountType: "xtream" as AccountType, mac: "" });
   const [testUsed, setTestUsed] = useState<{ used: boolean; at: string | null } | null>(null);
   const [needs, setNeeds] = useState("");
   const [rec, setRec] = useState<{ months: number; explanation: string } | null>(null);
@@ -94,7 +99,7 @@ function LinesPage() {
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "expired">("all");
   const [renewMonths, setRenewMonths] = useState<Record<string, number>>({});
-  const [editing, setEditing] = useState<{ id: string; username: string; password: string; host: string; expires: string; maxConn: number } | null>(null);
+  const [editing, setEditing] = useState<{ id: string; username: string; password: string; host: string; expires: string; maxConn: number; accountType: AccountType; mac: string; disabled: boolean } | null>(null);
   const [source, setSource] = useState<string | null>(null);
 
   useEffect(() => {
@@ -125,14 +130,28 @@ function LinesPage() {
     toast.success("Playlist source saved");
   }
 
+  async function generateMAC(edit = false) {
+    setMacBusy(true);
+    try {
+      const { mac } = await generateMacFn();
+      if (edit) setEditing(current => current ? { ...current, mac } : null);
+      else setForm(current => ({ ...current, mac }));
+    } catch (err) { toast.error(errMsg(err)); }
+    finally { setMacBusy(false); }
+  }
+
   async function saveEdit(e: React.FormEvent) {
     e.preventDefault();
     if (!editing) return;
     if (editing.password.length < 4) return void toast.error("Password: min 4 chars");
     try {
-      const result = await updateLineFn({
+      if (editing.accountType !== 'xtream' && !macSchema.safeParse(editing.mac).success) return void toast.error('MAC must be 00:1A:79:XX:XX:XX');
+      const result = await updateMacFn({
         data: {
           lineId: editing.id,
+          accountType: editing.accountType,
+          mac: editing.mac || null,
+          disabled: editing.disabled,
           password: editing.password,
           customHost: editing.host.trim() || null,
           maxConnections: editing.maxConn,
@@ -161,15 +180,18 @@ function LinesPage() {
     if (!parsed.success) return void toast.error(parsed.error.issues[0]?.message ?? "Invalid input");
     if (isTest && form.customer.trim().length < 3) return void toast.error("Enter the customer's phone or ID for a test line");
     if (isTest && testUsed?.used) return void toast.error("This customer already used their free 24H test");
+    if (form.accountType !== 'xtream' && !macSchema.safeParse(form.mac).success) return void toast.error('MAC must be 00:1A:79:XX:XX:XX');
     setBusy(true);
     try {
-      if (isTest) {
+      if (form.accountType !== 'xtream') {
+        await createMacFn({ data: { ...parsed.data, months: form.months, customHost: form.host.trim(), accountType: form.accountType, mac: form.mac, ...(isTest ? { customer: form.customer.trim() } : {}) } });
+      } else if (isTest) {
         await createTestLineFn({ data: { username: parsed.data.username, password: parsed.data.password, customer: form.customer.trim() } });
       } else {
         await createLineFn({ data: { ...parsed.data, ...(form.host.trim() ? { customHost: form.host.trim() } : {}) } });
       }
       toast.success(`Line ${parsed.data.username} created`);
-      setForm({ username: "", password: "", months: 1, host: "", customer: "" });
+      setForm({ username: "", password: "", months: 1, host: "", customer: "", accountType: "xtream", mac: "" });
       setTestUsed(null);
       refresh();
     } catch (err) {
@@ -261,6 +283,17 @@ function LinesPage() {
       </form></details>
 
       <form onSubmit={create} className="rise grid gap-4 border-y border-border bg-glass px-4 py-5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto_auto] lg:items-end">
+        <label className="min-w-0 space-y-1.5 sm:col-span-2 lg:col-span-5">
+          <span className="label-mono">Account type</span>
+          <select aria-label="Account type" className={`${inputCls} w-full py-2 sm:max-w-xs`} value={form.accountType} onChange={e => setForm({ ...form, accountType: accountTypeSchema.parse(e.target.value) })}>
+            {Object.entries(accountLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+        </label>
+        {form.accountType !== 'xtream' && <div className="grid min-w-0 gap-3 sm:col-span-2 lg:col-span-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+          <label className="min-w-0 space-y-1.5"><span className="label-mono">MAC address</span><input aria-label="MAC address" className={`${inputCls} w-full py-2 font-mono`} placeholder="00:1A:79:XX:XX:XX" value={form.mac} onChange={e => setForm({ ...form, mac: e.target.value.toUpperCase() })} /></label>
+          <Button type="button" variant="outline" disabled={macBusy} onClick={() => generateMAC()}><Sparkles className="size-4" />Generate MAC</Button>
+          <div className="flex min-w-0 flex-wrap items-center gap-2 sm:col-span-2"><span className="break-all font-mono text-xs">{PORTAL_URL}</span><Button type="button" variant="outline" size="sm" onClick={() => copyLink(PORTAL_URL, 'Portal URL')}><Copy className="size-4" />Copy portal</Button></div>
+        </div>}
         <label className="space-y-1.5">
           <span className="label-mono">Username</span>
           <input className={`${inputCls} w-full py-2`} value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
@@ -306,6 +339,13 @@ function LinesPage() {
         {editing && <DialogContent aria-describedby={undefined} className="max-h-[85dvh] w-[calc(100%-2rem)] overflow-y-auto rounded-lg p-5">
         <DialogHeader><DialogTitle className="break-all pr-6">Edit line · {editing.username}</DialogTitle></DialogHeader>
         <form onSubmit={saveEdit} className="grid min-w-0 gap-4 sm:grid-cols-2">
+          <label className="min-w-0 space-y-1.5 sm:col-span-2"><span className="label-mono">Account type</span><select aria-label="Edit account type" className={`${inputCls} w-full py-2`} value={editing.accountType} onChange={e => setEditing({ ...editing, accountType: accountTypeSchema.parse(e.target.value) })}>{Object.entries(accountLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+          {editing.accountType !== 'xtream' && <>
+            <label className="min-w-0 space-y-1.5"><span className="label-mono">MAC address</span><input aria-label="Edit MAC address" className={`${inputCls} w-full py-2 font-mono`} value={editing.mac} onChange={e => setEditing({ ...editing, mac: e.target.value.toUpperCase() })} /></label>
+            <Button type="button" variant="outline" disabled={macBusy} className="self-end" onClick={() => generateMAC(true)}><Sparkles className="size-4" />Generate MAC</Button>
+            <label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" checked={editing.disabled} onChange={e => setEditing({ ...editing, disabled: e.target.checked })} />MAC Portal disabled</label>
+            <div className="flex min-w-0 flex-wrap items-center gap-2 sm:col-span-2"><span className="break-all font-mono text-xs">{PORTAL_URL}</span><Button type="button" variant="outline" size="sm" onClick={() => copyLink(PORTAL_URL, 'Portal URL')}><Copy className="size-4" />Copy portal</Button></div>
+          </>}
           <label className="space-y-1.5">
             <span className="label-mono">Password</span>
             <input className={`${inputCls} w-full py-2`} value={editing.password} onChange={(e) => setEditing({ ...editing, password: e.target.value })} />
@@ -384,11 +424,12 @@ function LinesPage() {
               {isAdmin && <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-border bg-muted/30">
                 {copyItems(l).map((c, i) => <button key={c.label} type="button" title={c.title} onClick={() => copyLink(c.value, c.toast)} className={cn("flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 px-1 py-2 text-[11px] font-medium text-foreground transition-colors hover:bg-primary/10 active:bg-primary/15", i > 0 && "border-l border-border")}><Copy className="size-4 shrink-0 text-primary" /><span className="truncate">{c.short}</span></button>)}
               </div>}
+              {l.mac_address && <div className="flex min-w-0 flex-wrap items-center gap-2"><span className="break-all font-mono text-xs">{l.mac_address}</span><Button type="button" variant="outline" size="sm" onClick={() => copyLink(`Portal: ${PORTAL_URL}\nMAC: ${l.mac_address}`, 'Portal details')}><Copy className="size-4" />Copy portal & MAC</Button>{l.portal_disabled && <span className="text-xs text-destructive">Portal disabled</span>}</div>}
               {!isAdmin && <Button variant="outline" className={softBtn} onClick={() => copyLink(`Host: ${customerLinks(l).provider}\nUsername: ${l.username}\nPassword: ${l.password}`, "Login details")}><Copy />Copy host & login</Button>}
               <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-2">
                 <select aria-label={`Renew months for ${l.username}`} className={inputCls} value={renewMonths[l.id] ?? 1} onChange={(e) => setRenewMonths({ ...renewMonths, [l.id]: Number(e.target.value) })}>{MONTHS.map((m) => <option key={m} value={m}>{m}m</option>)}</select>
                 <Button variant="outline" className={cn(softBtn, "whitespace-normal px-2")} onClick={() => renew(l.id)}>{isAdmin ? "Renew" : `Renew · ${renewalCost(renewMonths[l.id] ?? 1, max)} credits`}</Button>
-                <Button variant="outline" className={cn(softBtn, "size-11 p-0")} aria-label={`Edit ${l.username}`} title="Edit line" onClick={() => setEditing({ id: l.id, username: l.username, password: l.password, host: l.custom_host ?? "", expires: fmtDate(l.expires_at), maxConn: max })}><Pencil /></Button>
+                <Button variant="outline" className={cn(softBtn, "size-11 p-0")} aria-label={`Edit ${l.username}`} title="Edit line" onClick={() => setEditing({ id: l.id, username: l.username, password: l.password, host: l.custom_host ?? "", expires: fmtDate(l.expires_at), maxConn: max, accountType: accountTypeSchema.parse(l.account_type), mac: l.mac_address ?? "", disabled: l.portal_disabled })}><Pencil /></Button>
                 <Button variant="outline" className={cn(dangerBtn, "size-11 p-0")} aria-label={`Delete ${l.username}`} title="Delete line" onClick={() => remove(l.id, l.username)}><Trash2 /></Button>
               </div>
             </article>;
@@ -425,6 +466,7 @@ function LinesPage() {
                       {l.is_test && <span className="rounded-full border border-border px-1.5 py-0.5 font-sans text-[10px] text-muted-foreground" title={l.customer_contact ?? ""}>Test used</span>}
                     </div>
                     <div className="mt-0.5 text-[11px] text-muted-foreground">{l.password}</div>
+                    {l.mac_address && <div className="mt-1 break-all text-[11px] text-muted-foreground">{l.mac_address}{l.portal_disabled ? ' · Portal disabled' : ''}</div>}
                   </td>
                   {isAdmin && <td className={`${td} max-w-28 truncate whitespace-nowrap px-2 py-2 text-[12px] text-muted-foreground`}>{l.profiles?.display_name ?? l.profiles?.email}</td>}
                   <td className={`${td} whitespace-nowrap px-2 py-2 font-mono text-[12px]`}>{fmtDate(l.expires_at)}</td>
@@ -455,6 +497,7 @@ function LinesPage() {
                   </td>
                   <td className={`${td} px-2 py-2`}><StatusBadge active={isActive(l.expires_at)} /></td>
                   <td className={`${td} px-2 py-2`}>
+                    {l.mac_address && <Button type="button" variant="outline" size="icon" className="mr-1 size-8" aria-label={`Copy portal for ${l.username}`} title="Copy portal & MAC" onClick={() => copyLink(`Portal: ${PORTAL_URL}\nMAC: ${l.mac_address}`, 'Portal details')}><Link2 className="size-3.5" /></Button>}
                     {isAdmin ? <div className="inline-flex overflow-hidden rounded-lg border border-border bg-muted/30">
                       {copyItems(l).map((c, i) => <button key={c.label} type="button" title={c.title} aria-label={c.title} onClick={() => copyLink(c.value, c.toast)} className={cn("inline-flex size-8 items-center justify-center text-foreground transition-colors hover:bg-primary/10 active:bg-primary/15", i > 0 && "border-l border-border")}><Copy className="size-3.5 text-primary" /></button>)}
                     </div> : <Button type="button" variant="outline" className={cn(softBtn, "size-8 p-0")} title="Copy host, username and password" aria-label="Copy host, username and password" onClick={() => copyLink(`Host: ${customerLinks(l).provider}\nUsername: ${l.username}\nPassword: ${l.password}`, "Login details")}><Copy className="size-3.5" /></Button>}
@@ -476,7 +519,7 @@ function LinesPage() {
                         className={cn(softBtn, "size-8 p-0")}
                         aria-label={`Edit ${l.username}`}
                         onClick={() =>
-                          setEditing({ id: l.id, username: l.username, password: l.password, host: l.custom_host ?? "", expires: fmtDate(l.expires_at), maxConn: l.max_connections ?? 1 })
+                          setEditing({ id: l.id, username: l.username, password: l.password, host: l.custom_host ?? "", expires: fmtDate(l.expires_at), maxConn: l.max_connections ?? 1, accountType: accountTypeSchema.parse(l.account_type), mac: l.mac_address ?? "", disabled: l.portal_disabled })
                         }
                       >
                         <Pencil className="size-3.5" />

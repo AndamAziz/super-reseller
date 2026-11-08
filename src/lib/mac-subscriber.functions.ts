@@ -12,7 +12,7 @@ export const createMacSubscriber = createServerFn({ method: 'POST' })
   .inputValidator(data => credentials.extend({ months: z.number().int().min(0).max(24), customHost: z.string().trim().max(200).optional(), customer: z.string().trim().min(3).max(100).optional() }).and(identity).parse(data))
   .handler(async ({ data, context }) => {
     if (data.months === 0 && !data.customer) throw new Error('Customer phone or ID required for a test');
-    const { data: lineId, error } = await context.supabase.rpc('create_subscriber', { _username: data.username, _password: data.password, _months: data.months, _account_type: data.accountType, _mac: data.accountType === 'xtream' ? undefined : macSchema.parse(data.mac), _custom_host: data.customHost ?? '', _customer: data.customer });
+    const { data: lineId, error } = await context.supabase.rpc('create_subscriber', { _username: data.username, _password: data.password, _months: data.months, _account_type: data.accountType, ...(data.accountType === 'xtream' ? {} : { _mac: macSchema.parse(data.mac) }), _custom_host: data.customHost ?? '', ...(data.customer ? { _customer: data.customer } : {}) });
     if (error) throw new Error(error.message.includes('mac_address') ? 'MAC address already assigned' : error.message);
     return { ok: true as const, lineId };
   });
