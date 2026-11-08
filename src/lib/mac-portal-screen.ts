@@ -1,7 +1,7 @@
 // Native MAG250 WebKit predates modern React/browser APIs; keep this isolated
 // device bootstrap ES5-compatible. Catalog and playback remain server-authorized.
 export function portalScreen(): Response {
-  return new Response(`<!doctype html>
+  const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>KURDISTAN IPTV · MAG Portal</title><meta name="description" content="KURDISTAN IPTV subscriber MAC portal.">
 <meta property="og:title" content="KURDISTAN IPTV · MAG Portal"><meta property="og:description" content="KURDISTAN IPTV subscriber MAC portal."><meta property="og:type" content="website"><meta name="twitter:card" content="summary">
@@ -37,5 +37,9 @@ var buttons=document.getElementById('modes').getElementsByTagName('button');for(
 document.onkeydown=function(e){e=e||window.event;var code=e.keyCode;if(code===27||code===8||code===461){back();if(e.preventDefault){e.preventDefault();}return false;}if(code===38||code===40||code===37||code===39){var all=document.getElementsByTagName('button'),index=0;for(var j=0;j<all.length;j++){if(all[j]===document.activeElement){index=j;break;}}index=Math.max(0,Math.min(all.length-1,index+((code===38||code===37)?-1:1)));all[index].focus();if(e.preventDefault){e.preventDefault();}return false;}};
 try{if(device&&typeof device.GetDeviceMacAddress==='function'){mac=device.GetDeviceMacAddress();}if(device&&typeof device.InitPlayer==='function'){device.InitPlayer();}}catch(e){}
 api('stb','handshake',{},function(data){token=data.token;api('stb','get_profile',{},function(){api('stb','get_modules',{},function(){api('stb','get_localization',{},function(){categories();});});});});
-})();</script></body></html>`, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'same-origin' } });
+})();</script></body></html>`;
+  // Old MAG WebKit lacks CSS variables: resolve the screen's semantic tokens
+  // at delivery time rather than relying on device-side variable support.
+  const tokens = new Map(Array.from(html.matchAll(/(--[a-z]+):([^;}]+)/g), match => [match[1], match[2]]));
+  return new Response(html.replace(/var\((--[a-z]+)\)/g, (_, name: string) => tokens.get(name) ?? 'inherit'), { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'same-origin' } });
 }

@@ -1,0 +1,2 @@
+# MAG startup
+- Keep the native MAG screen an isolated ES5 HTML/XHR bootstrap with resolved semantic CSS tokens, because MAG250 WebKit cannot run the panel's modern React frontend; use the existing authenticated catalog and playback handlers unchanged.
