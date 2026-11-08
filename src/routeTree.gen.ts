@@ -27,14 +27,18 @@ import { Route as ApiPublicContentRouteImport } from './routes/api/public/conten
 import { Route as ApiPublicGetDotphpRouteImport } from './routes/api/public/get[.]php'
 import { Route as ApiPublicPlayer_apiDotphpRouteImport } from './routes/api/public/player_api[.]php'
 import { Route as ApiPublicPlaylistRouteImport } from './routes/api/public/playlist'
+import { Route as ApiPublicPortalDotphpRouteImport } from './routes/api/public/portal[.]php'
 import { Route as ApiPublicWarmRouteImport } from './routes/api/public/warm'
+import { Route as ApiPublicCIndexRouteImport } from './routes/api/public/c/index'
 import { Route as ApiPublicINameRouteImport } from './routes/api/public/i/$name'
 import { Route as ApiPublicPlaylistSplatRouteImport } from './routes/api/public/playlist.$'
+import { Route as ApiPublicServerLoadDotphpRouteImport } from './routes/api/public/server/load[.]php'
 import { Route as ApiPublicVNameRouteImport } from './routes/api/public/v/$name'
 import { Route as LiveUsernamePasswordStreamRouteImport } from './routes/live.$username.$password.$stream'
 import { Route as MovieUsernamePasswordStreamRouteImport } from './routes/movie.$username.$password.$stream'
 import { Route as ProxyUsernamePasswordIdRouteImport } from './routes/proxy.$username.$password.$id'
 import { Route as SeriesUsernamePasswordStreamRouteImport } from './routes/series.$username.$password.$stream'
+import { Route as ApiPublicStalker_portalServerLoadDotphpRouteImport } from './routes/api/public/stalker_portal/server/load[.]php'
 import { Route as ApiPublicLiveUsernamePasswordStreamRouteImport } from './routes/api/public/live.$username.$password.$stream'
 import { Route as ApiPublicMovieUsernamePasswordStreamRouteImport } from './routes/api/public/movie.$username.$password.$stream'
 import { Route as ApiPublicSeriesUsernamePasswordStreamRouteImport } from './routes/api/public/series.$username.$password.$stream'
@@ -133,9 +137,19 @@ const ApiPublicPlaylistRoute = ApiPublicPlaylistRouteImport.update({
   path: '/api/public/playlist',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPortalDotphpRoute = ApiPublicPortalDotphpRouteImport.update({
+  id: '/api/public/portal.php',
+  path: '/api/public/portal.php',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicWarmRoute = ApiPublicWarmRouteImport.update({
   id: '/api/public/warm',
   path: '/api/public/warm',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicCIndexRoute = ApiPublicCIndexRouteImport.update({
+  id: '/api/public/c/',
+  path: '/api/public/c/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicINameRoute = ApiPublicINameRouteImport.update({
@@ -148,6 +162,12 @@ const ApiPublicPlaylistSplatRoute = ApiPublicPlaylistSplatRouteImport.update({
   path: '/$',
   getParentRoute: () => ApiPublicPlaylistRoute,
 } as any)
+const ApiPublicServerLoadDotphpRoute =
+  ApiPublicServerLoadDotphpRouteImport.update({
+    id: '/api/public/server/load.php',
+    path: '/api/public/server/load.php',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicVNameRoute = ApiPublicVNameRouteImport.update({
   id: '/api/public/v/$name',
   path: '/api/public/v/$name',
@@ -174,6 +194,12 @@ const SeriesUsernamePasswordStreamRoute =
   SeriesUsernamePasswordStreamRouteImport.update({
     id: '/series/$username/$password/$stream',
     path: '/series/$username/$password/$stream',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicStalker_portalServerLoadDotphpRoute =
+  ApiPublicStalker_portalServerLoadDotphpRouteImport.update({
+    id: '/api/public/stalker_portal/server/load.php',
+    path: '/api/public/stalker_portal/server/load.php',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicLiveUsernamePasswordStreamRoute =
@@ -219,14 +245,18 @@ export interface FileRoutesByFullPath {
   '/api/public/get.php': typeof ApiPublicGetDotphpRoute
   '/api/public/player_api.php': typeof ApiPublicPlayer_apiDotphpRoute
   '/api/public/playlist': typeof ApiPublicPlaylistRouteWithChildren
+  '/api/public/portal.php': typeof ApiPublicPortalDotphpRoute
   '/api/public/warm': typeof ApiPublicWarmRoute
   '/api/public/i/$name': typeof ApiPublicINameRoute
   '/api/public/playlist/$': typeof ApiPublicPlaylistSplatRoute
+  '/api/public/server/load.php': typeof ApiPublicServerLoadDotphpRoute
   '/api/public/v/$name': typeof ApiPublicVNameRoute
   '/live/$username/$password/$stream': typeof LiveUsernamePasswordStreamRoute
   '/movie/$username/$password/$stream': typeof MovieUsernamePasswordStreamRoute
   '/proxy/$username/$password/$id': typeof ProxyUsernamePasswordIdRoute
   '/series/$username/$password/$stream': typeof SeriesUsernamePasswordStreamRoute
+  '/api/public/c/': typeof ApiPublicCIndexRoute
+  '/api/public/stalker_portal/server/load.php': typeof ApiPublicStalker_portalServerLoadDotphpRoute
   '/api/public/live/$username/$password/$stream': typeof ApiPublicLiveUsernamePasswordStreamRoute
   '/api/public/movie/$username/$password/$stream': typeof ApiPublicMovieUsernamePasswordStreamRoute
   '/api/public/series/$username/$password/$stream': typeof ApiPublicSeriesUsernamePasswordStreamRoute
@@ -250,14 +280,18 @@ export interface FileRoutesByTo {
   '/api/public/get.php': typeof ApiPublicGetDotphpRoute
   '/api/public/player_api.php': typeof ApiPublicPlayer_apiDotphpRoute
   '/api/public/playlist': typeof ApiPublicPlaylistRouteWithChildren
+  '/api/public/portal.php': typeof ApiPublicPortalDotphpRoute
   '/api/public/warm': typeof ApiPublicWarmRoute
   '/api/public/i/$name': typeof ApiPublicINameRoute
   '/api/public/playlist/$': typeof ApiPublicPlaylistSplatRoute
+  '/api/public/server/load.php': typeof ApiPublicServerLoadDotphpRoute
   '/api/public/v/$name': typeof ApiPublicVNameRoute
   '/live/$username/$password/$stream': typeof LiveUsernamePasswordStreamRoute
   '/movie/$username/$password/$stream': typeof MovieUsernamePasswordStreamRoute
   '/proxy/$username/$password/$id': typeof ProxyUsernamePasswordIdRoute
   '/series/$username/$password/$stream': typeof SeriesUsernamePasswordStreamRoute
+  '/api/public/c': typeof ApiPublicCIndexRoute
+  '/api/public/stalker_portal/server/load.php': typeof ApiPublicStalker_portalServerLoadDotphpRoute
   '/api/public/live/$username/$password/$stream': typeof ApiPublicLiveUsernamePasswordStreamRoute
   '/api/public/movie/$username/$password/$stream': typeof ApiPublicMovieUsernamePasswordStreamRoute
   '/api/public/series/$username/$password/$stream': typeof ApiPublicSeriesUsernamePasswordStreamRoute
@@ -283,14 +317,18 @@ export interface FileRoutesById {
   '/api/public/get.php': typeof ApiPublicGetDotphpRoute
   '/api/public/player_api.php': typeof ApiPublicPlayer_apiDotphpRoute
   '/api/public/playlist': typeof ApiPublicPlaylistRouteWithChildren
+  '/api/public/portal.php': typeof ApiPublicPortalDotphpRoute
   '/api/public/warm': typeof ApiPublicWarmRoute
   '/api/public/i/$name': typeof ApiPublicINameRoute
   '/api/public/playlist/$': typeof ApiPublicPlaylistSplatRoute
+  '/api/public/server/load.php': typeof ApiPublicServerLoadDotphpRoute
   '/api/public/v/$name': typeof ApiPublicVNameRoute
   '/live/$username/$password/$stream': typeof LiveUsernamePasswordStreamRoute
   '/movie/$username/$password/$stream': typeof MovieUsernamePasswordStreamRoute
   '/proxy/$username/$password/$id': typeof ProxyUsernamePasswordIdRoute
   '/series/$username/$password/$stream': typeof SeriesUsernamePasswordStreamRoute
+  '/api/public/c/': typeof ApiPublicCIndexRoute
+  '/api/public/stalker_portal/server/load.php': typeof ApiPublicStalker_portalServerLoadDotphpRoute
   '/api/public/live/$username/$password/$stream': typeof ApiPublicLiveUsernamePasswordStreamRoute
   '/api/public/movie/$username/$password/$stream': typeof ApiPublicMovieUsernamePasswordStreamRoute
   '/api/public/series/$username/$password/$stream': typeof ApiPublicSeriesUsernamePasswordStreamRoute
@@ -316,14 +354,18 @@ export interface FileRouteTypes {
     | '/api/public/get.php'
     | '/api/public/player_api.php'
     | '/api/public/playlist'
+    | '/api/public/portal.php'
     | '/api/public/warm'
     | '/api/public/i/$name'
     | '/api/public/playlist/$'
+    | '/api/public/server/load.php'
     | '/api/public/v/$name'
     | '/live/$username/$password/$stream'
     | '/movie/$username/$password/$stream'
     | '/proxy/$username/$password/$id'
     | '/series/$username/$password/$stream'
+    | '/api/public/c/'
+    | '/api/public/stalker_portal/server/load.php'
     | '/api/public/live/$username/$password/$stream'
     | '/api/public/movie/$username/$password/$stream'
     | '/api/public/series/$username/$password/$stream'
@@ -347,14 +389,18 @@ export interface FileRouteTypes {
     | '/api/public/get.php'
     | '/api/public/player_api.php'
     | '/api/public/playlist'
+    | '/api/public/portal.php'
     | '/api/public/warm'
     | '/api/public/i/$name'
     | '/api/public/playlist/$'
+    | '/api/public/server/load.php'
     | '/api/public/v/$name'
     | '/live/$username/$password/$stream'
     | '/movie/$username/$password/$stream'
     | '/proxy/$username/$password/$id'
     | '/series/$username/$password/$stream'
+    | '/api/public/c'
+    | '/api/public/stalker_portal/server/load.php'
     | '/api/public/live/$username/$password/$stream'
     | '/api/public/movie/$username/$password/$stream'
     | '/api/public/series/$username/$password/$stream'
@@ -379,14 +425,18 @@ export interface FileRouteTypes {
     | '/api/public/get.php'
     | '/api/public/player_api.php'
     | '/api/public/playlist'
+    | '/api/public/portal.php'
     | '/api/public/warm'
     | '/api/public/i/$name'
     | '/api/public/playlist/$'
+    | '/api/public/server/load.php'
     | '/api/public/v/$name'
     | '/live/$username/$password/$stream'
     | '/movie/$username/$password/$stream'
     | '/proxy/$username/$password/$id'
     | '/series/$username/$password/$stream'
+    | '/api/public/c/'
+    | '/api/public/stalker_portal/server/load.php'
     | '/api/public/live/$username/$password/$stream'
     | '/api/public/movie/$username/$password/$stream'
     | '/api/public/series/$username/$password/$stream'
@@ -403,13 +453,17 @@ export interface RootRouteChildren {
   ApiPublicGetDotphpRoute: typeof ApiPublicGetDotphpRoute
   ApiPublicPlayer_apiDotphpRoute: typeof ApiPublicPlayer_apiDotphpRoute
   ApiPublicPlaylistRoute: typeof ApiPublicPlaylistRouteWithChildren
+  ApiPublicPortalDotphpRoute: typeof ApiPublicPortalDotphpRoute
   ApiPublicWarmRoute: typeof ApiPublicWarmRoute
   ApiPublicINameRoute: typeof ApiPublicINameRoute
+  ApiPublicServerLoadDotphpRoute: typeof ApiPublicServerLoadDotphpRoute
   ApiPublicVNameRoute: typeof ApiPublicVNameRoute
   LiveUsernamePasswordStreamRoute: typeof LiveUsernamePasswordStreamRoute
   MovieUsernamePasswordStreamRoute: typeof MovieUsernamePasswordStreamRoute
   ProxyUsernamePasswordIdRoute: typeof ProxyUsernamePasswordIdRoute
   SeriesUsernamePasswordStreamRoute: typeof SeriesUsernamePasswordStreamRoute
+  ApiPublicCIndexRoute: typeof ApiPublicCIndexRoute
+  ApiPublicStalker_portalServerLoadDotphpRoute: typeof ApiPublicStalker_portalServerLoadDotphpRoute
   ApiPublicLiveUsernamePasswordStreamRoute: typeof ApiPublicLiveUsernamePasswordStreamRoute
   ApiPublicMovieUsernamePasswordStreamRoute: typeof ApiPublicMovieUsernamePasswordStreamRoute
   ApiPublicSeriesUsernamePasswordStreamRoute: typeof ApiPublicSeriesUsernamePasswordStreamRoute
@@ -544,11 +598,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPlaylistRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/portal.php': {
+      id: '/api/public/portal.php'
+      path: '/api/public/portal.php'
+      fullPath: '/api/public/portal.php'
+      preLoaderRoute: typeof ApiPublicPortalDotphpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/warm': {
       id: '/api/public/warm'
       path: '/api/public/warm'
       fullPath: '/api/public/warm'
       preLoaderRoute: typeof ApiPublicWarmRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/c/': {
+      id: '/api/public/c/'
+      path: '/api/public/c'
+      fullPath: '/api/public/c/'
+      preLoaderRoute: typeof ApiPublicCIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/i/$name': {
@@ -564,6 +632,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/playlist/$'
       preLoaderRoute: typeof ApiPublicPlaylistSplatRouteImport
       parentRoute: typeof ApiPublicPlaylistRoute
+    }
+    '/api/public/server/load.php': {
+      id: '/api/public/server/load.php'
+      path: '/api/public/server/load.php'
+      fullPath: '/api/public/server/load.php'
+      preLoaderRoute: typeof ApiPublicServerLoadDotphpRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/v/$name': {
       id: '/api/public/v/$name'
@@ -598,6 +673,13 @@ declare module '@tanstack/react-router' {
       path: '/series/$username/$password/$stream'
       fullPath: '/series/$username/$password/$stream'
       preLoaderRoute: typeof SeriesUsernamePasswordStreamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/stalker_portal/server/load.php': {
+      id: '/api/public/stalker_portal/server/load.php'
+      path: '/api/public/stalker_portal/server/load.php'
+      fullPath: '/api/public/stalker_portal/server/load.php'
+      preLoaderRoute: typeof ApiPublicStalker_portalServerLoadDotphpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/live/$username/$password/$stream': {
@@ -679,13 +761,18 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicGetDotphpRoute: ApiPublicGetDotphpRoute,
   ApiPublicPlayer_apiDotphpRoute: ApiPublicPlayer_apiDotphpRoute,
   ApiPublicPlaylistRoute: ApiPublicPlaylistRouteWithChildren,
+  ApiPublicPortalDotphpRoute: ApiPublicPortalDotphpRoute,
   ApiPublicWarmRoute: ApiPublicWarmRoute,
   ApiPublicINameRoute: ApiPublicINameRoute,
+  ApiPublicServerLoadDotphpRoute: ApiPublicServerLoadDotphpRoute,
   ApiPublicVNameRoute: ApiPublicVNameRoute,
   LiveUsernamePasswordStreamRoute: LiveUsernamePasswordStreamRoute,
   MovieUsernamePasswordStreamRoute: MovieUsernamePasswordStreamRoute,
   ProxyUsernamePasswordIdRoute: ProxyUsernamePasswordIdRoute,
   SeriesUsernamePasswordStreamRoute: SeriesUsernamePasswordStreamRoute,
+  ApiPublicCIndexRoute: ApiPublicCIndexRoute,
+  ApiPublicStalker_portalServerLoadDotphpRoute:
+    ApiPublicStalker_portalServerLoadDotphpRoute,
   ApiPublicLiveUsernamePasswordStreamRoute:
     ApiPublicLiveUsernamePasswordStreamRoute,
   ApiPublicMovieUsernamePasswordStreamRoute:
