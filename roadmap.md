@@ -1,8 +1,9 @@
 # Connection billing
 ## MAC Portal
-- [ ] Add transactional subscriber MAC settings, durable sessions and per-MAC throttling without changing existing provider handlers.
-- [ ] Add account choices and MAC generation/copy controls on create/edit forms.
-- [ ] Verify portal handshake/profile/categories/list/link, isolation and existing provider regressions; actual MAG device checks require a device.
+- [x] Add transactional subscriber MAC settings, durable sessions and per-MAC throttling without changing existing provider handlers.
+- [x] Add account choices and MAC generation/copy controls on create/edit forms; desktop/mobile checked without overflow.
+- [x] Real temporary 00:1A:79:00:00:01 subscriber verified: handshake/profile/53 genres/14-item page/link, all aliases, media response 200, unchanged Xtream login and M3U 200; edit/reload persisted, fixture deleted. All 254 initial regressions pass.
+- [ ] Verify actual MAG/Ministra decoded playback after publication; blocked by unavailable customer device. Existing system has no assigned package/bouquet model: portal mirrors the same shared provider catalog. Disable toggle affects only MAC access, preserving existing credentials as requested.
 ## Provider first-login reliability
 - [x] Measured live baseline; account and unsupported actions avoid catalog work. Preview account 214ms; lists 139–730ms, matching category ETag 304. No account, credit, source or playback changes.
 - [x] Durable compact last-good catalog saved through authenticated warm callback; five-minute conditional source refresh and role-checked admin refresh function. Existing minute schedule unchanged (1,440 checks/day); production callback changes await publishing.
