@@ -26,6 +26,12 @@ describe('MAC portal rules', () => {
     expect(result.total_items).toBe(30);
     expect(result.max_page_items).toBe(14);
   });
+  it('treats p=0 as the first page and preserves p=1 and p=2 behavior', () => {
+    const items = Array.from({ length: 30 }, (_, i) => i + 1);
+    expect(portalPage(items, 0)).toEqual(portalPage(items, 1));
+    expect(portalPage(items, 2).data[0]).toBe(15);
+    expect(action('type=itv&action=get_ordered_list&p=0')).toEqual(action('type=itv&action=get_ordered_list&p=1'));
+  });
   it('preserves provider category order', () => {
     expect(action('type=itv&action=get_genres')).toEqual([{ id: '1', title: 'Z', alias: 'Z' }, { id: '2', title: 'A', alias: 'A' }]);
   });
