@@ -38,6 +38,7 @@ import { Route as LiveUsernamePasswordStreamRouteImport } from './routes/live.$u
 import { Route as MovieUsernamePasswordStreamRouteImport } from './routes/movie.$username.$password.$stream'
 import { Route as ProxyUsernamePasswordIdRouteImport } from './routes/proxy.$username.$password.$id'
 import { Route as SeriesUsernamePasswordStreamRouteImport } from './routes/series.$username.$password.$stream'
+import { Route as ApiPublicCServerLoadDotphpRouteImport } from './routes/api/public/c/server/load[.]php'
 import { Route as ApiPublicStalker_portalServerLoadDotphpRouteImport } from './routes/api/public/stalker_portal/server/load[.]php'
 import { Route as ApiPublicLiveUsernamePasswordStreamRouteImport } from './routes/api/public/live.$username.$password.$stream'
 import { Route as ApiPublicMovieUsernamePasswordStreamRouteImport } from './routes/api/public/movie.$username.$password.$stream'
@@ -196,6 +197,12 @@ const SeriesUsernamePasswordStreamRoute =
     path: '/series/$username/$password/$stream',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCServerLoadDotphpRoute =
+  ApiPublicCServerLoadDotphpRouteImport.update({
+    id: '/api/public/c/server/load.php',
+    path: '/api/public/c/server/load.php',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicStalker_portalServerLoadDotphpRoute =
   ApiPublicStalker_portalServerLoadDotphpRouteImport.update({
     id: '/api/public/stalker_portal/server/load.php',
@@ -256,6 +263,7 @@ export interface FileRoutesByFullPath {
   '/proxy/$username/$password/$id': typeof ProxyUsernamePasswordIdRoute
   '/series/$username/$password/$stream': typeof SeriesUsernamePasswordStreamRoute
   '/api/public/c/': typeof ApiPublicCIndexRoute
+  '/api/public/c/server/load.php': typeof ApiPublicCServerLoadDotphpRoute
   '/api/public/stalker_portal/server/load.php': typeof ApiPublicStalker_portalServerLoadDotphpRoute
   '/api/public/live/$username/$password/$stream': typeof ApiPublicLiveUsernamePasswordStreamRoute
   '/api/public/movie/$username/$password/$stream': typeof ApiPublicMovieUsernamePasswordStreamRoute
@@ -291,6 +299,7 @@ export interface FileRoutesByTo {
   '/proxy/$username/$password/$id': typeof ProxyUsernamePasswordIdRoute
   '/series/$username/$password/$stream': typeof SeriesUsernamePasswordStreamRoute
   '/api/public/c': typeof ApiPublicCIndexRoute
+  '/api/public/c/server/load.php': typeof ApiPublicCServerLoadDotphpRoute
   '/api/public/stalker_portal/server/load.php': typeof ApiPublicStalker_portalServerLoadDotphpRoute
   '/api/public/live/$username/$password/$stream': typeof ApiPublicLiveUsernamePasswordStreamRoute
   '/api/public/movie/$username/$password/$stream': typeof ApiPublicMovieUsernamePasswordStreamRoute
@@ -328,6 +337,7 @@ export interface FileRoutesById {
   '/proxy/$username/$password/$id': typeof ProxyUsernamePasswordIdRoute
   '/series/$username/$password/$stream': typeof SeriesUsernamePasswordStreamRoute
   '/api/public/c/': typeof ApiPublicCIndexRoute
+  '/api/public/c/server/load.php': typeof ApiPublicCServerLoadDotphpRoute
   '/api/public/stalker_portal/server/load.php': typeof ApiPublicStalker_portalServerLoadDotphpRoute
   '/api/public/live/$username/$password/$stream': typeof ApiPublicLiveUsernamePasswordStreamRoute
   '/api/public/movie/$username/$password/$stream': typeof ApiPublicMovieUsernamePasswordStreamRoute
@@ -365,6 +375,7 @@ export interface FileRouteTypes {
     | '/proxy/$username/$password/$id'
     | '/series/$username/$password/$stream'
     | '/api/public/c/'
+    | '/api/public/c/server/load.php'
     | '/api/public/stalker_portal/server/load.php'
     | '/api/public/live/$username/$password/$stream'
     | '/api/public/movie/$username/$password/$stream'
@@ -400,6 +411,7 @@ export interface FileRouteTypes {
     | '/proxy/$username/$password/$id'
     | '/series/$username/$password/$stream'
     | '/api/public/c'
+    | '/api/public/c/server/load.php'
     | '/api/public/stalker_portal/server/load.php'
     | '/api/public/live/$username/$password/$stream'
     | '/api/public/movie/$username/$password/$stream'
@@ -436,6 +448,7 @@ export interface FileRouteTypes {
     | '/proxy/$username/$password/$id'
     | '/series/$username/$password/$stream'
     | '/api/public/c/'
+    | '/api/public/c/server/load.php'
     | '/api/public/stalker_portal/server/load.php'
     | '/api/public/live/$username/$password/$stream'
     | '/api/public/movie/$username/$password/$stream'
@@ -463,6 +476,7 @@ export interface RootRouteChildren {
   ProxyUsernamePasswordIdRoute: typeof ProxyUsernamePasswordIdRoute
   SeriesUsernamePasswordStreamRoute: typeof SeriesUsernamePasswordStreamRoute
   ApiPublicCIndexRoute: typeof ApiPublicCIndexRoute
+  ApiPublicCServerLoadDotphpRoute: typeof ApiPublicCServerLoadDotphpRoute
   ApiPublicStalker_portalServerLoadDotphpRoute: typeof ApiPublicStalker_portalServerLoadDotphpRoute
   ApiPublicLiveUsernamePasswordStreamRoute: typeof ApiPublicLiveUsernamePasswordStreamRoute
   ApiPublicMovieUsernamePasswordStreamRoute: typeof ApiPublicMovieUsernamePasswordStreamRoute
@@ -675,6 +689,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SeriesUsernamePasswordStreamRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/c/server/load.php': {
+      id: '/api/public/c/server/load.php'
+      path: '/api/public/c/server/load.php'
+      fullPath: '/api/public/c/server/load.php'
+      preLoaderRoute: typeof ApiPublicCServerLoadDotphpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/stalker_portal/server/load.php': {
       id: '/api/public/stalker_portal/server/load.php'
       path: '/api/public/stalker_portal/server/load.php'
@@ -771,6 +792,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProxyUsernamePasswordIdRoute: ProxyUsernamePasswordIdRoute,
   SeriesUsernamePasswordStreamRoute: SeriesUsernamePasswordStreamRoute,
   ApiPublicCIndexRoute: ApiPublicCIndexRoute,
+  ApiPublicCServerLoadDotphpRoute: ApiPublicCServerLoadDotphpRoute,
   ApiPublicStalker_portalServerLoadDotphpRoute:
     ApiPublicStalker_portalServerLoadDotphpRoute,
   ApiPublicLiveUsernamePasswordStreamRoute:
