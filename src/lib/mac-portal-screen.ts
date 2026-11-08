@@ -1,12 +1,15 @@
 // Native MAG250 WebKit predates modern React/browser APIs; keep this isolated
 // device bootstrap ES5-compatible. Catalog and playback remain server-authorized.
+import logoAsset from '@/assets/kurdistan-iptv-logo.png.asset.json';
+
 export function portalScreen(): Response {
   const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>KURDISTAN IPTV · MAG Portal</title><meta name="description" content="KURDISTAN IPTV subscriber MAC portal.">
 <meta property="og:title" content="KURDISTAN IPTV · MAG Portal"><meta property="og:description" content="KURDISTAN IPTV subscriber MAC portal."><meta property="og:type" content="website"><meta name="twitter:card" content="summary">
 <style>:root{--background:#101715;--foreground:#f2f5f3;--muted:#b8c4be;--accent:#a5e15a;--surface:#202c25;--border:#415347}*{box-sizing:border-box}body{margin:0;background:var(--background);color:var(--foreground);font:24px Arial,sans-serif;letter-spacing:0}main{max-width:1200px;margin:auto;padding:32px}h1{font-size:34px;margin:0 0 24px}nav{margin-bottom:24px}button{font:inherit;cursor:pointer;color:var(--foreground);background:var(--surface);border:2px solid var(--border);border-radius:4px;padding:12px 18px;margin:4px;min-height:52px}button:focus{outline:3px solid var(--accent);color:var(--accent)}#status{color:var(--muted);min-height:32px;margin:16px 0}#items button{display:block;width:100%;text-align:left;margin:6px 0}footer{margin-top:20px}#player{width:100%;max-height:65vh;display:none}@media(max-width:600px){main{padding:16px}body{font-size:18px}h1{font-size:28px}}</style>
-</head><body><main><h1>KURDISTAN IPTV</h1><nav id="modes"><button data-mode="itv">TV</button><button data-mode="vod">Movies</button><button data-mode="series">Series</button></nav><div id="status" role="status">Connecting...</div><video id="player" controls></video><section id="items" aria-label="Channels"></section><footer><button id="back">Back</button><button id="previous">Previous</button><button id="next">Next</button></footer></main>
+<style>.portal-brand{margin-bottom:24px}.portal-brand img{display:block;width:144px;height:144px;object-fit:contain;margin-bottom:16px}.portal-brand h1{margin-bottom:0}@media(max-width:600px){.portal-brand img{width:112px;height:112px}}</style>
+</head><body><main><header class="portal-brand"><img src="${logoAsset.url}" alt="Kurdistan IPTV — Kurdistan map" width="144" height="144"><h1>KURDISTAN IPTV</h1></header><nav id="modes"><button data-mode="itv">TV</button><button data-mode="vod">Movies</button><button data-mode="series">Series</button></nav><div id="status" role="status">Connecting...</div><video id="player" controls></video><section id="items" aria-label="Channels"></section><footer><button id="back">Back</button><button id="previous">Previous</button><button id="next">Next</button></footer></main>
 <script>(function(){
 'use strict';
 var token='',mac='',mode='itv',category='*',page=1,screen='categories',total=0,movie='',season='',playing=false;
