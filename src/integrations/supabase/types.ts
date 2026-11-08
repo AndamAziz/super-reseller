@@ -341,44 +341,62 @@ export type Database = {
       }
       lines: {
         Row: {
+          account_type: string
           created_at: string
           custom_host: string | null
           customer_contact: string | null
           expires_at: string
           id: string
           is_test: boolean
+          last_mac_login_at: string | null
+          last_mac_login_ip: string | null
+          mac_address: string | null
           max_connections: number
           panel_message: string | null
           panel_status: string
           password: string
+          portal_disabled: boolean
+          portal_id: number
           reseller_id: string
           username: string
         }
         Insert: {
+          account_type?: string
           created_at?: string
           custom_host?: string | null
           customer_contact?: string | null
           expires_at: string
           id?: string
           is_test?: boolean
+          last_mac_login_at?: string | null
+          last_mac_login_ip?: string | null
+          mac_address?: string | null
           max_connections?: number
           panel_message?: string | null
           panel_status?: string
           password: string
+          portal_disabled?: boolean
+          portal_id?: number
           reseller_id: string
           username: string
         }
         Update: {
+          account_type?: string
           created_at?: string
           custom_host?: string | null
           customer_contact?: string | null
           expires_at?: string
           id?: string
           is_test?: boolean
+          last_mac_login_at?: string | null
+          last_mac_login_ip?: string | null
+          mac_address?: string | null
           max_connections?: number
           panel_message?: string | null
           panel_status?: string
           password?: string
+          portal_disabled?: boolean
+          portal_id?: number
           reseller_id?: string
           username?: string
         }
@@ -388,6 +406,53 @@ export type Database = {
             columns: ["reseller_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mac_portal_rate_limits: {
+        Row: {
+          mac_address: string
+          requests: number
+          window_start: string
+        }
+        Insert: {
+          mac_address: string
+          requests?: number
+          window_start?: string
+        }
+        Update: {
+          mac_address?: string
+          requests?: number
+          window_start?: string
+        }
+        Relationships: []
+      }
+      mac_portal_sessions: {
+        Row: {
+          expires_at: string
+          line_id: string
+          mac_address: string
+          token_hash: string
+        }
+        Insert: {
+          expires_at?: string
+          line_id: string
+          mac_address: string
+          token_hash: string
+        }
+        Update: {
+          expires_at?: string
+          line_id?: string
+          mac_address?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mac_portal_sessions_line_id_fkey"
+            columns: ["line_id"]
+            isOneToOne: false
+            referencedRelation: "lines"
             referencedColumns: ["id"]
           },
         ]
@@ -558,6 +623,15 @@ export type Database = {
         Args: { _amount: number; _reason: string; _reseller_id: string }
         Returns: number
       }
+      authorize_mac_portal: {
+        Args: {
+          _ip?: string
+          _mac: string
+          _new_token_hash?: string
+          _token_hash?: string
+        }
+        Returns: Json
+      }
       check_stream_limit:
         | {
             Args: { _client_key: string; _line_id: string; _max: number }
@@ -585,16 +659,22 @@ export type Database = {
       create_line: {
         Args: { _months: number; _password: string; _username: string }
         Returns: {
+          account_type: string
           created_at: string
           custom_host: string | null
           customer_contact: string | null
           expires_at: string
           id: string
           is_test: boolean
+          last_mac_login_at: string | null
+          last_mac_login_ip: string | null
+          mac_address: string | null
           max_connections: number
           panel_message: string | null
           panel_status: string
           password: string
+          portal_disabled: boolean
+          portal_id: number
           reseller_id: string
           username: string
         }
@@ -605,19 +685,37 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_subscriber: {
+        Args: {
+          _account_type?: string
+          _custom_host?: string
+          _customer?: string
+          _mac?: string
+          _months: number
+          _password: string
+          _username: string
+        }
+        Returns: string
+      }
       create_test_line: {
         Args: { _customer: string; _password: string; _username: string }
         Returns: {
+          account_type: string
           created_at: string
           custom_host: string | null
           customer_contact: string | null
           expires_at: string
           id: string
           is_test: boolean
+          last_mac_login_at: string | null
+          last_mac_login_ip: string | null
+          mac_address: string | null
           max_connections: number
           panel_message: string | null
           panel_status: string
           password: string
+          portal_disabled: boolean
+          portal_id: number
           reseller_id: string
           username: string
         }
@@ -641,16 +739,22 @@ export type Database = {
       renew_line: {
         Args: { _line_id: string; _months: number }
         Returns: {
+          account_type: string
           created_at: string
           custom_host: string | null
           customer_contact: string | null
           expires_at: string
           id: string
           is_test: boolean
+          last_mac_login_at: string | null
+          last_mac_login_ip: string | null
+          mac_address: string | null
           max_connections: number
           panel_message: string | null
           panel_status: string
           password: string
+          portal_disabled: boolean
+          portal_id: number
           reseller_id: string
           username: string
         }
@@ -660,6 +764,15 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      set_subscriber_mac: {
+        Args: {
+          _account_type: string
+          _disabled?: boolean
+          _line_id: string
+          _mac: string
+        }
+        Returns: undefined
       }
       swap_channel_positions: {
         Args: { _channel_id: string; _neighbor_id: string }
@@ -671,6 +784,19 @@ export type Database = {
           _custom_host: string
           _expires_at?: string
           _line_id: string
+          _max_connections: number
+          _password: string
+        }
+        Returns: number
+      }
+      update_subscriber: {
+        Args: {
+          _account_type: string
+          _custom_host: string
+          _disabled?: boolean
+          _expires_at?: string
+          _line_id: string
+          _mac: string
           _max_connections: number
           _password: string
         }
