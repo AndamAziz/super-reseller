@@ -2,8 +2,9 @@ import { z } from 'zod';
 import { loadCatalog } from './playlist-auth.server';
 import { requestMac } from './mac-portal';
 import { portalCatalogResponse, type PortalAccount } from './mac-portal-catalog';
+import { portalLocalization, portalModules } from './mac-portal-startup';
 
-const parameters = z.object({ type: z.string().max(30).default(''), action: z.string().max(50).default(''), genre: z.string().max(20).optional(), category: z.string().max(20).optional(), p: z.coerce.number().int().min(1).max(100000).optional(), cmd: z.string().max(2000).optional(), movie_id: z.string().max(30).optional(), season_id: z.string().max(50).optional(), ch_id: z.string().max(30).optional() });
+const parameters = z.object({ type: z.string().max(30).default(''), action: z.string().max(50).default(''), genre: z.string().max(20).optional(), category: z.string().max(20).optional(), p: z.coerce.number().int().min(0).max(100000).optional(), cmd: z.string().max(2000).optional(), movie_id: z.string().max(30).optional(), season_id: z.string().max(50).optional(), ch_id: z.string().max(30).optional() });
 const accountSchema = z.object({ lineId: z.string().uuid(), id: z.number(), username: z.string(), password: z.string(), mac: z.string(), expiresAt: z.string(), maxConnections: z.number() });
 const catalogActions = new Set(['itv:get_genres', 'itv:get_all_channels', 'itv:get_ordered_list', 'itv:create_link', 'vod:get_categories', 'vod:get_ordered_list', 'vod:create_link', 'series:get_categories', 'series:get_ordered_list', 'series:create_link']);
 export const portalHeaders = { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Authorization, Content-Type' };
@@ -40,6 +41,9 @@ export async function handleMacPortal(request: Request): Promise<Response> {
     const key = `${parsed.data.type}:${parsed.data.action}`;
     const expiry = new Date(account.expiresAt).toISOString().replace('T', ' ').slice(0, 19);
     if (key === 'stb:get_profile') return respond({ id: account.id, name: account.username, mac: account.mac, status: 0, blocked: '0', expire_billing_date: expiry });
+    if (key === 'stb:get_modules') return respond(portalModules);
+    if (key === 'stb:get_localization') return respond(portalLocalization);
+    if (key === 'stb:do_auth') return respond(true);
     if (key === 'account_info:get_main_info') return respond({ mac: account.mac, phone: expiry });
     if (key === 'watchdog:get_events') return respond({ data: { msgs: 0 } });
     if (!catalogActions.has(key)) return respond([]);
