@@ -1,4 +1,8 @@
 # Connection billing
+## MAC Portal
+- [ ] Add transactional subscriber MAC settings, durable sessions and per-MAC throttling without changing existing provider handlers.
+- [ ] Add account choices and MAC generation/copy controls on create/edit forms.
+- [ ] Verify portal handshake/profile/categories/list/link, isolation and existing provider regressions; actual MAG device checks require a device.
 ## Provider first-login reliability
 - [x] Measured live baseline; account and unsupported actions avoid catalog work. Preview account 214ms; lists 139–730ms, matching category ETag 304. No account, credit, source or playback changes.
 - [x] Durable compact last-good catalog saved through authenticated warm callback; five-minute conditional source refresh and role-checked admin refresh function. Existing minute schedule unchanged (1,440 checks/day); production callback changes await publishing.
