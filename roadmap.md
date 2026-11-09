@@ -1,4 +1,7 @@
 # Connection billing
+## Playlist iframe viewing
+- [ ] Map source-declared movie/series IDs and episode numbers to the requested iframe player in the website; preserve Live TV, raw exports and native provider stream APIs.
+- [ ] Test mapping and signed-in movie/episode opening; report third-party playback limitations.
 ## MAC Portal
 - [x] Add transactional subscriber MAC settings, durable sessions and per-MAC throttling without changing existing provider handlers.
 - [x] Add account choices and MAC generation/copy controls on create/edit forms; desktop/mobile checked without overflow.
