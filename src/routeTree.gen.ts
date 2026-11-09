@@ -19,6 +19,7 @@ import { Route as AuthenticatedCreditsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedImageToLinkRouteImport } from './routes/_authenticated/image-to-link'
 import { Route as AuthenticatedLinesRouteImport } from './routes/_authenticated/lines'
+import { Route as AuthenticatedMoviesSeriesRouteImport } from './routes/_authenticated/movies-series'
 import { Route as AuthenticatedPlaybackCheckRouteImport } from './routes/_authenticated/playback-check'
 import { Route as AuthenticatedPlaylistsRouteImport } from './routes/_authenticated/playlists'
 import { Route as AuthenticatedResellersRouteImport } from './routes/_authenticated/resellers'
@@ -95,6 +96,12 @@ const AuthenticatedLinesRoute = AuthenticatedLinesRouteImport.update({
   path: '/lines',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMoviesSeriesRoute =
+  AuthenticatedMoviesSeriesRouteImport.update({
+    id: '/movies-series',
+    path: '/movies-series',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlaybackCheckRoute =
   AuthenticatedPlaybackCheckRouteImport.update({
     id: '/playback-check',
@@ -244,6 +251,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/image-to-link': typeof AuthenticatedImageToLinkRoute
   '/lines': typeof AuthenticatedLinesRoute
+  '/movies-series': typeof AuthenticatedMoviesSeriesRoute
   '/playback-check': typeof AuthenticatedPlaybackCheckRoute
   '/playlists': typeof AuthenticatedPlaylistsRoute
   '/resellers': typeof AuthenticatedResellersRoute
@@ -280,6 +288,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/image-to-link': typeof AuthenticatedImageToLinkRoute
   '/lines': typeof AuthenticatedLinesRoute
+  '/movies-series': typeof AuthenticatedMoviesSeriesRoute
   '/playback-check': typeof AuthenticatedPlaybackCheckRoute
   '/playlists': typeof AuthenticatedPlaylistsRoute
   '/resellers': typeof AuthenticatedResellersRoute
@@ -318,6 +327,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/image-to-link': typeof AuthenticatedImageToLinkRoute
   '/_authenticated/lines': typeof AuthenticatedLinesRoute
+  '/_authenticated/movies-series': typeof AuthenticatedMoviesSeriesRoute
   '/_authenticated/playback-check': typeof AuthenticatedPlaybackCheckRoute
   '/_authenticated/playlists': typeof AuthenticatedPlaylistsRoute
   '/_authenticated/resellers': typeof AuthenticatedResellersRoute
@@ -356,6 +366,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/image-to-link'
     | '/lines'
+    | '/movies-series'
     | '/playback-check'
     | '/playlists'
     | '/resellers'
@@ -392,6 +403,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/image-to-link'
     | '/lines'
+    | '/movies-series'
     | '/playback-check'
     | '/playlists'
     | '/resellers'
@@ -429,6 +441,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/image-to-link'
     | '/_authenticated/lines'
+    | '/_authenticated/movies-series'
     | '/_authenticated/playback-check'
     | '/_authenticated/playlists'
     | '/_authenticated/resellers'
@@ -554,6 +567,13 @@ declare module '@tanstack/react-router' {
       path: '/lines'
       fullPath: '/lines'
       preLoaderRoute: typeof AuthenticatedLinesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/movies-series': {
+      id: '/_authenticated/movies-series'
+      path: '/movies-series'
+      fullPath: '/movies-series'
+      preLoaderRoute: typeof AuthenticatedMoviesSeriesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/playback-check': {
@@ -740,6 +760,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedImageToLinkRoute: typeof AuthenticatedImageToLinkRoute
   AuthenticatedLinesRoute: typeof AuthenticatedLinesRoute
+  AuthenticatedMoviesSeriesRoute: typeof AuthenticatedMoviesSeriesRoute
   AuthenticatedPlaybackCheckRoute: typeof AuthenticatedPlaybackCheckRoute
   AuthenticatedPlaylistsRoute: typeof AuthenticatedPlaylistsRoute
   AuthenticatedResellersRoute: typeof AuthenticatedResellersRoute
@@ -752,6 +773,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedImageToLinkRoute: AuthenticatedImageToLinkRoute,
   AuthenticatedLinesRoute: AuthenticatedLinesRoute,
+  AuthenticatedMoviesSeriesRoute: AuthenticatedMoviesSeriesRoute,
   AuthenticatedPlaybackCheckRoute: AuthenticatedPlaybackCheckRoute,
   AuthenticatedPlaylistsRoute: AuthenticatedPlaylistsRoute,
   AuthenticatedResellersRoute: AuthenticatedResellersRoute,

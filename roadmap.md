@@ -1,4 +1,7 @@
 # Connection billing
+## Movies & Series management
+- [x] Add admin-only curated library, TMDB search/details/posters and VidAPI player controls without changing GitHub Live TV or native streams.
+- [x] Saved TMDB key returned 200; real admin movie and series search/details/save/reload/test/remove verified, mobile has no overflow and fallback remains visible. Movie and S01E01 embed opened exact IMDb URLs but neither confirmed playback after 18 seconds; third-party playback remains blocked outside app control. Regression and database permission tests retained.
 ## Playlist iframe viewing
 - [x] Map source-declared movie/series IDs and episode numbers to the requested iframe player in the website; preserve Live TV, raw exports and native provider stream APIs.
 - [x] Seven mapping tests and twenty existing export/provider regressions pass; signed-in GitHub movie opens exact TMDB iframe on desktop/mobile. Current feed has no series; episode mapping tested with fixtures.

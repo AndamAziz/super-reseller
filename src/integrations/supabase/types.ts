@@ -598,6 +598,48 @@ export type Database = {
         }
         Relationships: []
       }
+      vod_library: {
+        Row: {
+          created_at: string
+          episode: number
+          id: string
+          imdb_id: string | null
+          media_type: string
+          overview: string
+          poster_path: string | null
+          release_date: string | null
+          season: number
+          title: string
+          tmdb_id: number
+        }
+        Insert: {
+          created_at?: string
+          episode?: number
+          id?: string
+          imdb_id?: string | null
+          media_type: string
+          overview?: string
+          poster_path?: string | null
+          release_date?: string | null
+          season?: number
+          title: string
+          tmdb_id: number
+        }
+        Update: {
+          created_at?: string
+          episode?: number
+          id?: string
+          imdb_id?: string | null
+          media_type?: string
+          overview?: string
+          poster_path?: string | null
+          release_date?: string | null
+          season?: number
+          title?: string
+          tmdb_id?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

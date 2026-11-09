@@ -15,6 +15,7 @@ const NAV = [
   { to: "/lines", label: "Lines", admin: false },
   { to: "/credits", label: "Credits", admin: false },
   { to: "/playlists", label: "Playlists", admin: true },
+  { to: "/movies-series", label: "Movies & Series", admin: true },
   { to: "/youtube-episodes", label: "MP4 uploads", admin: true },
   { to: "/image-to-link", label: "Image to Link", admin: true },
   { to: "/contact", label: "Contact", admin: false },
