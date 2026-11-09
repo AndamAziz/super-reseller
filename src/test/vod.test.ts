@@ -9,7 +9,7 @@ describe('VidAPI mapping', () => {
     vi.stubEnv('TMDB_API_KEY', 'test-only-key');
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ id: 120, title: 'Movie' })));
     vi.stubGlobal('fetch', fetchMock);
-    try { expect(await tmdbRequest('movie/120')).toEqual({ id: 120, title: 'Movie' }); expect(new URL(fetchMock.mock.calls[0][0]).searchParams.get('api_key')).toBe('test-only-key'); }
+    try { expect(await tmdbRequest('movie/120')).toEqual({ id: 120, title: 'Movie' }); const call = fetchMock.mock.calls[0]; if (!call) throw new Error('Expected TMDB request'); expect(new URL(call[0]).searchParams.get('api_key')).toBe('test-only-key'); }
     finally { vi.unstubAllEnvs(); vi.unstubAllGlobals(); }
   });
 });
