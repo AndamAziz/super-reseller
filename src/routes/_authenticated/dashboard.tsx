@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageHeader, Panel, StatCard, StatusBadge, td, th, primaryBtn } from "@/components/panel";
 import { useMe, isActive, fmtDate } from "@/hooks/use-me";
 import { useLines, usePlaylists, useResellers } from "@/lib/queries";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Film, ArrowUpRight } from "lucide-react";
+import { Button } from '@/components/ui/button';
 import { hasLowCredits } from "@/lib/credit-alert";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -59,6 +60,8 @@ function Dashboard() {
           <StatCard label="Lines" value={lines.length} delay={240} />
         )}
       </section>
+
+      {isAdmin && <section className="flex flex-wrap items-center gap-4 border-y border-border bg-glass py-5 px-4 sm:px-5"><Film className="size-8 shrink-0 text-primary" /><div className="min-w-0 flex-1"><h2 className="font-display text-lg font-semibold">Movies & Series</h2><p className="mt-1 text-xs text-muted-foreground">VidAPI · TMDB</p></div><Button asChild variant="outline" className="min-h-11"><Link to="/movies-series">Manage library<ArrowUpRight className="size-4" /></Link></Button></section>}
 
       {isAdmin && (
         <Panel title="Reseller credit balances" sub={`${lowBalanceCount} low-credit ${lowBalanceCount === 1 ? "account" : "accounts"}`} actions={<Link to="/resellers" className="text-[12px] font-medium text-primary">Manage resellers →</Link>}>
