@@ -1,4 +1,8 @@
 # Connection billing
+## Playlist iframe viewing
+- [x] Map source-declared movie/series IDs and episode numbers to the requested iframe player in the website; preserve Live TV, raw exports and native provider stream APIs.
+- [x] Seven mapping tests and twenty existing export/provider regressions pass; signed-in GitHub movie opens exact TMDB iframe on desktop/mobile. Current feed has no series; episode mapping tested with fixtures.
+- [ ] Verify third-party decoded playback and real GitHub episode viewing; blocked by external player availability and no series in the current feed.
 ## MAC Portal
 - [x] Add transactional subscriber MAC settings, durable sessions and per-MAC throttling without changing existing provider handlers.
 - [x] Add account choices and MAC generation/copy controls on create/edit forms; desktop/mobile checked without overflow.

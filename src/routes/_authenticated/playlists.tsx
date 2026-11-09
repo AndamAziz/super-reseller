@@ -14,7 +14,8 @@ import { testStream, type StreamTestStep } from "@/lib/stream-test.functions";
 import { getSourcePlaylist } from "@/lib/source-playlist.functions";
 import { sourcePlaylistQueryOptions } from "@/lib/source-playlist-query";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { Pencil, Trash2, Plus, Play } from "lucide-react";
+import { PlaylistEmbedPlayer } from '@/components/playlist-embed-player';
 import { ChannelCreateDialog } from "@/components/channel-create-dialog";
 import { ChannelLinksDialog } from "@/components/channel-links-dialog";
 import { useDeleteChannel } from "@/lib/channel-delete";
@@ -73,6 +74,7 @@ function PlaylistsPage() {
   const [editing, setEditing] = useState<(M3UChannel & { id: string }) | null>(null);
   const [moving, setMoving] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [watching, setWatching] = useState<M3UChannel | null>(null);
 
   async function test(c: M3UChannel & { id: string }) {
     setTests((t) => ({ ...t, [c.id]: { loading: true } }));
@@ -267,6 +269,7 @@ function PlaylistsPage() {
                   )}
                 </div>
                 <div className="truncate font-mono text-[11px] text-muted-foreground">{c.url}</div>
+                {mediaSection(c) !== 'live' && <Button variant="outline" className="h-11" onClick={() => setWatching(c)} aria-label={`Watch ${c.name}`}><Play /> Watch</Button>}
                 {isAdmin && !isSource && <ChannelOrderButtons name={c.name} canUp={!!channelNeighbor(shown, c.id, -1)} canDown={!!channelNeighbor(shown, c.id, 1)} busy={moving || busyId != null} onMove={(direction) => moveChannel(c.id, direction)} />}
 
                 {isAdmin && (
@@ -299,6 +302,7 @@ function PlaylistsPage() {
                       <div className="flex items-center gap-2.5">
                         {c.logo ? <img src={c.logo} alt="" loading="lazy" className="size-7 rounded-md bg-muted object-contain" /> : <div className="size-7 rounded-md bg-muted" />}
                         <span className="font-medium">{c.name}</span>
+                        {mediaSection(c) !== 'live' && <Button variant="outline" size="icon" className="shrink-0" title={`Watch ${c.name}`} aria-label={`Watch ${c.name}`} onClick={() => setWatching(c)}><Play /></Button>}
                       </div>
                     </td>
                     <td className={`${td} text-muted-foreground`}>{c.group_title ?? "—"}</td>
@@ -325,6 +329,7 @@ function PlaylistsPage() {
         </Panel>
       )}
       {editing && isAdmin && !isSource && <ChannelLinksDialog key={editing.id} channel={editing} playlistId={current} onClose={() => setEditing(null)} />}
+      {watching && <PlaylistEmbedPlayer channel={watching} onClose={() => setWatching(null)} />}
       {adding && isAdmin && !isSource && <ChannelCreateDialog playlistId={current} playlistName={playlists.find((p) => p.id === current)?.name ?? "Playlist"} initialType={section === "all" ? "live" : section} onClose={() => setAdding(false)} onAdded={() => { setSection("all"); setGroup("all"); setQ(""); }} />}
     </>
   );
