@@ -225,6 +225,13 @@
       "when": 1794268406101,
       "tag": "0031_admin_vod_library",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1794527863042,
+      "tag": "0032_remove_max_connections_100_cap",
+      "breakpoints": true
     }
   ]
 }

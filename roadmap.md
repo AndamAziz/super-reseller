@@ -1,4 +1,6 @@
 # Connection billing
+## Editable connection limits
+- [ ] Remove the 100-connection ceiling while preserving the default of 1, ownership checks and existing billing; test saving/reloading above 100.
 ## Movies & Series management
 - [x] Add admin-only curated library, TMDB search/details/posters and VidAPI player controls without changing GitHub Live TV or native streams.
 - [x] Saved TMDB key returned 200; real admin movie and series search/details/save/reload/test/remove verified, mobile has no overflow and fallback remains visible. Movie and S01E01 embed opened exact IMDb URLs but neither confirmed playback after 18 seconds; third-party playback remains blocked outside app control. Regression and database permission tests retained.

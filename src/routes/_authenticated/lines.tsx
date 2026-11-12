@@ -370,10 +370,10 @@ function LinesPage() {
             <input
               type="number"
               min={1}
-              max={100}
+              step={1}
               className={`${inputCls} w-full py-2`}
               value={editing.maxConn}
-              onChange={(e) => setEditing({ ...editing, maxConn: Math.min(100, Math.max(1, Number(e.target.value) || 1)) })}
+              onChange={(e) => setEditing({ ...editing, maxConn: Math.max(1, Number(e.target.value) || 1) })}
             />
           </label>
           <Button type="submit" disabled={insufficientUpgradeCredits} className={primaryBtn}>

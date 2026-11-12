@@ -5,6 +5,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { maxConnectionsSchema } from './connection-limit';
 
 const lineSchema = z.object({
   username: z.string().trim().min(3).max(50).regex(/^[\w.-]+$/),
@@ -89,7 +90,7 @@ const updateSchema = z.object({
   password: z.string().min(4).max(100),
   customHost: z.string().trim().max(200).nullable(),
   expiresAt: z.string().datetime().nullable(),
-  maxConnections: z.number().int().min(1).max(100).default(1),
+  maxConnections: maxConnectionsSchema,
 });
 
 /** Edit password / custom host (owner or admin). Only admins may set the expiry directly — resellers extend via credits. */

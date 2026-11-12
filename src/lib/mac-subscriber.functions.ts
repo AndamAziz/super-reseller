@@ -2,6 +2,7 @@ import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { accountTypeSchema, generateMac, macSchema } from './mac-portal';
+import { maxConnectionsSchema } from './connection-limit';
 
 const identity = z.object({ accountType: accountTypeSchema, mac: z.string().max(50).nullable() }).superRefine((v, ctx) => {
   if (v.accountType !== 'xtream' && !macSchema.safeParse(v.mac).success) ctx.addIssue({ code: 'custom', message: 'MAC must be 00:1A:79:XX:XX:XX', path: ['mac'] });
@@ -18,7 +19,7 @@ export const createMacSubscriber = createServerFn({ method: 'POST' })
   });
 export const updateMacSubscriber = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
-  .inputValidator(data => z.object({ lineId: z.string().uuid(), password: z.string().min(4).max(100), customHost: z.string().trim().max(200).nullable(), expiresAt: z.string().datetime().nullable(), maxConnections: z.number().int().min(1).max(100), disabled: z.boolean() }).and(identity).parse(data))
+  .inputValidator(data => z.object({ lineId: z.string().uuid(), password: z.string().min(4).max(100), customHost: z.string().trim().max(200).nullable(), expiresAt: z.string().datetime().nullable(), maxConnections: maxConnectionsSchema, disabled: z.boolean() }).and(identity).parse(data))
   .handler(async ({ data, context }) => {
     const { data: charge, error } = await context.supabase.rpc('update_subscriber', { _line_id: data.lineId, _password: data.password, _custom_host: data.customHost ?? '', _max_connections: data.maxConnections, _account_type: data.accountType, _mac: data.accountType === 'xtream' ? '' : macSchema.parse(data.mac), _disabled: data.disabled, ...(data.expiresAt ? { _expires_at: data.expiresAt } : {}) });
     if (error) throw new Error(error.message.includes('mac_address') ? 'MAC address already assigned' : error.message);
