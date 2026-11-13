@@ -609,6 +609,7 @@ export type Database = {
           poster_path: string | null
           release_date: string | null
           season: number
+          source_url: string | null
           title: string
           tmdb_id: number
         }
@@ -622,6 +623,7 @@ export type Database = {
           poster_path?: string | null
           release_date?: string | null
           season?: number
+          source_url?: string | null
           title: string
           tmdb_id: number
         }
@@ -635,6 +637,7 @@ export type Database = {
           poster_path?: string | null
           release_date?: string | null
           season?: number
+          source_url?: string | null
           title?: string
           tmdb_id?: number
         }
