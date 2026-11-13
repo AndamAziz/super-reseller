@@ -24,6 +24,7 @@ beforeAll(async () => {
     INSERT INTO public.active_connections VALUES ('${foreignLine}','stale',now()-interval '2 minutes',NULL,NULL);
   `);
   await db.exec(readFileSync('drizzle/migrations/0022_restrict_connection_functions_to_line_owners.sql', 'utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0033_serialize_stream_admission.sql', 'utf8'));
 }, 30000);
 afterAll(async () => { await db?.close(); });
 
@@ -44,7 +45,7 @@ describe.each([false, true])('connection access (extended=%s)', (extended) => {
     // Existing default arguments make three-argument SQL calls ambiguous.
     // Isolate that legacy overload to exercise its actual body and grants.
     if (!extended) await db.exec('DROP FUNCTION public.check_stream_limit(uuid,text,integer,text,text)');
-    else await db.exec(readFileSync('drizzle/migrations/0022_restrict_connection_functions_to_line_owners.sql', 'utf8'));
+    else await db.exec(readFileSync('drizzle/migrations/0033_serialize_stream_admission.sql', 'utf8'));
   });
   it('denies anonymous execution', async () => {
     await session('anon');

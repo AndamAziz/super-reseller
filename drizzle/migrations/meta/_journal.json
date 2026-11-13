@@ -232,6 +232,13 @@
       "when": 1794527863042,
       "tag": "0032_remove_max_connections_100_cap",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1794528955311,
+      "tag": "0033_serialize_stream_admission",
+      "breakpoints": true
     }
   ]
 }

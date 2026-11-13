@@ -1,4 +1,7 @@
 # Connection billing
+## 250 concurrent playback verification
+- [x] Real disposable PostgreSQL admitted 250 distinct concurrent clients; reproduced over-admission (253 saved for limit 250) and duplicate-device insert failure, then fixed both RPC overloads with per-line serialization. Retest: 250 allowed, client 251 denied, 260-client burst admits exactly 250, same-client concurrent requests succeed; 20 targeted tests pass. Database fix applied without changing accounts, credits or playlists. This is admission testing, not decoded playback.
+- [ ] Verify simultaneous decoded playback on 250 genuinely separate client IPs; requires distributed clients/hardware not supplied by this sandbox.
 ## Editable connection limits
 - [x] Removed the 100-connection ceiling, preserving default 1, ownership and billing; real admin temporary line saved/reloaded at 250 then deleted. All 32 targeted validation, billing and permission tests pass; simultaneous playback by 250 devices is not verified.
 ## Movies & Series management
