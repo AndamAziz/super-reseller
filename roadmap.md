@@ -1,4 +1,9 @@
 # Connection billing
+## Library playable sources and GitHub publication
+- [x] Added admin-supplied MP4/M3U8 source URLs, in-app playback and VidAPI fallback; controlled MP4 saved/reloaded and decoded (320px, 24 frames), then test source cleared. 33 validation, permission and playback tests pass; Live TV unchanged.
+- [x] Added explicit GitHub publication control with append-only entries, movie/episode metadata, fallback URL, duplicate protection and SHA conflict protection; connected app reads the actual 5.2MB playlist successfully.
+- [ ] Verify real GitHub publication and resulting customer playback; blocked until authorized source URLs are supplied. No dummy video published and existing GitHub entries unchanged.
+- [ ] Supply and verify actual Project Hail Mary and Lost episode video sources; blocked until authorized files or stream URLs are supplied.
 ## 250 concurrent playback verification
 - [x] Real disposable PostgreSQL admitted 250 distinct concurrent clients; reproduced over-admission (253 saved for limit 250) and duplicate-device insert failure, then fixed both RPC overloads with per-line serialization. Retest: 250 allowed, client 251 denied, 260-client burst admits exactly 250, same-client concurrent requests succeed; 20 targeted tests pass. Database fix applied without changing accounts, credits or playlists. This is admission testing, not decoded playback.
 - [ ] Verify simultaneous decoded playback on 250 genuinely separate client IPs; requires distributed clients/hardware not supplied by this sandbox.

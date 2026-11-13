@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { tmdbDetails, tmdbRequest } from './tmdb.server';
 import type { VodEntry, VodKind, VodMetadata } from './vod';
+import { vodSourceSchema } from './vod-source';
 
 const identity = z.object({ media_type: z.enum(['movie', 'tv']), tmdb_id: z.number().int().positive() });
 type AuthContext = { supabase: { rpc: (name: 'has_role', args: { _user_id: string; _role: 'admin' }) => PromiseLike<{ data: unknown; error: unknown }> }; userId: string };
@@ -26,7 +27,7 @@ export const searchVod = createServerFn({ method: 'POST' }).middleware([requireS
 export const getVodDetails = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).inputValidator((input) => identity.parse(input))
   .handler(async ({ data, context }) => { await requireAdmin(context); return tmdbDetails(data.media_type, data.tmdb_id); });
 export const saveVod = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth])
-  .inputValidator((input) => identity.extend({ season: z.number().int().positive().default(1), episode: z.number().int().positive().default(1) }).parse(input))
+  .inputValidator((input) => identity.extend({ season: z.number().int().positive().default(1), episode: z.number().int().positive().default(1), source_url: vodSourceSchema.default('') }).parse(input))
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
     const metadata = await tmdbDetails(data.media_type, data.tmdb_id);
@@ -35,10 +36,20 @@ export const saveVod = createServerFn({ method: 'POST' }).middleware([requireSup
       if (!season || data.episode > season.episode_count) throw new Error('Choose an existing season and episode.');
     }
     const { seasons: _seasons, ...fields } = metadata;
-    const { error } = await context.supabase.from('vod_library').upsert({ ...fields, season: data.season, episode: data.episode }, { onConflict: 'media_type,tmdb_id' });
+    const { error } = await context.supabase.from('vod_library').upsert({ ...fields, season: data.season, episode: data.episode, source_url: data.source_url || null }, { onConflict: 'media_type,tmdb_id' });
     if (error) throw new Error('Could not save this title.');
     return { ok: true };
   });
 export const deleteVod = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => { await requireAdmin(context); const { error } = await context.supabase.from('vod_library').delete().eq('id', data.id); if (error) throw new Error('Could not remove this title.'); return { ok: true }; });
+
+export const publishVod = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth])
+  .inputValidator(input => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const { data: item, error } = await context.supabase.from('vod_library').select('*').eq('id', data.id).single();
+    if (error || !item?.source_url) throw new Error('Save a playable source first.');
+    const { publishVodSource } = await import('./vod-github.server');
+    return publishVodSource(item as VodEntry);
+  });
