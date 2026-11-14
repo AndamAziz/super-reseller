@@ -14,7 +14,7 @@ export function useLines() {
         .select("*, profiles(display_name, email)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      const since = new Date(Date.now() - 90_000).toISOString();
+      const since = new Date(Date.now() - 45_000).toISOString();
       const { data: conns } = await supabase
         .from("active_connections")
         .select("line_id, user_agent, ip, last_seen")

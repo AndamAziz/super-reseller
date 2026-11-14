@@ -16,7 +16,7 @@ export async function authLine(username: string, password: string, withConnectio
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Optionally embed the live device count so app login needs a single database round trip.
-    const since = new Date(Date.now() - 90_000).toISOString();
+    const since = new Date(Date.now() - 45_000).toISOString();
     const columns = "id, username, password, expires_at, created_at, max_connections" + (withConnections ? ", active_connections(count)" : "");
     // Short first deadline so a stalled cold connection is retried well before IPTV apps give up.
     const result = await retryProviderRead(async (attempt) => {
@@ -36,10 +36,10 @@ export async function authLine(username: string, password: string, withConnectio
   }
 }
 
-/** Devices seen streaming on this line in the last 90 seconds (same window as check_stream_limit). */
+/** Devices seen streaming on this line in the last 45 seconds (same window as check_stream_limit). */
 export async function countActiveConnections(lineId: string): Promise<number> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const since = new Date(Date.now() - 90_000).toISOString();
+  const since = new Date(Date.now() - 45_000).toISOString();
   const result = await retryProviderRead(async () => await supabaseAdmin
     .from("active_connections")
     .select("client_key", { count: "exact", head: true })

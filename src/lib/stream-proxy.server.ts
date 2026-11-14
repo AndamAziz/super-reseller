@@ -7,26 +7,47 @@ import { peekStream } from "./stream-peek";
 
 export const needsProxy = (c: M3UChannel) => !!(c.referrer?.trim() || c.user_agent?.trim());
 
-/** Stable per-device key: line + client IP (Web Crypto — workerd-safe). */
+// Cloudflare's own egress ranges: a request relayed by another worker/proxy carries these
+// as the connecting IP, so they never identify the viewer's device.
+const CF_V6 = /^(2a06:98c[0-7]|2606:4700|2803:f800|2405:b500|2405:8100|2c0f:f248|2400:cb00)/i;
+const CF_V4 = /^(104\.(1[6-9]|2[0-9]|3[01])\.|172\.(6[4-9]|7[01])\.|162\.15[89]\.|173\.245\.|103\.(21|22|31)\.|141\.101\.|108\.162\.|190\.93\.|188\.114\.|197\.234\.|198\.41\.|131\.0\.7[2-5]\.)/;
+const isRelayIp = (ip: string) => CF_V6.test(ip) || CF_V4.test(ip) || isPrivateHost(ip);
+/** IPv6 devices rotate privacy addresses inside one /64, so the /64 identifies the household. */
+export function deviceIp(ip: string): string {
+  ip = ip.trim().toLowerCase();
+  if (!ip.includes(":")) return ip;
+  const [head, tail = ""] = ip.split("::");
+  const h = head ? head.split(":") : [];
+  const t = tail ? tail.split(":") : [];
+  const full = ip.includes("::") ? [...h, ...Array(Math.max(0, 8 - h.length - t.length)).fill("0"), ...t] : h;
+  return full.slice(0, 4).map((x) => x.replace(/^0+(?=.)/, "")).join(":") + "::/64";
+}
+/** The viewer's address: first non-relay IP among the edge-provided client headers. */
+export function viewerIp(headers: Headers): string {
+  const list = [headers.get("cf-connecting-ip"), headers.get("true-client-ip"), headers.get("x-real-ip"), ...(headers.get("x-forwarded-for") ?? "").split(",")]
+    .map((v) => v?.trim() ?? "").filter(Boolean);
+  return list.find((ip) => !isRelayIp(ip)) ?? list[0] ?? "";
+}
+
+/** Stable per-device key: line + viewer IP (Web Crypto — workerd-safe). One key per viewer, shared by
+ * every playlist and segment request and replaced in place when the viewer switches channel. */
 async function clientInfo(request: Request, username: string): Promise<{ key: string; ua: string; ip: string }> {
-  const ip = request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "";
+  const ip = viewerIp(request.headers);
   const ua = request.headers.get("user-agent") ?? "";
-  // Key by line + IP only: one device's app, player engine and retries send different
-  // user-agents, and counting each separately made single devices hit the limit (429).
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${username}|${ip || ua}`));
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${username}|${ip ? deviceIp(ip) : ua}`));
   const key = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
   return { key, ua, ip };
 }
 
 /**
  * Enforce a line's Max connections. Counts one active connection per device
- * (line + IP + user-agent) seen in the last 90 seconds. Returns null when the
+ * (line + IP + user-agent) seen in the last 45 seconds. Returns null when the
  * stream may proceed, or a 429 response when the line is already at its limit.
  */
 // Devices recently admitted (per worker instance). Re-checking every video piece added a
-// database round trip per segment; a 20s refresh still keeps the 90s activity window alive.
+// database round trip per segment; a 15s refresh still keeps the 45s activity window alive.
 const admitted = new Map<string, number>();
-const ADMIT_TTL_MS = 20_000;
+const ADMIT_TTL_MS = 15_000;
 
 export async function checkStreamLimit(request: Request, line: { username: string; maxConnections: number; lineId?: string }): Promise<Response | null> {
   const { key, ua, ip } = await clientInfo(request, line.username);
