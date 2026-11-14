@@ -7,11 +7,6 @@ import { peekStream } from "./stream-peek";
 
 export const needsProxy = (c: M3UChannel) => !!(c.referrer?.trim() || c.user_agent?.trim());
 
-// Cloudflare's own egress ranges: a request relayed by another worker/proxy carries these
-// as the connecting IP, so they never identify the viewer's device.
-const CF_V6 = /^(2a06:98c[0-7]|2606:4700|2803:f800|2405:b500|2405:8100|2c0f:f248|2400:cb00)/i;
-const CF_V4 = /^(104\.(1[6-9]|2[0-9]|3[01])\.|172\.(6[4-9]|7[01])\.|162\.15[89]\.|173\.245\.|103\.(21|22|31)\.|141\.101\.|108\.162\.|190\.93\.|188\.114\.|197\.234\.|198\.41\.|131\.0\.7[2-5]\.)/;
-const isRelayIp = (ip: string) => CF_V6.test(ip) || CF_V4.test(ip) || isPrivateHost(ip);
 /** IPv6 devices rotate privacy addresses inside one /64, so the /64 identifies the household. */
 export function deviceIp(ip: string): string {
   ip = ip.trim().toLowerCase();
@@ -22,11 +17,11 @@ export function deviceIp(ip: string): string {
   const full = ip.includes("::") ? [...h, ...Array(Math.max(0, 8 - h.length - t.length)).fill("0"), ...t] : h;
   return full.slice(0, 4).map((x) => x.replace(/^0+(?=.)/, "")).join(":") + "::/64";
 }
-/** The viewer's address: first non-relay IP among the edge-provided client headers. */
+/** The viewer's address, taken only from CF-Connecting-IP, which Cloudflare's edge sets and
+ * overwrites itself. Client-sent headers (X-Forwarded-For, X-Real-IP, True-Client-IP) are never
+ * trusted, so nobody can fake an address to bypass the limit. */
 export function viewerIp(headers: Headers): string {
-  const list = [headers.get("cf-connecting-ip"), headers.get("true-client-ip"), headers.get("x-real-ip"), ...(headers.get("x-forwarded-for") ?? "").split(",")]
-    .map((v) => v?.trim() ?? "").filter(Boolean);
-  return list.find((ip) => !isRelayIp(ip)) ?? list[0] ?? "";
+  return headers.get("cf-connecting-ip")?.trim() ?? "";
 }
 
 /** Stable per-device key: line + viewer IP (Web Crypto — workerd-safe). One key per viewer, shared by

@@ -2,9 +2,8 @@ import { describe, it, expect } from "vitest";
 import { viewerIp, deviceIp } from "@/lib/stream-proxy.server";
 
 describe("viewer identity for connection counting", () => {
-  it("skips a Cloudflare relay IP and uses the viewer's forwarded address", () => {
-    const h = new Headers({ "cf-connecting-ip": "2a06:98c0:3600::103", "x-forwarded-for": "89.245.182.175, 2a06:98c0:3600::103" });
-    expect(viewerIp(h)).toBe("89.245.182.175");
+  it("ignores client-sent forwarding headers", () => {
+    expect(viewerIp(new Headers({ "x-forwarded-for": "1.2.3.4", "x-real-ip": "5.6.7.8", "true-client-ip": "9.9.9.9" }))).toBe("");
   });
   it("uses the connecting IP when it is a real viewer", () => {
     expect(viewerIp(new Headers({ "cf-connecting-ip": "176.222.63.150", "x-forwarded-for": "1.2.3.4" }))).toBe("176.222.63.150");
