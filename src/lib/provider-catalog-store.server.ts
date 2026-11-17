@@ -30,8 +30,9 @@ async function stored() {
 /** Customer reads never call GitHub, including cold instances. */
 export async function readStoredCatalog(forceReload = false): Promise<Catalog> {
   if (local && !forceReload && Date.now() - localReadAt < 60_000) return local;
-  if (loading) return loading;
-  loading = (async () => {
+  // Never await another request's promise (Workers drop it when that request ends).
+  if (loading && local && !forceReload) return local;
+  const own: Promise<Catalog> = (async () => {
     try {
       const row = await stored();
       if (!row) throw new Error('Playlist cache is not ready; retry shortly');
@@ -39,15 +40,16 @@ export async function readStoredCatalog(forceReload = false): Promise<Catalog> {
       localReadAt = Date.now();
       return local;
     } catch (error) { if (local) return local; throw error; }
-    finally { loading = undefined; }
+    finally { if (loading === own) loading = undefined; }
   })();
-  return loading;
+  loading = own;
+  return own;
 }
 
 /** Only the authenticated schedule or role-checked admin refresh may call this. */
 export async function refreshStoredCatalog(parse: (text: string) => Promise<Catalog>, force = false): Promise<Catalog> {
-  if (refreshing) return refreshing;
-  refreshing = (async () => {
+  if (refreshing && local) return local;
+  const own: Promise<Catalog> = (async () => {
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
     let previous: Awaited<ReturnType<typeof stored>> = null;
     try {
@@ -89,7 +91,8 @@ export async function refreshStoredCatalog(parse: (text: string) => Promise<Cata
       if (previous) { local = decodeCatalog(previous.catalog); return local; }
       if (local) return local;
       throw error;
-    } finally { refreshing = undefined; }
+    } finally { if (refreshing === own) refreshing = undefined; }
   })();
-  return refreshing;
+  refreshing = own;
+  return own;
 }

@@ -69,11 +69,11 @@ describe("Playlist media", () => {
     expect(await read()).toEqual(["old", addition]);
     expect(load).toHaveBeenCalledTimes(2);
   });
-  it("coalesces simultaneous catalog reads into one source request", async () => {
+  it("never makes a request wait on another request's in-flight load (Workers drop cross-request promises)", async () => {
     const load = vi.fn().mockResolvedValue(["new"]);
     const read = createPlaylistCache(load);
     expect(await Promise.all([read(), read(), read(true)])).toEqual([["new"], ["new"], ["new"]]);
-    expect(load).toHaveBeenCalledTimes(1);
+    expect(load).toHaveBeenCalledTimes(3);
   });
   it("keeps the last working playlist on an outage and retries", async () => {
     let at = 0;

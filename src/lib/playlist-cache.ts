@@ -9,8 +9,9 @@ export function createPlaylistCache<T>(load: () => Promise<T>, now = Date.now) {
     if (!force && value !== undefined && now() < nextCheck) return value;
     // One request owns the refresh; other customers must not wait behind a slow source.
     // Forced reads still join the current refresh and cold starts have no fabricated fallback.
-    if (pending) return !force && value !== undefined ? value : pending;
-    pending = Promise.resolve().then(async () => {
+    // Workers cannot await a promise created by another request, so never share `pending`.
+    if (pending && !force && value !== undefined) return value;
+    const own = Promise.resolve().then(async () => {
       try {
         value = await load();
         nextCheck = now() + PLAYLIST_REFRESH_MS;
@@ -20,9 +21,10 @@ export function createPlaylistCache<T>(load: () => Promise<T>, now = Date.now) {
         if (value !== undefined) return value;
         throw error;
       } finally {
-        pending = undefined;
+        if (pending === own) pending = undefined;
       }
     });
-    return pending;
+    pending = own;
+    return own;
   };
 }
