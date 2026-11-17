@@ -6,3 +6,6 @@
 ## Connection limits
 - Share positive PostgreSQL-integer validation between subscriber edit functions to prevent conflicting caps; retain the default of one and database-only billing.
 - Both connection RPC overloads use the same per-line transaction advisory lock and line-scoped cleanup, preventing concurrent over-admission and duplicate device inserts.- Count one connection per line + viewer IP (CF-Connecting-IP only, never client headers; IPv6 grouped by /64, IPv4 exact for CGNAT) with a 45s idle window, so playlist/segment requests and channel switches share one slot.
+
+## Worker runtime
+- Never let a request await a promise created by another request (Workers drop it and the waiter fails with 502); module-level in-flight loads may only let others return the last-good value.
