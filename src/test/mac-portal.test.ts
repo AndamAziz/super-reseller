@@ -51,4 +51,12 @@ describe('MAC portal rules', () => {
     expect(action('type=series&action=get_ordered_list&movie_id=1')).toMatchObject({ data: [{ id: '1:1', season_number: 1 }] });
     expect(action('type=series&action=get_ordered_list&movie_id=1&season_id=1:1')).toMatchObject({ data: [{ id: '1', cmd: '/series/1.mp4', episode: 2 }] });
   });
+  it('opens episodes from season-style firmware requests and type=vod links', () => {
+    expect(action('type=series&action=get_ordered_list&movie_id=1:1')).toMatchObject({ data: [{ id: '1', episode: 2 }] });
+    const ep = catalog.episodes.find(e => e.id === 1);
+    if (!ep) throw new Error('Missing fixture');
+    const expected = { id: '1', cmd: `ffmpeg ${playbackUrl('https://re.andam.uk', 'series', account.username, account.password, 1, ep.url, ep)}` };
+    expect(action('type=vod&action=create_link&cmd=/series/1.mp4')).toEqual(expected);
+    expect(action('type=series&action=create_link&cmd=/season/1:1.mp4&series=2')).toEqual(expected);
+  });
 });
