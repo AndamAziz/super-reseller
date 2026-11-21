@@ -253,6 +253,13 @@
       "when": 1794691087687,
       "tag": "0035_stream_idle_45s",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1795235281998,
+      "tag": "0036_restrict_test_used",
+      "breakpoints": true
     }
   ]
 }
