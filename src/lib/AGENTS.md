@@ -9,3 +9,4 @@
 
 ## Worker runtime
 - Never let a request await a promise created by another request (Workers drop it and the waiter fails with 502); module-level in-flight loads may only let others return the last-good value.
+- MAC portal series IDs are title-derived (stable across GitHub playlist edits) and movie_id/season_id of 0 mean "not set", because MAG firmware sends them on the plain series list.

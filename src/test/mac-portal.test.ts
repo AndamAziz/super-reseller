@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { accountLabels, generateMac, macSchema, portalPage, requestMac, PORTAL_URL } from '../lib/mac-portal';
-import { portalCatalogResponse, type PortalAccount } from '../lib/mac-portal-catalog';
+import { portalCatalogResponse, stableSeriesIds, type PortalAccount } from '../lib/mac-portal-catalog';
 import { buildCatalog } from '../lib/playlist-auth.server';
 import { parseM3U } from '../lib/m3u';
 import { playbackUrl } from '../lib/media';
@@ -46,17 +46,31 @@ describe('MAC portal rules', () => {
   it('rejects arbitrary URL commands instead of signing or echoing them', () => {
     expect(action('type=itv&action=create_link&cmd=ffmpeg%20https://evil.test/')).toEqual({ error: 'Channel or movie not found' });
   });
-  it('provides movies, seasons and episodes with the same existing IDs', () => {
+  const sid = String(stableSeriesIds(catalog.series).idOf.get(catalog.series[0]!));
+  it('provides movies, seasons and episodes', () => {
     expect(action('type=vod&action=get_ordered_list')).toMatchObject({ data: [{ id: '1', cmd: '/media/1.mp4' }] });
-    expect(action('type=series&action=get_ordered_list&movie_id=1')).toMatchObject({ data: [{ id: '1:1', season_number: 1 }] });
-    expect(action('type=series&action=get_ordered_list&movie_id=1&season_id=1:1')).toMatchObject({ data: [{ id: '1', cmd: '/series/1.mp4', episode: 2 }] });
+    expect(action('type=series&action=get_ordered_list')).toMatchObject({ data: [{ id: sid }] });
+    expect(action(`type=series&action=get_ordered_list&movie_id=${sid}`)).toMatchObject({ data: [{ id: `${sid}:1`, season_number: 1 }] });
+    expect(action(`type=series&action=get_ordered_list&movie_id=${sid}&season_id=${sid}:1`)).toMatchObject({ data: [{ id: '1', cmd: `/series/${sid}:1:2.mp4`, episode: 2 }] });
+  });
+  it('lists every series when firmware sends movie_id=0 / season_id=0', () => {
+    const all = action('type=series&action=get_ordered_list&category=*&p=1');
+    expect(action('type=series&action=get_ordered_list&movie_id=0&category=*&p=1')).toEqual(all);
+    expect(action('type=series&action=get_ordered_list&movie_id=0&season_id=0&episode_id=0&category=*&p=1')).toEqual(all);
+    expect(action('type=series&action=get_ordered_list&movie_id=999')).toEqual({ error: 'Series not found' });
+  });
+  it('keeps a series ID unchanged when other series are added before it in the playlist', () => {
+    const grown = buildCatalog(parseM3U('#EXTM3U\n#EXTINF:-1 tvg-type="series" group-title="Shows",New - S01E01\nhttps://media.example/new.mp4\n#EXTINF:-1 tvg-type="series" group-title="Shows",Show - S01E02\nhttps://media.example/episode.mp4'));
+    const res = portalCatalogResponse(grown, new URLSearchParams(`type=series&action=get_ordered_list&movie_id=${sid}&season_id=${sid}:1`), account, 'https://re.andam.uk');
+    expect(res).toMatchObject({ data: [{ name: 'Show - S01E02' }] });
   });
   it('opens episodes from season-style firmware requests and type=vod links', () => {
-    expect(action('type=series&action=get_ordered_list&movie_id=1:1')).toMatchObject({ data: [{ id: '1', episode: 2 }] });
+    expect(action(`type=series&action=get_ordered_list&movie_id=${sid}:1`)).toMatchObject({ data: [{ id: '1', episode: 2 }] });
     const ep = catalog.episodes.find(e => e.id === 1);
     if (!ep) throw new Error('Missing fixture');
     const expected = { id: '1', cmd: `ffmpeg ${playbackUrl('https://re.andam.uk', 'series', account.username, account.password, 1, ep.url, ep)}` };
     expect(action('type=vod&action=create_link&cmd=/series/1.mp4')).toEqual(expected);
-    expect(action('type=series&action=create_link&cmd=/season/1:1.mp4&series=2')).toEqual(expected);
+    expect(action(`type=vod&action=create_link&cmd=/series/${sid}:1:2.mp4`)).toEqual(expected);
+    expect(action(`type=series&action=create_link&cmd=/season/${sid}:1.mp4&series=2`)).toEqual(expected);
   });
 });

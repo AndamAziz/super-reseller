@@ -12,14 +12,17 @@ export function portalCatalogResponse(catalog: Catalog, params: URLSearchParams,
   const category = params.get(type === 'itv' ? 'genre' : 'category');
   const allowed = (group: string | null) => !category || category === '*' || category === '0' || String(groups.indexOf(group ?? 'Uncategorized') + 1) === category;
   const page = Number(params.get('p') ?? 1);
+  const ids = stableSeriesIds(catalog.series);
   const link = (kind: 'live' | 'movie' | 'series', id: number, item: Catalog['live'][number]) => playbackUrl(origin, kind, account.username, account.password, id, item.url, item);
   if (action === 'create_link') {
     // Never echo or fetch arbitrary caller URLs. Commands only select saved catalog IDs.
     const cmd = params.get('cmd') ?? '';
     const seasonCmd = type !== 'itv' ? /^\/season\/(\d+):(\d+)\.mp4$/.exec(cmd) : null;
-    if (seasonCmd) {
-      // MAG firmware plays a season item with series=<episode number>.
-      const ep = catalog.series.find(s => String(s.id) === seasonCmd[1])?.episodes.find(e => e.season === Number(seasonCmd[2]) && e.episode === Number(params.get('series') ?? 1));
+    const episodeCmd = type !== 'itv' ? /^\/series\/(\d+):(\d+):(\d+)\.mp4$/.exec(cmd) : null;
+    if (seasonCmd || episodeCmd) {
+      // MAG firmware plays a season item with series=<episode number>; episode items carry it in the command.
+      const [, sid, season, episode] = episodeCmd ?? [...(seasonCmd ?? []), params.get('series') ?? '1'];
+      const ep = ids.byId.get(String(sid))?.episodes.find(e => e.season === Number(season) && e.episode === Number(episode));
       if (!ep) return { error: 'Channel or movie not found' };
       return { id: String(ep.id), cmd: `ffmpeg ${link('series', ep.id, ep)}` };
     }
@@ -41,22 +44,40 @@ export function portalCatalogResponse(catalog: Catalog, params: URLSearchParams,
     return { id: String(i + 1), name: cleanName(m.name), screenshot_uri: m.logo ?? '', description: metadata.plot ?? '', year: metadata.releaseDate.slice(0, 4), rating_imdb: metadata.rating ?? '', category_id: String(groups.indexOf(m.group_title ?? 'Uncategorized') + 1), cmd: `/media/${i + 1}.mp4` };
   }).filter(x => !category || category === '*' || category === '0' || x.category_id === category), page);
   if (type === 'series') {
-    // Some firmwares request episodes with movie_id=<series>:<season> instead of season_id.
-    const rawMovie = params.get('movie_id'), rawSeason = params.get('season_id');
-    const seasonId = rawSeason && rawSeason !== '0' ? rawSeason : rawMovie?.includes(':') ? rawMovie : null;
-    const movieId = rawMovie?.includes(':') ? null : rawMovie;
-    if (movieId || seasonId) {
-      const selected = catalog.series.find(s => String(s.id) === (movieId ?? seasonId?.split(':')[0]));
+    // Firmwares send movie_id=0 / season_id=0 on the plain list screen, and some send movie_id=<series>:<season>.
+    const present = (v: string | null) => (v && v !== '0' && v !== '*' ? v : null);
+    const rawMovie = present(params.get('movie_id')), rawSeason = present(params.get('season_id'));
+    const seasonId = rawSeason ?? (rawMovie?.includes(':') ? rawMovie : null);
+    const seriesKey = rawMovie && !rawMovie.includes(':') ? rawMovie : seasonId?.split(':')[0] ?? null;
+    if (seriesKey) {
+      const selected = ids.byId.get(seriesKey);
       if (!selected) return { error: 'Series not found' };
+      const sid = ids.idOf.get(selected) ?? 0;
       if (seasonId) {
         const season = Number(seasonId.split(':')[1]);
-        if (seasonId !== `${selected.id}:${season}`) return { error: 'Season not found' };
-        return portalPage(selected.episodes.filter(e => e.season === season).map(e => ({ id: String(e.id), name: cleanName(e.name), episode: e.episode, series: String(e.episode), screenshot_uri: e.logo ?? selected.cover ?? '', cmd: `/series/${e.id}.mp4` })), page);
+        if (!Number.isSafeInteger(season) || !selected.episodes.some(e => e.season === season)) return { error: 'Season not found' };
+        return portalPage(selected.episodes.filter(e => e.season === season).map(e => ({ id: String(e.id), name: cleanName(e.name), episode: e.episode, series: String(e.episode), screenshot_uri: e.logo ?? selected.cover ?? '', cmd: `/series/${sid}:${e.season}:${e.episode}.mp4` })), page);
       }
-      return portalPage([...new Set(selected.episodes.map(e => e.season))].map(n => ({ id: `${selected.id}:${n}`, movie_id: String(selected.id), name: `Season ${n}`, season_number: n, series: selected.episodes.filter(e => e.season === n).map(e => e.episode), is_season: '1', cmd: `/season/${selected.id}:${n}.mp4` })), page);
+      return portalPage([...new Set(selected.episodes.map(e => e.season))].map(n => ({ id: `${sid}:${n}`, movie_id: String(sid), name: `Season ${n}`, season_number: n, series: selected.episodes.filter(e => e.season === n).map(e => e.episode), is_season: '1', cmd: `/season/${sid}:${n}.mp4` })), page);
     }
-    return portalPage(catalog.series.filter(s => allowed(s.category)).map(s => ({ id: String(s.id), name: cleanName(s.title), screenshot_uri: s.cover ?? '', category_id: String(groups.indexOf(s.category) + 1), is_series: '1', description: s.episodes[0] ? providerMetadata(s.episodes[0]).plot ?? '' : '' })), page);
+    return portalPage(catalog.series.filter(s => allowed(s.category)).map(s => ({ id: String(ids.idOf.get(s)), name: cleanName(s.title), screenshot_uri: s.cover ?? '', category_id: String(groups.indexOf(s.category) + 1), is_series: '1', description: s.episodes[0] ? providerMetadata(s.episodes[0]).plot ?? '' : '' })), page);
   }
   return [];
 }
 const cleanName = (name: string) => name.replace(/\s*\{(?:tmdb|imdb)-[^}]*\}/gi, '').trim() || name;
+
+/**
+ * Portal series IDs derive from the series title, not list position, so adding or
+ * reordering series in the GitHub playlist never makes a box's saved ID point elsewhere.
+ */
+export function stableSeriesIds(series: Catalog['series']) {
+  const byId = new Map<string, Catalog['series'][number]>(), idOf = new Map<Catalog['series'][number], number>();
+  for (const s of [...series].sort((a, b) => (a.title < b.title ? -1 : a.title > b.title ? 1 : 0))) {
+    let h = 0x811c9dc5;
+    for (const ch of s.title) { h ^= ch.codePointAt(0) ?? 0; h = Math.imul(h, 0x01000193) >>> 0; }
+    let id = (h % 2_000_000_000) + 1;
+    while (byId.has(String(id))) id = (id % 2_000_000_000) + 1;
+    byId.set(String(id), s); idOf.set(s, id);
+  }
+  return { byId, idOf };
+}
