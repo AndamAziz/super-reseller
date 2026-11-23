@@ -163,10 +163,25 @@ export interface ProxyOptions {
   manifestRedirect?: Partial<Record<"hls" | "dash" | "ts", string>>;
 }
 
+function directSource(url: URL): Response {
+  return new Response(null, { status: 302, headers: { ...CORS, Location: url.toString(), "Cache-Control": "no-store", "X-Media-Protocol": "hls" } });
+}
+
 /** Fetch target with the channel's headers; rewrite playlists, stream everything else. */
 export async function proxyFetch(request: Request, target: URL, channel: M3UChannel, prefix: string, scope: string, options: ProxyOptions = {}): Promise<Response> {
-  // Text-named HLS sources rely on their native URL/host and reject synthetic Origin.
-  const textSource = /\.txt$/i.test(new URL(channel.url).pathname);
+  let original: URL | null = null;
+  try { original = new URL(channel.url); } catch { /* the normal target validation below reports the error */ }
+  const isOriginal = original?.toString() === target.toString();
+  const textSource = !!original && /\.txt$/i.test(original.pathname);
+  const hlsSource = !!original && /\.(?:m3u8|m3u)$/i.test(original.pathname);
+  const handoffOriginal = () => {
+    if (!original || !isOriginal || original.protocol !== "http:" && original.protocol !== "https:" || isPrivateHost(original.hostname)) return null;
+    return directSource(original);
+  };
+  // The hosted fetch to some text-named HLS origins is rejected even though the
+  // player's direct request works. Hand off the original entry before fetching it.
+  if (isOriginal && textSource) return handoffOriginal() ?? plain("Forbidden target", 403);
+  const hlsFallback = () => isOriginal && hlsSource ? handoffOriginal() : null;
   const headers: Record<string, string> = { "User-Agent": channel.user_agent?.trim() || "Mozilla/5.0" };
   if (channel.referrer?.trim()) {
     headers["Referer"] = channel.referrer.trim();
@@ -203,7 +218,7 @@ export async function proxyFetch(request: Request, target: URL, channel: M3UChan
         }
         break;
       }
-      if (!res) return plain("Stream origin unreachable", 502);
+      if (!res) return hlsFallback() ?? plain("Stream origin unreachable", 502);
       const loc = res.status >= 300 && res.status < 400 ? res.headers.get("location") : null;
       if (!loc) break;
       current = new URL(loc, current);
@@ -211,24 +226,34 @@ export async function proxyFetch(request: Request, target: URL, channel: M3UChan
       res = null;
     }
   } catch {
-    return plain("Stream origin unreachable", 502);
+    return hlsFallback() ?? plain("Stream origin unreachable", 502);
   }
-  if (!res) return plain("Too many redirects", 502);
-  if (!res.ok && res.status !== 206) return plain(`Stream origin error (HTTP ${res.status})`, 502);
+  if (!res) return hlsFallback() ?? plain("Too many redirects", 502);
+  if (!res.ok && res.status !== 206) {
+    const fallback = hlsFallback();
+    if (fallback) {
+      await res.body?.cancel().catch(() => undefined);
+      return fallback;
+    }
+    return plain(`Stream origin error (HTTP ${res.status})`, 502);
+  }
   const ct = res.headers.get("content-type") ?? "";
   // Do not inspect nonzero byte ranges as if they start at a container header.
   const startsAtZero = !range || /^bytes=0-/i.test(range);
   let peeked;
   try { peeked = startsAtZero ? await peekStream(res.body) : { bytes: new Uint8Array(), body: res.body }; }
-  catch { return plain("No media data received within 15 seconds", 502); }
+  catch { return hlsFallback() ?? plain("No media data received within 15 seconds", 502); }
   const protocol = detectMedia(peeked.bytes, ct, current.toString());
+  const signatureProtocol = detectMedia(peeked.bytes);
+  const htmlError = /^text\/html(?:\s*;|$)/i.test(ct) && signatureProtocol === "unknown";
+  const invalidHls = protocol === "hls" && signatureProtocol !== "hls";
+  if (htmlError || invalidHls) {
+    await peeked.body?.cancel().catch(() => undefined);
+    const fallback = hlsFallback();
+    if (fallback) return fallback;
+    return plain(htmlError ? "Stream origin returned HTML instead of media" : "Invalid HLS playlist response", 502);
+  }
   if (protocol === "hls" || protocol === "dash") {
-    // Auth/admission already ran in the shared entry handler. Hand verified .txt HLS
-    // back to the original URL, not an app .m3u8 link or the last redirect hop.
-    if (protocol === "hls" && /\.txt$/i.test(target.pathname)) {
-      await peeked.body?.cancel().catch(() => undefined);
-      return new Response(null, { status: 302, headers: { ...CORS, Location: target.toString(), "Cache-Control": "no-store", "X-Media-Protocol": "hls" } });
-    }
     const redirectTo = options.manifestRedirect?.[protocol];
     if (redirectTo) {
       await peeked.body?.cancel().catch(() => undefined);
