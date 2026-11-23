@@ -1,5 +1,6 @@
 # Connection billing
 ## Text-named HLS playback
+- [ ] Reproduce live stream 127 HTTP 200 text/html "security error"; hand off original .txt HLS before any origin fetch on every entry path after auth/admission, reject successful HTML error bodies, and verify working MP4/M3U8/TS plus connection limits remain unchanged. Live publication and VLC decoded playback require separate verification/approval.
 - [x] ANDAM1 preview movie 72 HOURS returns exact source .txt URL via 302 with CORS; movie metadata remains m3u8. Native video/audio playlists and TS segments return 200. No synthetic Origin for this source chain; 309 tests pass (3 skipped), build OK. Publication and target-TV decoded playback remain unverified.
 ## Library playable sources and GitHub publication
 - [x] Added admin-supplied MP4/M3U8 source URLs, in-app playback and VidAPI fallback; controlled MP4 saved/reloaded and decoded (320px, 24 frames), then test source cleared. 33 validation, permission and playback tests pass; Live TV unchanged.
