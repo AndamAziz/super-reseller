@@ -1,4 +1,6 @@
 # Connection billing
+## Text-named HLS playback
+- [x] ANDAM1 preview movie 72 HOURS returns exact source .txt URL via 302 with CORS; movie metadata remains m3u8. Native video/audio playlists and TS segments return 200. No synthetic Origin for this source chain; 309 tests pass (3 skipped), build OK. Publication and target-TV decoded playback remain unverified.
 ## Library playable sources and GitHub publication
 - [x] Added admin-supplied MP4/M3U8 source URLs, in-app playback and VidAPI fallback; controlled MP4 saved/reloaded and decoded (320px, 24 frames), then test source cleared. 33 validation, permission and playback tests pass; Live TV unchanged.
 - [x] Added explicit GitHub publication control with append-only entries, movie/episode metadata, fallback URL, duplicate protection and SHA conflict protection; connected app reads the actual 5.2MB playlist successfully.

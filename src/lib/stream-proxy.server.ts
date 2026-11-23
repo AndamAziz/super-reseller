@@ -165,10 +165,14 @@ export interface ProxyOptions {
 
 /** Fetch target with the channel's headers; rewrite playlists, stream everything else. */
 export async function proxyFetch(request: Request, target: URL, channel: M3UChannel, prefix: string, scope: string, options: ProxyOptions = {}): Promise<Response> {
+  // Text-named HLS sources rely on their native URL/host and reject synthetic Origin.
+  const textSource = /\.txt$/i.test(new URL(channel.url).pathname);
   const headers: Record<string, string> = { "User-Agent": channel.user_agent?.trim() || "Mozilla/5.0" };
   if (channel.referrer?.trim()) {
     headers["Referer"] = channel.referrer.trim();
-    try { headers["Origin"] = new URL(channel.referrer.trim()).origin; } catch { /* ignore */ }
+    if (!textSource) {
+      try { headers["Origin"] = new URL(channel.referrer.trim()).origin; } catch { /* ignore */ }
+    }
   }
   const range = request.headers.get("range");
   if (range) headers["Range"] = range;
@@ -219,6 +223,12 @@ export async function proxyFetch(request: Request, target: URL, channel: M3UChan
   catch { return plain("No media data received within 15 seconds", 502); }
   const protocol = detectMedia(peeked.bytes, ct, current.toString());
   if (protocol === "hls" || protocol === "dash") {
+    // Auth/admission already ran in the shared entry handler. Hand verified .txt HLS
+    // back to the original URL, not an app .m3u8 link or the last redirect hop.
+    if (protocol === "hls" && /\.txt$/i.test(target.pathname)) {
+      await peeked.body?.cancel().catch(() => undefined);
+      return new Response(null, { status: 302, headers: { ...CORS, Location: target.toString(), "Cache-Control": "no-store", "X-Media-Protocol": "hls" } });
+    }
     const redirectTo = options.manifestRedirect?.[protocol];
     if (redirectTo) {
       await peeked.body?.cancel().catch(() => undefined);
