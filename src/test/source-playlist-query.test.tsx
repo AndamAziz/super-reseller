@@ -3,7 +3,7 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { sourcePlaylistQueryOptions } from "@/lib/source-playlist-query";
 
-vi.mock("@/lib/source-playlist.functions", () => ({ getSourcePlaylist: vi.fn() }));
+vi.mock("@/lib/source-playlist-direct", () => ({ fetchSourcePlaylistDirect: vi.fn() }));
 
 afterEach(() => { cleanup(); vi.useRealTimers(); });
 
