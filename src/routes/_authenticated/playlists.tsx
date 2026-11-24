@@ -11,7 +11,6 @@ import { parseM3UDocument, buildM3U, mediaSection, type M3UChannel } from "@/lib
 import { cn } from "@/lib/utils";
 import { useServerFn } from "@tanstack/react-start";
 import { testStream, type StreamTestStep } from "@/lib/stream-test.functions";
-import { getSourcePlaylist } from "@/lib/source-playlist.functions";
 import { sourcePlaylistQueryOptions } from "@/lib/source-playlist-query";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, Plus, Play } from "lucide-react";
@@ -67,8 +66,7 @@ function PlaylistsPage() {
   const current = selected ?? playlists[0]?.id ?? "github";
   const isSource = current === "github";
   const { removeChannel, busyId } = useDeleteChannel(current);
-  const fetchSource = useServerFn(getSourcePlaylist);
-  const source = useQuery(sourcePlaylistQueryOptions(() => fetchSource()));
+  const source = useQuery(sourcePlaylistQueryOptions());
   const runTest = useServerFn(testStream);
   const [tests, setTests] = useState<Record<string, TestResult>>({});
   const [editing, setEditing] = useState<(M3UChannel & { id: string }) | null>(null);
