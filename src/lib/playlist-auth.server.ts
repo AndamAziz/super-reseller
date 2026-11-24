@@ -120,17 +120,34 @@ export async function handlePlaylistRequest(request: Request): Promise<Response>
   const url = new URL(request.url);
   const auth = await authLine(url.searchParams.get("username") ?? "", url.searchParams.get("password") ?? "");
   if (!auth.ok) return plain(auth.message, auth.status);
-  const loaded = await loadCatalog(url.searchParams.get("refresh") === "1");
-  if (!loaded.ok) return plain(loaded.message, loaded.status);
   // Rewrite every stream URL through this app so auth, max-connections and referer rules apply.
   const origin = url.origin;
-  const { live, movies, episodes } = loaded.catalog;
-  const rewritten: M3UChannel[] = [
-    ...live.map((c, i) => ({ ...c, url: playbackUrl(origin, "live", auth.username, auth.password, i + 1, c.url, c) })),
-    ...movies.map((m, i) => ({ ...m, url: playbackUrl(origin, "movie", auth.username, auth.password, i + 1, m.url, m) })),
-    ...episodes.map((e) => ({ ...e, url: playbackUrl(origin, "series", auth.username, auth.password, e.id, e.url, e) })),
-  ];
-  return new Response(buildM3U(rewritten), {
+  const playlistFor = (catalog: Catalog, username: string, password: string) => {
+    const { live, movies, episodes } = catalog;
+    const rewritten: M3UChannel[] = [
+      ...live.map((c, i) => ({ ...c, url: playbackUrl(origin, "live", username, password, i + 1, c.url, c) })),
+      ...movies.map((m, i) => ({ ...m, url: playbackUrl(origin, "movie", username, password, i + 1, m.url, m) })),
+      ...episodes.map((e) => ({ ...e, url: playbackUrl(origin, "series", username, password, e.id, e.url, e) })),
+    ];
+    return buildM3U(rewritten);
+  };
+  // Built once per stored catalog with placeholder credentials, filled per line (see list-template).
+  let body: string | Uint8Array<ArrayBuffer> | null = null;
+  if (url.searchParams.get("refresh") !== "1") {
+    const { fillLine, listTemplate, templateKey, LINE_PASS, LINE_USER } = await import("./list-template.server");
+    const key = await templateKey("m3u", origin).catch(() => null);
+    const template = key && await listTemplate(key, async () => {
+      const loaded = await loadCatalog();
+      return loaded.ok ? playlistFor(loaded.catalog, LINE_USER, LINE_PASS) : null;
+    });
+    if (template) body = fillLine(template, auth.username, auth.password);
+  }
+  if (body === null) {
+    const loaded = await loadCatalog(url.searchParams.get("refresh") === "1");
+    if (!loaded.ok) return plain(loaded.message, loaded.status);
+    body = playlistFor(loaded.catalog, auth.username, auth.password);
+  }
+  return new Response(body, {
     headers: {
       "Content-Type": "audio/x-mpegurl; charset=utf-8",
       "Content-Disposition": `inline; filename="${auth.username}.m3u"`,
