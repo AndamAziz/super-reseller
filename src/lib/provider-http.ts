@@ -11,6 +11,7 @@ export function providerRequestType(action: string) {
 /** Authenticate before calling: validators must never bypass expiry or password checks. */
 export async function privateListValidator(request: Request, response: Response) {
   if (response.status !== 200 || response.headers.get('retry-after')) return response;
+  if (response.headers.get('etag')) return response; // templated lists set their own ETag
   const body = await response.clone().text();
   if (!body.startsWith('[')) return response;
   const bytes = new TextEncoder().encode(body);

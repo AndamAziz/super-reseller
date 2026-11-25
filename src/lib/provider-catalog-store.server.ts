@@ -17,6 +17,24 @@ function decodeCatalog(value: Json): Catalog {
 export const CATALOG_REFRESH_MS = 300_000;
 let local: Catalog | undefined;
 let localReadAt = 0;
+/** etag (or checked_at) of the stored row that `local` was decoded from. */
+let localStamp: string | undefined;
+let stampValue: { stamp: string | null; at: number } | undefined;
+
+const stampOf = (row: { etag: string | null; checked_at: string }) => row.etag || row.checked_at;
+
+/**
+ * Cheap identity of the stored catalog (its GitHub etag, else checked_at), read without the
+ * ~2 MB catalog column. Decoding the catalog costs ~230 ms of CPU, so readers compare this first.
+ */
+export async function catalogStamp(maxAgeMs = 15_000): Promise<string | null> {
+  if (stampValue && Date.now() - stampValue.at < maxAgeMs) return stampValue.stamp;
+  const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+  const { data, error } = await supabaseAdmin.from('provider_catalog_cache').select('etag, checked_at').eq('key', 'github').abortSignal(AbortSignal.timeout(2000)).maybeSingle();
+  if (error) throw new Error('Stored playlist temporarily unavailable');
+  stampValue = { stamp: data ? stampOf(data) : null, at: Date.now() };
+  return stampValue.stamp;
+}
 let loading: Promise<Catalog> | undefined;
 let refreshing: Promise<Catalog> | undefined;
 
@@ -35,9 +53,15 @@ export async function readStoredCatalog(forceReload = false): Promise<Catalog> {
   let own!: Promise<Catalog>;
   own = (async () => {
     try {
+      // Unchanged since the last decode: keep the decoded copy (no 26 MB inflate + parse).
+      if (local && localStamp && !forceReload) {
+        const stamp = await catalogStamp(0).catch(() => null);
+        if (stamp && stamp === localStamp) { localReadAt = Date.now(); return local; }
+      }
       const row = await stored();
       if (!row) throw new Error('Playlist cache is not ready; retry shortly');
       local = decodeCatalog(row.catalog);
+      localStamp = stampOf(row);
       localReadAt = Date.now();
       return local;
     } catch (error) { if (local) return local; throw error; }
@@ -79,6 +103,7 @@ export async function refreshStoredCatalog(parse: (text: string) => Promise<Cata
         const { error: writeError } = await supabaseAdmin.from('provider_catalog_cache').update({ checked_at }).eq('key', 'github').abortSignal(AbortSignal.timeout(1500));
         if (writeError) throw new Error('Playlist cache update failed');
         local = decodeCatalog(previous.catalog);
+        localStamp = stampOf({ etag: previous.etag, checked_at });
       } else {
         if (!response.ok) { await response.body?.cancel(); throw new Error(`Playlist source HTTP ${response.status}`); }
         const catalog = await parse(await response.text());
@@ -86,7 +111,10 @@ export async function refreshStoredCatalog(parse: (text: string) => Promise<Cata
         const { error: writeError } = await supabaseAdmin.from('provider_catalog_cache').upsert({ key: 'github', source_url: settings.value, etag: response.headers.get('etag'), checked_at, catalog: encodeCatalog(catalog) }).abortSignal(AbortSignal.timeout(4000));
         if (writeError) { console.warn('provider_catalog_store_error', writeError.code, writeError.message); throw new Error('Playlist cache save failed'); }
         local = catalog;
+        localStamp = stampOf({ etag: response.headers.get('etag'), checked_at });
       }
+      localReadAt = Date.now();
+      stampValue = undefined;
       return local;
     } catch (error) {
       console.warn('provider_catalog_refresh_failed', error instanceof Error ? error.message : 'Unavailable');

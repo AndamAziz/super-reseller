@@ -1,7 +1,8 @@
 // Xtream Codes-compatible API so IPTV apps can add this server as an "Xtream" provider.
 // Backed by the protected shared M3U source, including movies and series.
 import { createFileRoute } from "@tanstack/react-router";
-import { authLine, countActiveConnections, json, loadCatalog } from "@/lib/playlist-auth.server";
+import { authLine, countActiveConnections, json, loadCatalog, type Catalog } from "@/lib/playlist-auth.server";
+import { fillLine, lineEtag, LINE_PASS, LINE_USER, listTemplate, templateKey } from "@/lib/list-template.server";
 import { needsProxy } from "@/lib/stream-proxy.server";
 import { mediaExtension, playbackUrl } from "@/lib/media";
 import { providerMetadata } from '@/lib/provider-metadata';
@@ -104,27 +105,37 @@ async function respondXtreamRequest(request: Request) {
 
   // EPG/unsupported actions retain their empty-array contract without loading 10,500 entries.
   if (!providerActions.has(action)) return json([]);
-  const loaded = await loadCatalog(params.get("refresh") === "1");
-  if (!loaded.ok) return json({ error: loaded.message }, loaded.status);
-  const { live, movies, series } = loaded.catalog;
-  const base = `${url.origin}`;
-  const cats = (items: { group_title?: string | null; category?: string }[]) =>
-    [...new Set(items.map((c) => c.category ?? c.group_title ?? "Uncategorized"))];
-  const groups = cats(live);
-  const catId = (g: string | null) => String(groups.indexOf(g ?? "Uncategorized") + 1);
   const filter = params.get("category_id");
 
-  if (action === "get_vod_categories") {
-    return json(cats(movies).map((g, i) => ({ category_id: String(i + 1), category_name: g, parent_id: 0 })));
+  // Lists: built once per stored catalog with placeholder credentials, then filled per line.
+  if (TEMPLATED_LISTS.has(action) && params.get("refresh") !== "1") {
+    const key = await templateKey("xtream", url.origin, action, filter ?? "").catch(() => null);
+    if (key) {
+      const template = await listTemplate(key, async () => {
+        const loaded = await loadCatalog();
+        if (!loaded.ok) return null;
+        const payload = listPayload(action, loaded.catalog, url.origin, LINE_USER, LINE_PASS, filter);
+        return payload === undefined ? null : JSON.stringify(payload);
+      });
+      if (template !== null) {
+        const etag = await lineEtag(key, auth.username, auth.password);
+        const headers = {
+          "Content-Type": "application/json; charset=utf-8", "Cache-Control": "private, max-age=0, must-revalidate",
+          "Access-Control-Allow-Origin": "*", ETag: etag,
+        };
+        const matches = request.headers.get("if-none-match")?.split(",").map((v) => v.trim().replace(/^W\//, "")).includes(etag);
+        return matches ? new Response(null, { status: 304, headers }) : new Response(fillLine(template, auth.username, auth.password), { headers });
+      }
+    }
   }
-  if (action === "get_vod_streams") {
-    const vc = cats(movies);
-    return json(movies.map((m, i) => ({
-      num: i + 1, name: m.name, stream_type: "movie", stream_id: i + 1, stream_icon: m.logo ?? "",
-      ...providerMetadata(m), added: "0", category_id: String(vc.indexOf(m.group_title ?? "Uncategorized") + 1),
-      container_extension: mediaExtension(m.url), custom_sid: "", direct_source: playbackUrl(base, "movie", auth.username, auth.password, i + 1, m.url, m),
-    })).filter((s) => !filter || s.category_id === filter));
-  }
+
+  const loaded = await loadCatalog(params.get("refresh") === "1");
+  if (!loaded.ok) return json({ error: loaded.message }, loaded.status);
+  const { movies, series } = loaded.catalog;
+  const base = `${url.origin}`;
+  const list = listPayload(action, loaded.catalog, base, auth.username, auth.password, filter);
+  if (list !== undefined) return json(list);
+
   if (action === "get_vod_info") {
     const id = Number(params.get("vod_id"));
     const m = Number.isInteger(id) && id > 0 ? movies[id - 1] : undefined;
@@ -137,17 +148,6 @@ async function respondXtreamRequest(request: Request) {
     });
   }
   const sc = cats(series);
-  if (action === "get_series_categories") {
-    return json(sc.map((g, i) => ({ category_id: String(i + 1), category_name: g, parent_id: 0 })));
-  }
-  if (action === "get_series") {
-    return json(series.map((s, i) => ({
-      num: i + 1, name: s.title, series_id: s.id, cover: s.cover ?? "", plot: "", cast: "", director: "", genre: "",
-      releaseDate: "", last_modified: "0", rating: "", rating_5based: 0, backdrop_path: [], youtube_trailer: "",
-      ...(s.episodes[0] ? providerMetadata(s.episodes[0]) : {}),
-      episode_run_time: "", category_id: String(sc.indexOf(s.category) + 1),
-    })).filter((s) => !filter || s.category_id === filter));
-  }
   if (action === "get_series_info") {
     const s = series.find((x) => x.id === Number(params.get("series_id")));
     if (!s) return json({ seasons: [], info: {}, episodes: {} });
@@ -165,31 +165,64 @@ async function respondXtreamRequest(request: Request) {
       episodes,
     });
   }
+  return json([]);
+}
 
+const TEMPLATED_LISTS = new Set(["get_live_categories", "get_live_streams", "get_vod_categories", "get_vod_streams", "get_series_categories", "get_series"]);
+
+const cats = (items: { group_title?: string | null; category?: string }[]) =>
+  [...new Set(items.map((c) => c.category ?? c.group_title ?? "Uncategorized"))];
+
+/** The category / stream lists (unchanged output); undefined for any other action. */
+function listPayload(action: string, catalog: Catalog, base: string, username: string, password: string, filter: string | null): unknown[] | undefined {
+  const { live, movies, series } = catalog;
+  if (action === "get_vod_categories") {
+    return cats(movies).map((g, i) => ({ category_id: String(i + 1), category_name: g, parent_id: 0 }));
+  }
+  if (action === "get_vod_streams") {
+    const vc = cats(movies);
+    return movies.map((m, i) => ({
+      num: i + 1, name: m.name, stream_type: "movie", stream_id: i + 1, stream_icon: m.logo ?? "",
+      ...providerMetadata(m), added: "0", category_id: String(vc.indexOf(m.group_title ?? "Uncategorized") + 1),
+      container_extension: mediaExtension(m.url), custom_sid: "", direct_source: playbackUrl(base, "movie", username, password, i + 1, m.url, m),
+    })).filter((s) => !filter || s.category_id === filter);
+  }
+  const sc = cats(series);
+  if (action === "get_series_categories") {
+    return sc.map((g, i) => ({ category_id: String(i + 1), category_name: g, parent_id: 0 }));
+  }
+  if (action === "get_series") {
+    return series.map((s, i) => ({
+      num: i + 1, name: s.title, series_id: s.id, cover: s.cover ?? "", plot: "", cast: "", director: "", genre: "",
+      releaseDate: "", last_modified: "0", rating: "", rating_5based: 0, backdrop_path: [], youtube_trailer: "",
+      ...(s.episodes[0] ? providerMetadata(s.episodes[0]) : {}),
+      episode_run_time: "", category_id: String(sc.indexOf(s.category) + 1),
+    })).filter((s) => !filter || s.category_id === filter);
+  }
+  const groups = cats(live);
+  const catId = (g: string | null) => String(groups.indexOf(g ?? "Uncategorized") + 1);
   if (action === "get_live_categories") {
-    return json(groups.map((g, i) => ({ category_id: String(i + 1), category_name: g, parent_id: 0 })));
+    return groups.map((g, i) => ({ category_id: String(i + 1), category_name: g, parent_id: 0 }));
   }
   if (action === "get_live_streams") {
-    return json(
-      live
-        .map((c, i) => ({
-          num: i + 1,
-          name: c.name,
-          stream_type: "live",
-          stream_id: i + 1,
-          stream_icon: c.logo ?? "",
-          epg_channel_id: null,
-          added: "0",
-          category_id: catId(c.group_title),
-          custom_sid: "",
-          tv_archive: 0,
-          container_extension: mediaExtension(c.url),
-          direct_source: playbackUrl(base, "live", auth.username, auth.password, i + 1, c.url, c),
-          requires_referer: needsProxy(c),
-          tv_archive_duration: 0,
-        }))
-        .filter((s) => !filter || s.category_id === filter),
-    );
+    return live
+      .map((c, i) => ({
+        num: i + 1,
+        name: c.name,
+        stream_type: "live",
+        stream_id: i + 1,
+        stream_icon: c.logo ?? "",
+        epg_channel_id: null,
+        added: "0",
+        category_id: catId(c.group_title),
+        custom_sid: "",
+        tv_archive: 0,
+        container_extension: mediaExtension(c.url),
+        direct_source: playbackUrl(base, "live", username, password, i + 1, c.url, c),
+        requires_referer: needsProxy(c),
+        tv_archive_duration: 0,
+      }))
+      .filter((s) => !filter || s.category_id === filter);
   }
-  return json([]);
+  return undefined;
 }
